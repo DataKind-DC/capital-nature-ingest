@@ -52,16 +52,11 @@ for individual_event in event_json:
     if k in key_list:
       event_data[k] = individual_event[k]
 
-    # if location loop through properties to populate geo and address
-    if k == 'location':
-      location_dict = individual_event[k]
-      for loc_k in individual_event[k]:
-        if loc_k == 'geo':
-          geo_dict = location_dict[loc_k]
-          for geo_k in geo_dict:
-            if geo_k in key_list:
-              event_data[geo_k] = geo_dict[geo_k]
-
+    event_data['geo'] = {}
+    # Prevent key errors
+    if 'location' in individual_event and 'geo' in individual_event['location']:
+      event_data['geo']['lat'] = individual_event['location']['geo']['latitude']
+      event_data['geo']['lon'] = individual_event['location']['geo']['longitude']
   event_data['ingested_by'] = 'https://github.com/DataKind-DC/capital-nature-ingest/blob/master/casey_trees.py'
 
   # check each url to determine if event is duplicate
