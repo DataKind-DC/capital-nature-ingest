@@ -1,5 +1,8 @@
 import requests
 import json
+from collections import abc
+from dateutil.tz import tzoffset
+from datetime import datetime
 
 def get_botanical_garden_events(start_date, end_date):
     '''
@@ -21,7 +24,53 @@ def get_botanical_garden_events(start_date, end_date):
     
     return data
 
-data = get_botanical_garden_events('2018-01-01','2018-12-31')
+
+
+def recursive_items(dictionary):
+    '''
+    Recursive function to get all key:value pairs in a nested dictionary of unknown depth
+    '''
+    
+    for key, value in dictionary.items():
+        if type(value) is dict:
+            yield from recursive_items(value)
+        else:
+            yield (key, value)
+
+
+def filter_data(data):
+    '''
+    Iterate through all key:value pairs in the data array, returning those that match our schema
+    '''
+    
+    keys = ['longitude', 'latitude', 'dateStart', 'description', 'images', 
+            'id', 'dateEnd', 'isRegResRequired', 'infoURL',
+            'title','regResInfo']
+    key_map = {'title':'name',
+               'dateStart':'startDate',
+               'dateEnd':'endDate',
+               'latitude':'geo.lat',
+               'longitude':'geo.lon',
+               'infoURL':'url',
+               'images':'image',
+               'description':'description',
+               'isRegResRequired':'registrationRequired',
+               'regResInfo':'regResInfo',
+               'id':'id'
+                }
+    filtered_data = {k:None for k in key_map.values()}
+    for d in data:
+        for key, _ in recursive_items(d):
+            if key in keys:
+                mapped_key = key_map[key]
+                filtered_data[mapped_key] = d[key] if mapped_key != 'registrationRequired' else int(d[key])
+    return filtered_data
 
 if __name__ == '__main__':
     data = get_botanical_garden_events('2018-01-01','2018-12-31')
+    filtered_data = filter_data(data)
+        
+
+    
+
+    
