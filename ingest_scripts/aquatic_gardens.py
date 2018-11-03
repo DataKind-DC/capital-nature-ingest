@@ -58,17 +58,21 @@ def filter_data(data):
                'regResInfo':'regResInfo',
                'id':'id'
                 }
-    filtered_data = {k:None for k in key_map.values()}
+    filtered_data = []
     for d in data:
+        filtered = {k:None for k in key_map.values()}
         for key, _ in recursive_items(d):
             if key in keys:
                 mapped_key = key_map[key]
-                filtered_data[mapped_key] = d[key] if mapped_key != 'registrationRequired' else int(d[key])
+                filtered[mapped_key] = d[key] if mapped_key != 'registrationRequired' else int(d[key])
+        filtered_data.append(filtered)
+    
     return filtered_data
 
 if __name__ == '__main__':
     data = get_botanical_garden_events('2018-01-01','2018-12-31')
     filtered_data = filter_data(data)
+    print(len(filtered_data))
         
 
     
