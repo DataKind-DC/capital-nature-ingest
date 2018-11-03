@@ -1,4 +1,4 @@
-import beautiful_soup
+import beautifulsoup
 import requests
 
 elasticsearch_domain = XXX
