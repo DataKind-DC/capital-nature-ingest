@@ -4,7 +4,7 @@ import os
 import requests
 
 elasticsearch_domain = os.environ['ELASTICSEARCH_DOMAIN']
-
+date_param = '2018-11'
 event = {
   "eventType": "Volunteer",
   "description": "Join us in planting 80 trees on Heritage Island.",
@@ -25,9 +25,10 @@ event = {
   "url": "https://caseytrees.org/event/volunteer-heritage-island-community-tree-planting/",
   "image": "https://caseytrees.org/wp-content/uploads/2018/08/387e7949d4f5d75504bfae95a9019b18.jpg"  
 }
+event_id = filter(None, event['url'].split('/'))[-1]
 
-r = requests.post(
-  "{0}/capital_nature/event/1".format(elasticsearch_domain),
+r = requests.put(
+  "{0}/capital_nature/event/{1}".format(elasticsearch_domain, event_id),
   data=json.dumps(event),
   headers = {'content-type': 'application/json'})
 
