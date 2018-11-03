@@ -2,34 +2,77 @@ import bs4
 import json
 import os
 import requests
+import extruct
+import pprint
+from w3lib.html import get_base_url
 
+# establish elastic search
 elasticsearch_domain = os.environ['ELASTICSEARCH_DOMAIN']
-date_param = '2018-11'
-event = {
-  "eventType": "Volunteer",
-  "description": "Join us in planting 80 trees on Heritage Island.",
-  "venue": "Heritage Island",
-  "address": {
-    "streetAddress": "575 Oklahoma Ave NE",
-    "addressLocality": "Washington",
-    "addressRegion": "DC",
-    "postalCode": "20002",
-    "addressCountry": "US"
-  },  
-  "geo": {
-    "lat": 38.8959751,
-    "lon": -76.9709448
-  },
-  "startDate": "2018-10-06T09:00:00-04:00",
-  "endDate": "2018-10-06T12:00:00-04:00",
-  "url": "https://caseytrees.org/event/volunteer-heritage-island-community-tree-planting/",
-  "image": "https://caseytrees.org/wp-content/uploads/2018/08/387e7949d4f5d75504bfae95a9019b18.jpg"  
-}
-event_id = filter(None, event['url'].split('/'))[-1]
 
-r = requests.put(
-  "{0}/capital_nature/event/{1}".format(elasticsearch_domain, event_id),
-  data=json.dumps(event),
-  headers = {'content-type': 'application/json'})
+# setup pretty printer
+pp = pprint.PrettyPrinter(indent=2)
 
-print(r.status_code)
+# create request to get data from Casey Trees calendar
+r = requests.get('https://caseytrees.org/events/month/')
+base_url = get_base_url(r.text, r.url)
+data = extruct.extract(r.text, base_url = base_url, syntaxes=['json-ld'], uniform=True)
+
+# get json-ld data for Casey Trees
+event_json = []
+for jsonLD in data['json-ld']:
+    if jsonLD['@type'] == 'Event':
+        event_json.append(jsonLD)
+
+
+for individual_event in event_json:
+  # establish list of properties in dict
+  key_list = [
+    'name',
+    'startDate',
+    'endDate',
+    'geo',
+    'url',
+    'image',
+    'description',
+    'registrationRequired',
+    'registrationByDate',
+    'registrationURL',
+    'fee',
+    'location',
+    'organization',
+    'offers',
+    'physicalRequirements',
+    'activityCategory'
+  ]
+  
+  event_data = {k:None for k in key_list}
+
+  for k in individual_event:
+    # if property from keylist exists within the event_json object, set property
+    if k in key_list:
+      event_data[k] = individual_event[k]
+
+    # if location loop through properties to populate geo and address
+    if k == 'location':
+      location_dict = individual_event[k]
+      for loc_k in individual_event[k]:
+        if loc_k == 'geo':
+          geo_dict = location_dict[loc_k]
+          for geo_k in geo_dict:
+            if geo_k in key_list:
+              event_data[geo_k] = geo_dict[geo_k]
+
+  event_data['ingested_by'] = 'https://github.com/DataKind-DC/capital-nature-ingest/blob/master/casey_trees.py'
+
+  # check each url to determine if event is duplicate
+  event_id = filter(None, event_data['url'].split('/'))[-1]
+
+  # create the request to submit data to elasticsearch
+  r = requests.put(
+    "{0}/capital_nature/event/{1}".format(elasticsearch_domain, event_id),
+    data=json.dumps(event_data),
+    headers = {'content-type': 'application/json'})
+
+  # print status code
+  # TODO: handle response, provide error messaging if necessary
+  pp.pprint(r.status_code)
