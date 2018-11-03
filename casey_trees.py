@@ -1,7 +1,9 @@
 import bs4
+import json
+import os
 import requests
 
-elasticsearch_domain = XXX
+elasticsearch_domain = os.environ['ELASTICSEARCH_DOMAIN']
 
 event = {
   "eventType": "Volunteer",
@@ -24,5 +26,9 @@ event = {
   "image": "https://caseytrees.org/wp-content/uploads/2018/08/387e7949d4f5d75504bfae95a9019b18.jpg"  
 }
 
-r = requests.post('{0}/capital_nature/events/1'.format(elasticsearch_domain), data=event)
+r = requests.post(
+  "{0}/capital_nature/event/1".format(elasticsearch_domain),
+  data=json.dumps(event),
+  headers = {'content-type': 'application/json'})
 
+print(r.status_code)
