@@ -17,5 +17,5 @@ pip install -r requirements.txt --user
 ```bash
 export ELASTICSEARCH_DOMAIN=XXX
 # At time of this writing this script just posts one event to elasticsearch.
-python casey_trees.py
+python ingest_scripts/casey_trees.py
 ```
