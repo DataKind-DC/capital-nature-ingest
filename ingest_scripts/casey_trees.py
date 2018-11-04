@@ -13,7 +13,9 @@ elasticsearch_domain = os.environ['ELASTICSEARCH_DOMAIN']
 pp = pprint.PrettyPrinter(indent=2)
 
 # create request to get data from Casey Trees calendar
-months = map(lambda m: "2018-{0}".format(m), range(10,13))
+# TODO(aimee): Create 0-padded months
+#months = map(lambda m: "2018-{0}".format(m), range(8,10))
+months = ['2018-07']
 activityCategories = ['Tree Planting', 'Park Inventory', 'Tree Identification']
 
 for month in months:
