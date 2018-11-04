@@ -208,14 +208,14 @@ def fetch_geo_and_location_objs(location, parkFullName):
     return location_obj, geo_obj
 
 
-def put_event(schema):
+def put_event(schema, event_id):
     ELASTICSEARCH_DOMAIN = os.environ['ELASTICSEARCH_DOMAIN']
-    event_id = schema['id']
     json_schema = json.dumps(schema)
     r = requests.put("{0}/capital_nature/event/{1}".format(ELASTICSEARCH_DOMAIN, event_id),
                      data=json_schema,
                      headers={'content-type':'application/json'})
-    r.raise_for_status()
+    
+    # TODO: handle errors
 
 
 def main(write_json = False):
@@ -233,9 +233,10 @@ def main(write_json = False):
     park_events = get_nps_events()
     filtered_data = filter_data(park_events)
     for i, event_data in enumerate(filtered_data):
+        event_id = event_data['id']
         schema = transform_event_data(event_data)
         filtered_data[i] = schema
-        put_event(schema)
+        put_event(schema, event_id)
 
     if write_json:
         now = datetime.now()
@@ -246,9 +247,8 @@ def main(write_json = False):
     return filtered_data
 
 
-
 if __name__ == '__main__':
-    filtered_data = main(write_json = False)
+    filtered_data = main()
 
     
 
