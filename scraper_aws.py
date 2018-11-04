@@ -107,16 +107,16 @@ def process_events(event_url):
 
 def write_to_elasticsearch(eventList):
     success_counter = 0
-    # TODO: use OS env variable for this instead of hard-coding it
-    elasticsearch_domain = 'https://search-capital-nature-beta-qx6lvr45s4sk4tmm67w6tfvph4.us-east-1.es.amazonaws.com'
-    # TODO: is it better to bundle the writes, or do one-by-one liks this?
+    # set domain for elasticsearch operations
+    elasticsearch_domain = os.environ['ELASTICSEARCH_DOMAIN']
+    # TODO: is it better to bundle the writes, or do one-by-one like this?
     for event in eventList:
         event_id = event['url'].split('/')[-1]
         r = requests.put(
           "{0}/capital_nature/event/{1}".format(elasticsearch_domain, event_id),
           data=json.dumps(event),
           headers = {'content-type': 'application/json'})
-        # TODO: create more robust status checking and reporting - this is set up for one-by-one writing, and checking for success count of 1
+        # TODO: create more robust status checking and reporting - this is set up for one-by-one writing
         #       also - if there is an error it prints to screen; should write to error log
         result = r.json()
         if r.status_code == 200 or r.status_code == 201:
@@ -127,6 +127,8 @@ def write_to_elasticsearch(eventList):
             print(result)
             print(r.status_code)
     return success_counter
+
+
 # ------------------------------------
 pp = pprint.PrettyPrinter(indent=2)
 
