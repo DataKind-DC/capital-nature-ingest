@@ -14,8 +14,8 @@ pp = pprint.PrettyPrinter(indent=2)
 
 # create request to get data from Casey Trees calendar
 # TODO(aimee): Create 0-padded months
-#months = map(lambda m: "2018-{0}".format(m), range(8,10))
-months = ['2018-07']
+months = map(lambda m: "2018-{0}".format(m), range(1,12))
+#months = ['2018-07']
 activityCategories = ['Tree Planting', 'Park Inventory', 'Tree Identification']
 
 for month in months:
@@ -67,7 +67,7 @@ for month in months:
     for cat in activityCategories:
       if cat in individual_event['name']: event_data['activityCategory'] = cat 
 
-    event_data['ingested_by'] = 'https://github.com/DataKind-DC/capital-nature-ingest/blob/master/casey_trees.py'
+    event_data['ingested_by'] = 'https://github.com/DataKind-DC/capital-nature-ingest/blob/master/ingest_scripts/casey_trees.py'
 
     # check each url to determine if event is duplicate
     event_id = filter(None, event_data['url'].split('/'))[-1]
