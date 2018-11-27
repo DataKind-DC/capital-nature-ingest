@@ -86,10 +86,14 @@ def get_nps_events(park_codes):
     
     nps_events = []
     for park_code in park_codes:
-        park_events = get_park_events(park_code)
-        if len(park_events) > 1:
-            for park_event in park_events:
-                nps_events.append(park_event)
+        try:
+            park_events = get_park_events(park_code)
+            if len(park_events) > 1:
+                for park_event in park_events:
+                    nps_events.append(park_event)
+        except Exception as e:
+            print(e)
+
                 
     return nps_events
 
@@ -166,7 +170,7 @@ def shcematize_nps_event(nps_event, park_codes_geo_map):
     url = nps_event['infoURL'] if len(nps_event['infoURL']) > 0 else nps_event['portalName']
     image = nps_event['images']
     description = nps_event['description']
-    registrationRequired = nps_event['isRegResRequired']
+    registrationRequired = True if nps_event['isRegResRequired'] else 0
     registrationByDate = nps_event['regResInfo']
     registrationURL = nps_event['regResURL']
     fee = 'free' if nps_event['isFree'] else nps_event['feeInfo']
@@ -174,25 +178,25 @@ def shcematize_nps_event(nps_event, park_codes_geo_map):
     organization = {'name':nps_event['organizationName'],
                     'description':None,
                     'url':None,
-                    'telephone':nps_event['contactTelephoneNumber'],
+                    #'telephone':nps_event['contactTelephoneNumber'],
                     'email':nps_event['contactEmailAddress']}
     activityCategories = nps_event['tags']
     eventTypes = nps_event['types']
     ingested_by = 'https://github.com/DataKind-DC/capital-nature-ingest/tree/master/ingest_scripts/nps.py'
     
-    schematized_nps_event = {'name':name,
-                              'startDate':startDate,
-                              'endDate':endDate,
-                              'geo':geo,
-                              'url':url,
-                              'image':image,
-                              'description':description,
-                              'registrationRequired':registrationRequired,
-                              'registrationByDate':registrationByDate,
-                              'registrationURL':registrationURL,
-                              'fee':fee,
-                              'location':location,
-                              'organization':organization,
+    schematized_nps_event = { 'name': name,
+                              'startDate': startDate,
+                              'endDate': endDate,
+                              'geo': geo,
+                              'url': url,
+                              'image': image,
+                              'description': description,
+                              'registrationRequired': registrationRequired,
+                              'registrationByDate': registrationByDate,
+                              'registrationURL': registrationURL,
+                              'fee': fee,
+                              'location': location,
+                              'organizationDetails': organization,
                               'offers':None,
                               'physicalRequirements':None,
                               'activityCategories':activityCategories,
@@ -228,6 +232,7 @@ def put_event(schema, event_id):
         r = requests.put("{0}/capital_nature/event/{1}".format(ELASTICSEARCH_DOMAIN, event_id),
                         data=json_schema,
                         headers={'content-type':'application/json'})
+        print(r.status_code)
     except Exception as e:
         #TODO: log errors
         print(e)
