@@ -6,17 +6,16 @@ import string
 import MySQLdb
 
 
-USERNAME = os.environ.get("CAPNAT_DB_USER")
-HOST = os.environ.get("CAPNAT_DB_HOST")
-PORT = int(os.environ.get("CAPNAT_DB_PORT"))
-PASSWORD = os.environ.get("CAPNAT_DB_PASSWORD")
-DATABASE = os.environ.get("CAPNAT_DB_DBNAME")
-
-
 class DatabaseLoader:
 
     def __init__(self):
-        self.db = MySQLdb.connect(host=HOST, port=PORT, user=USERNAME, passwd=PASSWORD, db=DATABASE)
+        self.db = MySQLdb.connect(
+            host=os.environ.get("CAPNAT_DB_HOST"),
+            port=int(os.environ.get("CAPNAT_DB_PORT")),
+            user=os.environ.get("CAPNAT_DB_USER"),
+            passwd=os.environ.get("CAPNAT_DB_PASSWORD"),
+            db=os.environ.get("CAPNAT_DB_DBNAME")
+        )
         self.cursor = self.db.cursor()
         self.user_id = None
         self.setup_database()
