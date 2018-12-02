@@ -1,5 +1,5 @@
 export ELASTICSEARCH_DOMAIN=XXX
-curl -XDELETE ${ELASTICSEARCH_DOMAIN}/capital_nature
+#curl -XDELETE ${ELASTICSEARCH_DOMAIN}/capital_nature
 
 curl -XPUT ${ELASTICSEARCH_DOMAIN}/capital_nature \
 -d '{
