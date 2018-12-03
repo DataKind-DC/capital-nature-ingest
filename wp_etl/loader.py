@@ -2,6 +2,7 @@ import datetime
 import os
 import random
 import string
+import time
 
 import MySQLdb
 
@@ -22,25 +23,18 @@ class DatabaseLoader:
 
     def close(self):
         self.cursor.close()
+        self.db.commit()
 
     def setup_database(self):
         # 1. Create table for scraped event metadata
-        self.cursor.execute("SHOW tables")
-        existing_tables = self.cursor.fetchall()
-        is_table_present = False
-        for t in existing_tables:
-            if t[0] == 'wp_capnat_eventmeta':
-                is_table_present = True
-        if is_table_present == False:
-            print("Creating database table to hold event metadata")
-            self.cursor.execute("""
-                CREATE TABLE wp_capnat_eventmeta (
-                    post_id BIGINT(20) PRIMARY KEY,
-                    ingester_id VARCHAR(512) NOT NULL,
-                    ingester_source_url VARCHAR(512) NOT NULL,
-                    ingesting_script VARCHAR(512) NOT NULL
-                );
-            """)
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS wp_capnat_eventmeta (
+                post_id BIGINT(20) PRIMARY KEY,
+                ingester_id VARCHAR(512) NOT NULL,
+                ingester_source_url VARCHAR(512) NOT NULL,
+                ingesting_script VARCHAR(512) NOT NULL
+            );
+        """)
 
         # 2. Create a user to associate with uploaded events, and get their Wordpress user ID
         self.cursor.execute("""
@@ -50,7 +44,7 @@ class DatabaseLoader:
         if (len(existing_user)) == 0:
             print("Events user not found... creating new user")
             password = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
-            now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            now = self.get_now_timestamp()
             self.cursor.execute(f"""
                 INSERT INTO wp_users (
                     user_login, 
@@ -76,10 +70,79 @@ class DatabaseLoader:
             """)
         elif (len(existing_user)) > 1:
             raise ValueError("More than one user exists with the username Capital Nature events")
-        self.db.commit()
+        # self.db.commit()
 
         self.cursor.execute("SELECT ID FROM wp_users WHERE user_login='Capital Nature events'")
         self.user_id = self.cursor.fetchone()[0]
+
+    def load_events(self, event_data):
+        for e in event_data['events']:
+            # TODO: Check if exists in event metadata table, and skip if so.
+            print('processing event:', e['id'])
+            now = self.get_now_timestamp()
+            self.cursor.execute("""
+                INSERT INTO wp_posts
+                    (post_author, post_date, post_content, post_title, post_status, post_type)
+                VALUES 
+                    (?,           ?,         ?,            ?,         'pending',   'ai1ec_event')
+            """, (self.user_id, now, e['description'], e['title']))
+            post_id = self.cursor.lastrowid
+            values = self.generate_ai1ec_fields(e, post_id)
+            self.cursor.execute("""
+                INSERT INTO wp_ai1ec_events
+                    (post_id, start, end, timezone_name, allday, instant_event, venue, country, address, city, province,
+                     postal_code, show_map, contact_name, contact_phone, contact_email, contact_url, cost, ticket_url,
+                     show_coordinates, longitude, latitude)
+                VALUES
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, values)
+        # self.cursor.close()
+        self.db.commit()
+
+    def get_now_timestamp(self):
+        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def parse_date(self, stamp):
+        return datetime.datetime.strptime(stamp, '%Y-%m-%d')
+
+    def parse_time(self, stamp):
+        return datetime.datetime.strptime(stamp, '%H:%M:%S')
+
+    def generate_ai1ec_fields(self, event, post_id):
+        values = [post_id]
+        start_date = self.parse_date(event['timing']['start_date'])
+        start_time = self.parse_time(event['timing']['start_time'])
+        values.append(datetime.datetime(
+            start_date.year, start_date.month, start_date.day,
+            start_time.hour, start_time.minute).timestamp())
+        end_date = self.parse_date(event['timing']['end_date'])
+        end_time = self.parse_time(event['timing']['end_time'])
+        values.append(datetime.datetime(
+            end_date.year, end_date.month, end_date.day,
+            end_time.hour, end_time.minute).timestamp())
+        values.append('America/New_York')
+        if event['timing']['all_day'] == True:
+            values.append(1)
+        else:
+            values.append(0)
+        values.append(0) # 'instant event'
+        values.append(event['location']['venue'])
+        values.append('United States')
+        values.append(event['location']['address1']+', '+event['location']['address2'])
+        values.append(event['location']['city'])
+        values.append(event['location']['state'])
+        values.append(event['location']['zipcode'])
+        values.append(1) # show map
+        values.append(event['organizer']['organization_name'])
+        values.append(event['organizer']['phone_number'])
+        values.append(event['organizer']['email'])
+        values.append(event['event_url'])
+        values.append(event['ticketing']['cost'])
+        values.append(event['ticketing']['ticketing_url'])
+        values.append(1) #show coordinates
+        values.append(event['location']['lat'])
+        values.append(event['location']['lon'])
+        return values
 
 
 if __name__ == "__main__":

@@ -27,7 +27,8 @@ else:
 
 class DatabaseLoaderTest(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         self.test_data = {
             'events': [
                 {
@@ -35,6 +36,7 @@ class DatabaseLoaderTest(unittest.TestCase):
                     'title': 'Some event',
                     'description': 'A really great event, yo.',
                     'image': 'https://caseytrees.org/wp-content/uploads/2018/08/9914c96912bb9d802b693cfb3402753c.jpg',
+                    'event_url': 'http://www.someevent.com',
                     'physical_requirements': 'None',
                     'organizer': {
                         'organization_name': 'NPS',
@@ -56,9 +58,9 @@ class DatabaseLoaderTest(unittest.TestCase):
                         'address2': 'Rm 101',
                         'city': 'Washington',
                         'state': 'DC',
-                        'postal_code': '20050',
+                        'zipcode': '20050',
                         'lat': 38.897663,
-                        'long': -77.036574,
+                        'lon': -77.036574,
                         'location_description': 'A really swell kind of place',
                         'location_url': 'http://swellplace.com',
                         'location_phone': '202-765-4321'
@@ -84,3 +86,33 @@ class DatabaseLoaderTest(unittest.TestCase):
 
     def test_db_connects_and_initializes(self):
         self.assertNotEqual(self.dbl.user_id, None)
+
+    # @unittest.skip
+    def test_can_create_post_and_event_rows_in_database(self):
+        self.dbl.cursor.execute("SELECT COUNT(*) FROM wp_posts")
+        start_posts = self.dbl.cursor.fetchone()[0]
+        self.dbl.cursor.execute("SELECT COUNT(*) FROM wp_ai1ec_events")
+        start_events = self.dbl.cursor.fetchone()[0]
+
+        self.dbl.load_events(self.test_data)
+        new_event_count = len(self.test_data['events'])
+
+        self.dbl.cursor.execute("SELECT COUNT(*) FROM wp_posts")
+        end_posts = self.dbl.cursor.fetchone()[0]
+        self.assertEqual(end_posts, start_posts + new_event_count)
+        self.dbl.cursor.execute("SELECT COUNT(*) FROM wp_ai1ec_events")
+        end_events = self.dbl.cursor.fetchone()[0]
+        self.assertEqual(end_events, start_events + new_event_count)
+
+    def test_date_parser_correct(self):
+        stamp = self.dbl.parse_date('2019-06-01')
+        self.assertEqual(stamp.year, 2019)
+        self.assertEqual(stamp.month, 6)
+        self.assertEqual(stamp.day, 1)
+
+    def test_date_parser_fails_on_datetime_input(self):
+        self.assertRaises(ValueError, self.dbl.parse_date, ('2019-06-01 14:43:00'))
+
+    @classmethod
+    def tearDownClass(self):
+        self.dbl.close()

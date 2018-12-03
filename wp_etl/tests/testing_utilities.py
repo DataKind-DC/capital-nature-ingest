@@ -93,29 +93,13 @@ class SqliteDatabaseLoader(loader.DatabaseLoader):
         """)
         # 2. Create table for scraped event metadata
         self.cursor.execute("""
-            SELECT 
-                name
-            FROM 
-                sqlite_master 
-            WHERE 
-                type ='table' AND 
-                name NOT LIKE 'sqlite_%';
+            CREATE TABLE IF NOT EXISTS wp_capnat_eventmeta (
+                post_id INTEGER PRIMARY KEY,
+                ingester_id TEXT NOT NULL,
+                ingester_source_url TEXT NOT NULL,
+                ingesting_script TEXT NOT NULL
+            );
         """)
-        existing_tables = self.cursor.fetchall()
-        is_table_present = False
-        for t in existing_tables:
-            if t[0] == 'wp_capnat_eventmeta':
-                is_table_present = True
-        if is_table_present == False:
-            print("Creating database table to hold event metadata")
-            self.cursor.execute("""
-                CREATE TABLE wp_capnat_eventmeta (
-                    post_id INTEGER PRIMARY KEY,
-                    ingester_id TEXT NOT NULL,
-                    ingester_source_url TEXT NOT NULL,
-                    ingesting_script TEXT NOT NULL
-                );
-            """)
 
         # 3. Create a user to associate with uploaded events, and get their Wordpress user ID
         self.cursor.execute("""
@@ -125,7 +109,7 @@ class SqliteDatabaseLoader(loader.DatabaseLoader):
         if (len(existing_user)) == 0:
             print("Events user not found... creating new user")
             password = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
-            now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            now = self.get_now_timestamp()
             self.cursor.execute(f"""
                 INSERT INTO wp_users (
                     user_login, 
@@ -151,7 +135,7 @@ class SqliteDatabaseLoader(loader.DatabaseLoader):
             """)
         elif (len(existing_user)) > 1:
             raise ValueError("More than one user exists with the username Capital Nature events")
-        self.db.commit()
+        # self.db.commit()
 
         self.cursor.execute("SELECT ID FROM wp_users WHERE user_login='Capital Nature events'")
         self.user_id = self.cursor.fetchone()[0]
