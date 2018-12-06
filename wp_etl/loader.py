@@ -110,38 +110,38 @@ class DatabaseLoader:
 
     def generate_ai1ec_fields(self, event, post_id):
         values = [post_id]
-        start_date = self.parse_date(event['timing']['start_date'])
-        start_time = self.parse_time(event['timing']['start_time'])
+        start_date = self.parse_date(event['start_date'])
+        start_time = self.parse_time(event['start_time'])
         values.append(datetime.datetime(
             start_date.year, start_date.month, start_date.day,
             start_time.hour, start_time.minute).timestamp())
-        end_date = self.parse_date(event['timing']['end_date'])
-        end_time = self.parse_time(event['timing']['end_time'])
+        end_date = self.parse_date(event['end_date'])
+        end_time = self.parse_time(event['end_time'])
         values.append(datetime.datetime(
             end_date.year, end_date.month, end_date.day,
             end_time.hour, end_time.minute).timestamp())
         values.append('America/New_York')
-        if event['timing']['all_day'] == True:
+        if event['all_day'] == True:
             values.append(1)
         else:
             values.append(0)
         values.append(0) # 'instant event'
-        values.append(event['location']['venue'])
+        values.append(event['location_venue'])
         values.append('United States')
-        values.append(event['location']['address1']+', '+event['location']['address2'])
-        values.append(event['location']['city'])
-        values.append(event['location']['state'])
-        values.append(event['location']['zipcode'])
+        values.append(event['location_address1']) #+', '+event['location']['address2'])
+        values.append(event['location_city'])
+        values.append(event['location_state'])
+        values.append(event['location_zipcode'])
         values.append(1) # show map
-        values.append(event['organizer']['organization_name'])
-        values.append(event['organizer']['phone_number'])
-        values.append(event['organizer']['email'])
+        values.append(event['organization_name'])
+        values.append(event['organization_phone_number'])
+        values.append(event['organization_email'])
         values.append(event['event_url'])
-        values.append(event['ticketing']['cost'])
-        values.append(event['ticketing']['ticketing_url'])
+        values.append(event['ticket_cost'])
+        values.append(event['ticketing_url'])
         values.append(1) #show coordinates
-        values.append(event['location']['lat'])
-        values.append(event['location']['lon'])
+        values.append(event['location_lat'])
+        values.append(event['location_lon'])
         return values
 
 
