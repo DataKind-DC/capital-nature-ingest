@@ -99,32 +99,28 @@ class DatabaseLoader:
         # self.cursor.close()
         self.db.commit()
 
-    def get_now_timestamp(self):
-        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    def parse_date(self, stamp):
-        return datetime.datetime.strptime(stamp, '%Y-%m-%d')
-
-    def parse_time(self, stamp):
-        return datetime.datetime.strptime(stamp, '%H:%M:%S')
+    def posix_date(self, d, t):
+        if t == None:
+            t = datetime.time(0, 0, 0)
+        return datetime.datetime.combine(d, t).timestamp()
 
     def generate_ai1ec_fields(self, event, post_id):
         values = [post_id]
-        start_date = self.parse_date(event['start_date'])
-        start_time = self.parse_time(event['start_time'])
-        values.append(datetime.datetime(
-            start_date.year, start_date.month, start_date.day,
-            start_time.hour, start_time.minute).timestamp())
-        end_date = self.parse_date(event['end_date'])
-        end_time = self.parse_time(event['end_time'])
-        values.append(datetime.datetime(
-            end_date.year, end_date.month, end_date.day,
-            end_time.hour, end_time.minute).timestamp())
+
+        values.append(self.posix_date(event['start_date'], event['start_time']))
+
+        if event['end_date'] != None: # estimate end time based on start time
+            if event['start_time'] == None: # if event "starts" at midnight, then it ends the following midnight
+                values.append(values[-1] + 86400)
+            else: # otherwise estimate dureation at 1 hour
+                values.append(values[-1] + 3600)
+
         values.append('America/New_York')
-        if event['all_day'] == True:
+        if event['all_day'] == True: # TODO: combine with start and end times to determine all_day better. What does all_day even mean?
             values.append(1)
         else:
             values.append(0)
+
         values.append(0) # 'instant event'
         values.append(event['location_venue'])
         values.append('United States')
