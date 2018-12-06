@@ -6,4 +6,14 @@ def parse_datetime(s):
             return datetime.datetime.strptime(s, fmt)
         except ValueError:
             pass
-    raise ValueError("no valid datetime found for " + s)
+    raise ValueError("no valid datetime found")
+
+def get_date(s):
+    dt = parse_datetime(s)
+    return dt.date()
+
+def get_time(s):
+    dt = parse_datetime(s)
+    if dt.hour == 0:
+        return None
+    return dt.time()
