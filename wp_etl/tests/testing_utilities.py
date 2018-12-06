@@ -1,4 +1,3 @@
-import datetime
 import os
 import random
 import sqlite3
@@ -148,7 +147,6 @@ class SqliteDatabaseLoader(loader.DatabaseLoader):
             """)
         elif (len(existing_user)) > 1:
             raise ValueError("More than one user exists with the username Capital Nature events")
-        # self.db.commit()
 
         self.cursor.execute("SELECT ID FROM wp_users WHERE user_login='Capital Nature events'")
         self.user_id = self.cursor.fetchone()[0]

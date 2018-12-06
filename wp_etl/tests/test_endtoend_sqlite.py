@@ -1,5 +1,4 @@
 import unittest
-import sqlite3
 
 from wp_etl.csv_parser import CSVParser
 from wp_etl.tests.testing_utilities import SqliteDatabaseLoader

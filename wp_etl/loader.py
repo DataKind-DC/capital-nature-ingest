@@ -2,7 +2,6 @@ import datetime
 import os
 import random
 import string
-import time
 
 import MySQLdb
 
@@ -85,19 +84,18 @@ class DatabaseLoader:
             """)
         elif (len(existing_user)) > 1:
             raise ValueError("More than one user exists with the username Capital Nature events")
-        # self.db.commit()
 
         self.cursor.execute("SELECT ID FROM wp_users WHERE user_login='Capital Nature events'")
         self.user_id = self.cursor.fetchone()[0]
 
     def load_events(self, event_data):
         for e in event_data['events']:
-            print('processing event:', e['id'])
+            print('Processing event:', e['id'])
             self.cursor.execute(f"SELECT count(*) FROM wp_capnat_eventmeta WHERE ingester_id = {self.param_symbol}", (e['id'], ))
             if self.cursor.fetchone()[0] > 0:
                 print(" - event with that ID already exists in database")
                 continue
-            print(" - adding to database")
+            print(" - adding to database...")
             now = self.get_now_timestamp()
             self.cursor.execute(f"""
                 INSERT INTO wp_posts
@@ -167,7 +165,7 @@ class DatabaseLoader:
         values.append(0) # 'instant event'
         values.append(event['location_venue'])
         values.append('United States')
-        values.append(event['location_address1']) #+', '+event['location']['address2'])
+        values.append(event['location_address1'])
         values.append(event['location_city'])
         values.append(event['location_state'])
         values.append(event['location_zipcode'])
@@ -186,7 +184,3 @@ class DatabaseLoader:
         values.append(event['location_lat'])
         return values
 
-
-if __name__ == "__main__":
-    dl = DatabaseLoader()
-    dl.close()

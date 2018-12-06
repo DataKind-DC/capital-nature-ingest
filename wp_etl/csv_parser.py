@@ -64,24 +64,23 @@ class CSVParser:
             for row in reader:
                 self.data.append(row)
         print(f"Loaded {len(self.data)} rows from {f}.")
-        print(len(self.colnames))
-        for c in self.colnames: print(c)
 
     def parse(self):
+        success_count = 0
         for i, row in enumerate(self.data):
             print("Parsing event " + str(i+1))
             try:
-                self.parsed_events['events'].append( self.__get_vals(row) )
+                self.parsed_events['events'].append(self.__get_vals(row))
+                success_count += 1
             except Exception as E:
                 print(E)
                 print("...skipping event")
+        print(f"Successfully parsed {success_count} rows")
 
 
     def __get_vals(self, row):
         vals = {}
         for k in DATA_TRANSFORMS:
-            # if DATA_TRANSFORMS[k]['source_col'] != None:
-            #     continue
             scraped_val = ''
             try:
                 if isinstance(DATA_TRANSFORMS[k]['source_col'], str):
@@ -108,10 +107,3 @@ class CSVParser:
 
     def __get_col_idx(self, colname):
         return self.colnames.index(colname)
-
-if __name__ == "__main__":
-    cp = CSVParser()
-    cp.open("result.csv")
-    cp.parse()
-    print(cp.parsed_events)
-    print(len(cp.parsed_events))
