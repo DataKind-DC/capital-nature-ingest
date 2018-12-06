@@ -92,7 +92,18 @@ class SqliteDatabaseLoader(loader.DatabaseLoader):
                 force_regenerate INTEGER DEFAULT 0
             )
         """)
-        # 2. Create table for scraped event metadata
+
+        # 2. Create table of ai1ec event instances
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS wp_ai1ec_event_instances (
+                id INTEGER PRIMARY KEY,
+                post_id INTEGER NOT NULL,
+                start INTEGER NOT NULL,
+                end INTEGER NOT NULL
+            );
+        """)
+
+        # 3. Create table for scraped event metadata
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS wp_capnat_eventmeta (
                 post_id INTEGER PRIMARY KEY,
@@ -102,7 +113,7 @@ class SqliteDatabaseLoader(loader.DatabaseLoader):
             );
         """)
 
-        # 3. Create a user to associate with uploaded events, and get their Wordpress user ID
+        # 4. Create a user to associate with uploaded events, and get their Wordpress user ID
         self.cursor.execute("""
             SELECT * FROM wp_users WHERE user_login='Capital Nature events'
         """)
