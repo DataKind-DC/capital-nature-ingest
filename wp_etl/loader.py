@@ -9,17 +9,32 @@ import MySQLdb
 
 class DatabaseLoader:
 
-    def __init__(self):
+    def __init__(self, host=None, port=None, user=None, passwd=None, db=None):
+        if host == None:
+            host = os.environ.get("CAPNAT_DB_HOST")
+        if port == None:
+            port = int(os.environ.get("CAPNAT_DB_PORT"))
+        if user == None:
+            user = os.environ.get("CAPNAT_DB_USER")
+        if passwd == None:
+            passwd = os.environ.get("CAPNAT_DB_PASSWORD")
+        if db == None:
+            db = os.environ.get("CAPNAT_DB_DBNAME")
         self.db = MySQLdb.connect(
-            host=os.environ.get("CAPNAT_DB_HOST"),
-            port=int(os.environ.get("CAPNAT_DB_PORT")),
-            user=os.environ.get("CAPNAT_DB_USER"),
-            passwd=os.environ.get("CAPNAT_DB_PASSWORD"),
-            db=os.environ.get("CAPNAT_DB_DBNAME")
+            host=host,
+            port=port,
+            user=user,
+            passwd=passwd,
+            db=db
         )
+        self.db.set_character_set('utf8')
         self.cursor = self.db.cursor()
+        self.cursor.execute('SET NAMES utf8;')
+        self.cursor.execute('SET CHARACTER SET utf8;')
+        self.cursor.execute('SET character_set_connection=utf8;')
         self.user_id = None
         self.setup_database()
+        self.param_symbol = '%s'
 
     def close(self):
         self.cursor.close()
@@ -78,44 +93,54 @@ class DatabaseLoader:
     def load_events(self, event_data):
         for e in event_data['events']:
             print('processing event:', e['id'])
-            self.cursor.execute("SELECT count(*) FROM wp_capnat_eventmeta WHERE ingester_id = ?", (e['id'], ))
+            self.cursor.execute(f"SELECT count(*) FROM wp_capnat_eventmeta WHERE ingester_id = {self.param_symbol}", (e['id'], ))
             if self.cursor.fetchone()[0] > 0:
                 print(" - event with that ID already exists in database")
                 continue
             print(" - adding to database")
             now = self.get_now_timestamp()
-            self.cursor.execute("""
+            self.cursor.execute(f"""
                 INSERT INTO wp_posts
-                    (post_author, post_date, post_content, post_title, post_status, post_type)
+                    (post_author, post_date, post_date_gmt, post_content, post_title, post_excerpt, post_status, to_ping, pinged, post_modified, 
+                     post_modified_gmt, post_content_filtered, post_type)
                 VALUES 
-                    (?,           ?,         ?,            ?,         'pending',   'ai1ec_event')
-            """, (self.user_id, now, e['description'], e['title']))
+                    ({self.param_symbol}, {self.param_symbol}, {self.param_symbol}, {self.param_symbol}, 
+                     {self.param_symbol}, '', 'pending', '', '', {self.param_symbol}, {self.param_symbol}, '', 'ai1ec_event')
+            """, (self.user_id, now, now, e['description'], e['title'], now, now))
             post_id = self.cursor.lastrowid
             print(" post id is", post_id)
             values = self.generate_ai1ec_fields(e, post_id)
-            self.cursor.execute("""
+            self.cursor.execute(f"""
                 INSERT INTO wp_ai1ec_events
                     (post_id, start, end, timezone_name, allday, instant_event, venue, country, address, city, province,
                      postal_code, show_map, contact_name, contact_phone, contact_email, contact_url, cost, ticket_url,
                      show_coordinates, longitude, latitude)
                 VALUES
-                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ({self.param_symbol}, {self.param_symbol}, {self.param_symbol}, {self.param_symbol}, 
+                     {self.param_symbol}, {self.param_symbol}, {self.param_symbol}, {self.param_symbol}, 
+                     {self.param_symbol}, {self.param_symbol}, {self.param_symbol}, {self.param_symbol}, 
+                     {self.param_symbol}, {self.param_symbol}, {self.param_symbol}, {self.param_symbol},
+                     {self.param_symbol}, {self.param_symbol}, {self.param_symbol}, {self.param_symbol}, 
+                     {self.param_symbol}, {self.param_symbol})
             """, values)
 
-            self.cursor.execute("""
+            self.cursor.execute(f"""
                     INSERT INTO wp_ai1ec_event_instances
                         (post_id, start, end)
                     VALUES
-                        (?, ?, ?)
+                        ({self.param_symbol}, {self.param_symbol}, {self.param_symbol})
                 """, values[:3])
-            self.cursor.execute("""
+            self.cursor.execute(f"""
                     INSERT INTO wp_capnat_eventmeta
                         (post_id, ingester_id, ingester_source_url, ingesting_script)
                     VALUES
-                        (?, ?, ?, ?)
+                        ({self.param_symbol}, {self.param_symbol}, {self.param_symbol}, {self.param_symbol})
                 """, (post_id, e["id"], e["ingest_source_url"], e['ingesting_script']))
 
             self.db.commit()
+
+    def get_now_timestamp(self):
+        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def posix_date(self, d, t):
         if t == None:
@@ -155,7 +180,6 @@ class DatabaseLoader:
         values.append(event['ticketing_url'])
         values.append(1) #show coordinates
         values.append(event['location_lat'])
-        values.append(event['location_lon'])
         return values
 
 

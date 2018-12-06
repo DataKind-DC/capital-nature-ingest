@@ -14,6 +14,7 @@ class SqliteDatabaseLoader(loader.DatabaseLoader):
         self.cursor = self.db.cursor()
         self.user_id = None
         self.setup_database()
+        self.param_symbol = '?'
 
     def setup_database(self):
         # 1. Create basic tables
