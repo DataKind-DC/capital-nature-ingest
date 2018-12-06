@@ -1,4 +1,5 @@
 import csv
+import wp_etl.utils as utils
 
 # This dictionary maps from the CSV columns
 # to the MySQL (table, attribute) pairs in Wordpress
@@ -16,11 +17,11 @@ DATA_TRANSFORMS = {
     "organization_email": {"source_col": "_source/organizationDetails/email", "default": None, "required": False},
     "organization_url": {"source_col": "_source/organizationDetails/url", "default": None, "required": False},
     
-    "start_date": {"source_col": "_source/startDate", "default": None, "required": True},
-    "end_date": {"source_col": "_source/endDate", "default": None, "required": False},
+    "start_date": {"source_col": "_source/startDate", "default": None, "required": True, "handler": "get_date"},
+    "end_date": {"source_col": "_source/endDate", "default": None, "required": False, "handler": "get_date"},
     # TODO: parse times from datetimes
-    "start_time": {"source_col": None, "default": None, "required": False},
-    "end_time": {"source_col": None, "default": None, "required": False},
+    "start_time": {"source_col": "_source/startDate", "default": None, "required": False, "handler": "get_time"},
+    "end_time": {"source_col": "_source/endDate", "default": None, "required": False, "handler": "get_time"},
     "all_day": {"source_col": None, "default": None, "required": False},
     
     "location_venue": {"source_col": ["_source/location/name", "_source/venue"], "default": None, "required": False},
@@ -68,7 +69,12 @@ class CSVParser:
 
     def parse(self):
         for i, row in enumerate(self.data):
-            self.parsed_events['events'].append( self.__get_vals(row) )
+            print("Parsing event " + str(i+1))
+            try:
+                self.parsed_events['events'].append( self.__get_vals(row) )
+            except Exception as E:
+                print(E)
+                print("...skipping event")
 
 
     def __get_vals(self, row):
@@ -77,14 +83,25 @@ class CSVParser:
             # if DATA_TRANSFORMS[k]['source_col'] != None:
             #     continue
             scraped_val = ''
-            if isinstance(DATA_TRANSFORMS[k]['source_col'], str):
-                scraped_val = row[self.__get_col_idx(DATA_TRANSFORMS[k]['source_col'])]
-            elif isinstance(DATA_TRANSFORMS[k]['source_col'], list):
-                scraped_vals = [row[self.__get_col_idx(c)] for c in DATA_TRANSFORMS[k]['source_col']]
-                for v in scraped_vals:
-                    scraped_val = v
-                    if v:
-                        break
+            try:
+                if isinstance(DATA_TRANSFORMS[k]['source_col'], str):
+                    scraped_val = row[self.__get_col_idx(DATA_TRANSFORMS[k]['source_col'])]
+                elif isinstance(DATA_TRANSFORMS[k]['source_col'], list):
+                    scraped_vals = [row[self.__get_col_idx(c)] for c in DATA_TRANSFORMS[k]['source_col']]
+                    for v in scraped_vals:
+                        scraped_val = v
+                        if v:
+                            break
+                if "handler" in DATA_TRANSFORMS[k]:
+                    handler = getattr(utils, DATA_TRANSFORMS[k]['handler'])
+                    scraped_val = handler(scraped_val)
+            except Exception as E:
+                scraped_val = ''
+                if DATA_TRANSFORMS[k]['required'] == True:
+                    print("Couldn't parse data for required attribute " + k)
+                    raise E
+                elif DATA_TRANSFORMS[k]['default'] != None:
+                    scraped_val = DATA_TRANSFORMS[k]['default']
             vals[k] = scraped_val
         return vals
 
