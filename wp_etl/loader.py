@@ -29,8 +29,8 @@ class DatabaseLoader:
         # 1. Create table for scraped event metadata
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS wp_capnat_eventmeta (
-                post_id BIGINT(20) PRIMARY KEY,
-                ingester_id VARCHAR(512) NOT NULL,
+                ingester_id VARCHAR(512) PRIMARY KEY,
+                post_id BIGINT(20) NOT NULL,
                 ingester_source_url VARCHAR(512) NOT NULL,
                 ingesting_script VARCHAR(512) NOT NULL
             );
@@ -77,8 +77,12 @@ class DatabaseLoader:
 
     def load_events(self, event_data):
         for e in event_data['events']:
-            # TODO: Check if exists in event metadata table, and skip if so.
             print('processing event:', e['id'])
+            self.cursor.execute("SELECT count(*) FROM wp_capnat_eventmeta WHERE ingester_id = ?", (e['id'], ))
+            if self.cursor.fetchone()[0] > 0:
+                print(" - event with that ID already exists in database")
+                continue
+            print(" - adding to database")
             now = self.get_now_timestamp()
             self.cursor.execute("""
                 INSERT INTO wp_posts
@@ -87,6 +91,7 @@ class DatabaseLoader:
                     (?,           ?,         ?,            ?,         'pending',   'ai1ec_event')
             """, (self.user_id, now, e['description'], e['title']))
             post_id = self.cursor.lastrowid
+            print(" post id is", post_id)
             values = self.generate_ai1ec_fields(e, post_id)
             self.cursor.execute("""
                 INSERT INTO wp_ai1ec_events
@@ -96,8 +101,21 @@ class DatabaseLoader:
                 VALUES
                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, values)
-        # self.cursor.close()
-        self.db.commit()
+
+            self.cursor.execute("""
+                    INSERT INTO wp_ai1ec_event_instances
+                        (post_id, start, end)
+                    VALUES
+                        (?, ?, ?)
+                """, values[:3])
+            self.cursor.execute("""
+                    INSERT INTO wp_capnat_eventmeta
+                        (post_id, ingester_id, ingester_source_url, ingesting_script)
+                    VALUES
+                        (?, ?, ?, ?)
+                """, (post_id, e["id"], e["ingest_source_url"], e['ingesting_script']))
+
+            self.db.commit()
 
     def posix_date(self, d, t):
         if t == None:

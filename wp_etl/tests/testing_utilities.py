@@ -18,7 +18,7 @@ class SqliteDatabaseLoader(loader.DatabaseLoader):
     def setup_database(self):
         # 1. Create basic tables
         self.cursor.execute("""
-                CREATE TABLE wp_users (
+                CREATE TABLE IF NOT EXISTS wp_users (
                     ID INTEGER PRIMARY KEY,
                     user_login TEXT,
                     user_pass TEXT,
@@ -32,7 +32,7 @@ class SqliteDatabaseLoader(loader.DatabaseLoader):
                 );
             """)
         self.cursor.execute("""
-                CREATE TABLE wp_posts (
+                CREATE TABLE IF NOT EXISTS wp_posts (
                     ID INTEGER PRIMARY KEY DEFAULT NULL,
                     post_author INTEGER DEFAULT 0,
                     post_date TEXT DEFAULT '0000-00-00 00:00:00',
@@ -58,7 +58,7 @@ class SqliteDatabaseLoader(loader.DatabaseLoader):
                 )
             """)
         self.cursor.execute("""
-            CREATE TABLE wp_ai1ec_events (
+            CREATE TABLE IF NOT EXISTS wp_ai1ec_events (
                 post_id INTEGER PRIMARY KEY DEFAULT NULL,
                 start INTEGER DEFAULT NULL,
                 end INTEGER DEFAULT NULL,
@@ -106,8 +106,8 @@ class SqliteDatabaseLoader(loader.DatabaseLoader):
         # 3. Create table for scraped event metadata
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS wp_capnat_eventmeta (
-                post_id INTEGER PRIMARY KEY,
-                ingester_id TEXT NOT NULL,
+                ingester_id TEXT PRIMARY KEY,
+                post_id INTEGER NOT NULL,
                 ingester_source_url TEXT NOT NULL,
                 ingesting_script TEXT NOT NULL
             );
