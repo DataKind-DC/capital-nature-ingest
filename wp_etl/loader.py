@@ -179,6 +179,10 @@ class DatabaseLoader:
         values.append(event['ticket_cost'])
         values.append(event['ticketing_url'])
         values.append(1) #show coordinates
+        lon = float(event['location_lon'])
+        if lon > 0:
+            lon = lon * -1 # hack to fix incorrectly signed longitudes in CSV file
+        values.append(str(lon))
         values.append(event['location_lat'])
         return values
 

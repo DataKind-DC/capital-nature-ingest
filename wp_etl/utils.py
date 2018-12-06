@@ -17,3 +17,6 @@ def get_time(s):
     if dt.hour == 0:
         return None
     return dt.time()
+
+def coord_check(s):
+    return float(s)
