@@ -7,8 +7,9 @@ import string
 import wp_etl.loader as loader
 
 class SqliteDatabaseLoader(loader.DatabaseLoader):
-    def __init__(self):
-        os.remove('test.db')
+    def __init__(self, reset_db = True):
+        if reset_db == True and 'test.db' in os.listdir(os.getcwd()):
+            os.remove('test.db')
         self.db = sqlite3.connect('test.db')
         self.cursor = self.db.cursor()
         self.user_id = None
