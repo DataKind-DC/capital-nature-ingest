@@ -38,47 +38,37 @@ class DatabaseLoaderTest(unittest.TestCase):
                     'image': 'https://caseytrees.org/wp-content/uploads/2018/08/9914c96912bb9d802b693cfb3402753c.jpg',
                     'event_url': 'http://www.someevent.com',
                     'physical_requirements': 'None',
-                    'organizer': {
-                        'organization_name': 'NPS',
-                        'contact_person': 'Joe Bloggs',
-                        'phone_number': '202-123-4567',
-                        'email': 'something@something.else'
-                    },
-                    'timing': {
-                        'start_date': '2018-12-05',
-                        'end_date': '2018-12-05',
-                        'start_time': '11:00:00',
-                        'end_time': '13:00:00',
-                        'all_day': False
-                    },
-                    'location': {
-                        'venue': 'Somewhere fancy',
-                        'country': 'USA',
-                        'address1': '1600 Pennsylvania Ave NW',
-                        'address2': 'Rm 101',
-                        'city': 'Washington',
-                        'state': 'DC',
-                        'zipcode': '20050',
-                        'lat': 38.897663,
-                        'lon': -77.036574,
-                        'location_description': 'A really swell kind of place',
-                        'location_url': 'http://swellplace.com',
-                        'location_phone': '202-765-4321'
-                    },
-                    'ticketing': {
-                        'is_required': True,
-                        'is_free': False,
-                        'cost': '$10',
-                        'ticketing_url': 'https://www.ticketmaster.com',
-                        'registration_by_date': '2018-12-05'
-                    },
-                    'metadata': {
-                        'ingesting_script': 'https://github.com/DataKind-DC/capital-nature-ingest/tree/master/ingest_scripts/nps.py',
-                        'ingest_source_url': 'https://www.nps.gov',
-                        'ingest_source_name': 'National Park Service',
-                        'activity_category': 'Park stuff',
-                        'activity_tags': ['ice skating', 'outdoors']
-                    }
+                    'organization_name': 'NPS',
+                    'organization_contact_person': 'Joe Bloggs',
+                    'organization_phone_number': '202-123-4567',
+                    'organization_email': 'something@something.else',
+                    'start_date': '2018-12-05',
+                    'end_date': '2018-12-05',
+                    'start_time': '11:00:00',
+                    'end_time': '13:00:00',
+                    'all_day': False,
+                    'location_venue': 'Somewhere fancy',
+                    'location_country': 'USA',
+                    'location_address1': '1600 Pennsylvania Ave NW',
+                    'location_address2': 'Rm 101',
+                    'location_city': 'Washington',
+                    'location_state': 'DC',
+                    'location_zipcode': '20050',
+                    'location_lat': 38.897663,
+                    'location_lon': -77.036574,
+                    'location_description': 'A really swell kind of place',
+                    'location_url': 'http://swellplace.com',
+                    'location_phone': '202-765-4321',
+                    'is_ticket_required': True,
+                    'is_ticket_free': False,
+                    'ticket_cost': '$10',
+                    'ticketing_url': 'https://www.ticketmaster.com',
+                    'registration_by_date': '2018-12-05',
+                    'ingesting_script': 'https://github.com/DataKind-DC/capital-nature-ingest/tree/master/ingest_scripts/nps.py',
+                    'ingest_source_url': 'https://www.nps.gov',
+                    'ingest_source_name': 'National Park Service',
+                    'activity_category': 'Park stuff',
+                    'activity_tags': ['ice skating', 'outdoors']
                 }
             ]
         }
