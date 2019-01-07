@@ -45,4 +45,4 @@
   python lambda_handler.py
   ```
 
-7. Open a pull request
+7. Open a pull request. To build and test a new lambda package I will run `make lambda` in the directory and upload the resulting zip to AWS Lambda for testing.
