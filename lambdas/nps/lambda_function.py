@@ -248,7 +248,7 @@ def nps_handler(event, context):
     source_name = event['source_name']
     events = main()
     filename = '{0}-results.csv'.format(source_name)
-    fieldnames = events[list(events.keys())[0]]
+    fieldnames = list(events[list(events.keys())[0]][0].keys())
     if not is_local:
         with open('/tmp/{0}'.format(filename), mode = 'w') as f:
             writer = csv.DictWriter(f, fieldnames = fieldnames)
