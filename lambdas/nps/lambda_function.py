@@ -4,6 +4,7 @@ import re
 import json
 import sys
 import csv
+from bs4 import BeautifulSoup
 import boto3
 
 bucket = 'aimeeb-datasets-public'
@@ -137,6 +138,37 @@ def get_park_geo_data(park_codes):
     
     return park_codes_geo_map
 
+def get_specific_event_location(event_id):
+    website = f"https://www.nps.gov/planyourvisit/event-details.htm?id={event_id}"
+    r = requests.get(website)
+    content = r.content
+    soup = BeautifulSoup(content, "html.parser")
+
+    # kill all script and style elements
+    for script in soup(["script", "style"]):
+        script.extract()    # rip it out
+    # get text
+    text = soup.get_text()
+    # break into lines and remove leading and trailing space on each
+    lines = (line.strip() for line in text.splitlines())
+    # break multi-headlines into a line each
+    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+    # drop blank lines
+    text = '\n'.join(chunk for chunk in chunks if chunk)
+
+    #extract the data from the raw text
+    event_data = {}
+    split_text = text.split("\n")
+    specific_event_location = ''
+    for i,line in enumerate(split_text):
+        if "Location:" in line:
+            try:
+                specific_event_location += split_text[i+1]
+            except IndexError:
+                pass
+    
+    return specific_event_location
+
 def shcematize_nps_event(nps_event, park_codes_geo_map):
     '''
     Converts the event data from the NPS API into our application's schema.
@@ -206,7 +238,11 @@ def shcematize_nps_event(nps_event, park_codes_geo_map):
                               'ingested_by':ingested_by}
     '''
     #here's the new schema
-    venueAddress = f"{location['streetAddress']} {location['addressLocality']}, {state} {location['postalCode']}, USA"
+    specific_event_location = get_specific_event_location(event_id)
+    venueName = re.sub(' +', ' ', location['name'] + ", " + specific_event_location)
+    venueAddress = re.sub(' +', 
+                          ' ', 
+                          f"{location['streetAddress']} {location['addressLocality']}, {state} {location['postalCode']}, USA")
     times = nps_event['times']
     #TODO handle multiple start and end times
     schematized_nps_event = [
@@ -216,7 +252,7 @@ def shcematize_nps_event(nps_event, park_codes_geo_map):
                                 "endDate": endDate, 
                                 "startTime": None, 
                                 "latitude": geo['lat'], 
-                                "venueName": location['name'], 
+                                "venueName": venueName, 
                                 "endTime": None, 
                                 "longitude": geo['lon'], 
                                 "venueAddress": venueAddress

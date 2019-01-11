@@ -1,2 +1,2 @@
+beautifulsoup4>=4.6.3
 requests>=2.18.4
-boto3==1.9.76
