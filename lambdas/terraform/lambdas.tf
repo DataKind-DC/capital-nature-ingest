@@ -94,3 +94,11 @@ resource "aws_cloudwatch_log_group" "example" {
   name              = "/aws/lambda/${module.ans_lambda.function_name}"
   retention_in_days = 14
 }
+
+resource "aws_lambda_permission" "allow_cloudwatch" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = "${module.ans_lambda.function_name}"
+  principal     = "events.amazonaws.com"
+  source_arn    = "${aws_cloudwatch_event_rule.ans_scraper-trigger.arn}"
+}
