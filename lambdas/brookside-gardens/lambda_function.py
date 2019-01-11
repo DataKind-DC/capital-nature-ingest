@@ -79,10 +79,10 @@ def handler(event, context):
   return json.dumps(event_output, indent=2)
 
 # For local testing
-event = {
-  'url': 'https://www.montgomeryparks.org/calendar/?park=brookside%20gardens',
-  'source_name': 'brookside-gardens'
-}
-is_local = True
-events_dict = handler(event, {})
-print(events_dict)
+# event = {
+#   'url': 'https://www.montgomeryparks.org/calendar/?park=brookside%20gardens',
+#   'source_name': 'brookside-gardens'
+# }
+# is_local = True
+# events_dict = handler(event, {})
+# print(events_dict)
