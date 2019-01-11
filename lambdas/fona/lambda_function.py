@@ -167,10 +167,10 @@ def handler(event, context):
     return json.dumps(event_output, indent=2)
 
 # For local testing
-if __name__=="__main__":
-    event = {
-        'url': f'https://www.eventbriteapi.com/v3/events/search/?token={EVENTBRITE_TOKEN}&organizer.id={FONA_EVENTBRITE_ORG_ID}&',
-        'source_name': 'fona'
-    }
-    is_local = True
-    print(handler(event, {}))
+# if __name__=="__main__":
+#     event = {
+#         'url': f'https://www.eventbriteapi.com/v3/events/search/?token={EVENTBRITE_TOKEN}&organizer.id={FONA_EVENTBRITE_ORG_ID}&',
+#         'source_name': 'fona'
+#     }
+#     is_local = True
+#     print(handler(event, {}))
