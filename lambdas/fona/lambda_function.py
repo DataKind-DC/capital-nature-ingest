@@ -133,16 +133,19 @@ def handle_fona_eventbrite_api():
         data = fona_ingester.output_data[e]
         start = datetime.datetime.strptime(data['startDate'], '%Y-%m-%dT%H:%M:%SZ')
         end = datetime.datetime.strptime(data['endDate'], '%Y-%m-%dT%H:%M:%SZ')
+        # Note: no address, latitude, or longitude fields in the current calendar schema...
+        venueAddress = f"{data['location']['streetAddress']} {data['location']['addressLocality']}, {data['location']['addressRegion']} {data['location']['postalCode']}, USA"
+        latitude = float(data['geo']['lat'])
+        longitude = float(data['geo']['lon'])
         event_data = {
-          'website': data['url'],
-          'startDate': start.strftime('%Y-%m-%d'),
-          'startTime': start.strftime('%I:%M %p'),
-          'endDate': end.strftime('%Y-%m-%d'),
-          'endTime': end.strftime('%I:%M %p'),
-          'venueName': data['location']['name'],
-          'venueAddress': f"{data['location']['streetAddress']} {data['location']['addressLocality']}, {data['location']['addressRegion']} {data['location']['postalCode']}, USA",
-          'latitude': float(data['geo']['lat']),
-          'longitude': float(data['geo']['lon'])
+            'Event Name': data['name'],
+            'Event Organizer Name(s) or ID(s)': 'Friends of the National Arboretum',
+            'Event Website': data['url'],
+            'Event Start Date': start.strftime('%Y-%m-%d'),
+            'Event Start Time': start.strftime('%I:%M %p'),
+            'Event End Date': end.strftime('%Y-%m-%d'),
+            'Event End Time': end.strftime('%I:%M %p'),
+            'Event Venue Name': data['location']['name'],
         }
         event_output.append(event_data)
     return event_output
