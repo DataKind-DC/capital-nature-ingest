@@ -155,15 +155,20 @@ def handler(event, context):
     filename = '{0}-results.csv'.format(source_name)
     if not is_local:
         with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-          writer = csv.DictWriter(f, fieldnames = event_output[0].keys())
-          writer.writeheader()
-          [writer.writerow(event) for event in event_output]
+            writer = csv.DictWriter(f, fieldnames = event_output[0].keys())
+            writer.writeheader()
+            [writer.writerow(event) for event in event_output]
         s3 = boto3.resource('s3')
         s3.meta.client.upload_file(
-          '/tmp/{0}'.format(filename),
-          bucket,
-          'capital-nature/{0}'.format(filename)
+            '/tmp/{0}'.format(filename),
+            bucket,
+            'capital-nature/{0}'.format(filename)
         )
+    else:
+        with open('{0}'.format(filename), mode = 'w') as f:
+            writer = csv.DictWriter(f, fieldnames = event_output[0].keys())
+            writer.writeheader()
+            [writer.writerow(event) for event in event_output]
     return json.dumps(event_output, indent=2)
 
 # For local testing
