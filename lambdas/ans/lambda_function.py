@@ -20,13 +20,14 @@ def handle_ans_page(soup):
     latLong = e.find('p').find('span', {'class': 'evcal_desc'})['data-latlng'].split(',')
     spanTime = e.find('p').find('span', {'class': 'evo_time'})
     event_data = {
-      'website': e.find('a')['href'],
-      'startDate': e.find('time', {'itemprop': 'startDate'})['datetime'],
-      'startTime': spanTime.find('span', {'class': 'start'}).text,
-      'endDate': e.find('time', {'itemprop': 'endDate'})['datetime'],
-      'endTime': spanTime.find('span', {'class': 'end'}).text.replace('- ', ''),
-      'venueName': e.find('span', {'itemprop': 'name'}).text,
-      'venueAddress': e.find('item', {'itemprop': 'streetAddress'}).text,
+      'Event Name': e.find('span', {'class': 'evcal_event_title'}).text,
+      'Event Website': e.find('a')['href'],
+      'Event Start Date': e.find('time', {'itemprop': 'startDate'})['datetime'],
+      'Event Start Time': spanTime.find('span', {'class': 'start'}).text,
+      'Event End Date': e.find('time', {'itemprop': 'endDate'})['datetime'],
+      'Event End Time': spanTime.find('span', {'class': 'end'}).text.replace('- ', ''),
+      'Event Venue Name': e.find('span', {'itemprop': 'name'}).text,
+      'Event Venue Address': e.find('item', {'itemprop': 'streetAddress'}).text,
       'latitude': float(latLong[0]),
       'longitude': float(latLong[1])
     }
@@ -50,7 +51,7 @@ def handler(event, context):
       '/tmp/{0}'.format(filename),
       bucket,
       'capital-nature/{0}'.format(filename)
-    )  
+    )
   return json.dumps(event_output, indent=2)
 
 # For local testing
@@ -58,5 +59,5 @@ def handler(event, context):
 #   'url': 'https://anshome.org/events-calendar/',
 #   'source_name': 'ans'
 # }
-# is_local = True
+# is_local = False
 # print(handler(event, {}))
