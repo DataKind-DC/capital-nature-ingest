@@ -94,7 +94,52 @@ def parse_description_and_location(description_and_location):
     return event_website, event_name, event_venue, event_tags   
 
 
-def get_vnps_events():
+def filter_events(events, categories = []):
+    '''
+    Filters the events output of get_vnps_events() to only include select categories. Possible options are:
+        Blue Ridge Wildflower Society
+        Chapter Events
+        Extended Field Trip
+        Field Trips
+        Jefferson
+        John Clayton
+        Meetings
+        New River
+        Northern Neck
+        Piedmont
+        Plant Sales
+        Pocahontas
+        Potowmack
+        Prince William
+        Programs
+        Shenandoah
+        South Hampton Roads
+        State Events
+        Type of Event
+        Upper James River
+        Volunteer Opportunities
+        Workshop
+        
+    Parameters:
+        events (list): get_vnps_events() return object, which is a list of dicts, with each 
+                       dictionary representing an event. 
+        categories (list): a list of categories to filter out.
+        
+    Returns:
+        events (list): events that do not contain one of the categories within the categories param
+    '''
+    categories_lowered = [x.lower() for x in categories]
+    filtered_events = []
+    for event in events:
+        event_tags = event['Event Tags']
+        event_categories = [x.strip().lower() for x in event_tags.split(",")]
+        if not any(x in event_categories for x in categories_lowered):
+            filtered_events.append(event)
+            
+    return filtered_events
+
+
+def get_vnps_events(categories=[]):
     '''
     Gets the event data in oour wordpess schema
     
@@ -129,8 +174,9 @@ def get_vnps_events():
                      'All Day Event': all_day,
                      'Event Tags': event_tags}
             events.append(event)
-            
-    return events
+    filtered_events = filter_events(events, categories)        
+    
+    return filtered_events
 
 
 def vnps_handler(event, context):
