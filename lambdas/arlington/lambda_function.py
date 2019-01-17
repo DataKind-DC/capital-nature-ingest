@@ -1,53 +1,73 @@
-import requests
-from bs4 import BeautifulSoup
+from datetime import datetime
 import re
+import requests
 import csv
+from bs4 import BeautifulSoup
 import boto3
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
 
-
-def get_event_cost_and_description(event_website):
+def get_arlington_events():
     '''
-    Scape the event cost and description from its site.
+    Gets animal- and environment-related events for Arlington County (https://today.arlingtonva.us/)
 
     Parameters:
-        event_website (str): the url for an Arlington County event.
+        None
 
     Returns:
-        event_cost (str): the cost of the event, usually 'Free'
-        event_description (str): the description of the event
+        event_items (list): a list of dictionaries, each of which represents an event.
     '''
-    r = requests.get(event_website)
-    content = r.content
-    soup = BeautifulSoup(content, 'html.parser')
-    entry_content = soup.find('div',{'class':'entry-content'})
-    try:
-        event_description = entry_content.find("br",{"style":"clear:both"}).text
-    except AttributeError:
-        event_description = ''
-    paras = soup.find_all('p')
-    for p in paras:
-        if "Cost" in p.text:
-            event_cost = p.text.split(":")[1].strip()
-            return event_cost, event_description
+    startDate = datetime.now().strftime("%Y-%m-%d")
+    from_param = 0
+    uri = f'https://today-service.arlingtonva.us/api/event/elasticevent?&StartDate={startDate}T05:00:00.000Z&EndDate=null&TopicCode=ANIMALS&TopicCode=ENVIRONMENT&ParkingAvailable=false&NearBus=false&NearRail=false&NearBikeShare=false&From={from_param}&Size=5&OrderBy=featured&EndTime=86400000'
+    r = requests.get(uri)
+    data = r.json()
+    count = data['count']
+    event_items = []
+    while from_param < count:
+        if from_param == 0:
+            items = data['items']
+            for item in items:
+                event_items.append(item)
         else:
-            continue
-    event_cost = ''
-    
-    return event_cost, event_description
+            uri = f'https://today-service.arlingtonva.us/api/event/elasticevent?&StartDate={startDate}T05:00:00.000Z&EndDate=null&TopicCode=ANIMALS&TopicCode=ENVIRONMENT&ParkingAvailable=false&NearBus=false&NearRail=false&NearBikeShare=false&From={from_param}&Size=5&OrderBy=featured&EndTime=86400000'
+            r = requests.get(uri)
+            data = r.json()
+            items = data['items']
+            for item in items:
+                event_items.append(item) 
+        from_param += 5
+            
+    return event_items
 
+def html_textraction(html):
+    '''
+    Extracts text from html using bs4
+
+    Parameters:
+        html (str): a string containing html
+
+    Returns:
+        text (str): the text extracted from the html
+    '''
+    if not html:
+        text = "See event website."
+    else:
+        soup = BeautifulSoup(html, 'html.parser')
+        text = soup.get_text().strip()
+    
+    return text
 
 def parse_event_name(event_name):
     '''
-    Clarifies the invasive plant removal event names.
+    Clarifies the invasive plant removal event names and extracts text from html.
     
     Parameters:
-        event_name (str): the name of the event scraped from the events page
+        event_name (str): the event name as a string
 
     Returns:
-        parsed_event_name (str): the parsed name of the event
+        event_name (str): the parsed event name
     '''
     if any(x in event_name for x in ('RIP','RiP','Invasive Plant Removal')):
         if "Invasive Plant Removal" in event_name:
@@ -58,73 +78,66 @@ def parse_event_name(event_name):
             parsed_event_name = parsed_event_name.replace("RiP",'').replace("RIP",'').replace(' - ','')
             parsed_event_name = f'{parsed_event_name} Invasive Plant Removal'
             parsed_event_name = re.sub("  +", " ", parsed_event_name).strip()
-        return parsed_event_name
+        event_name = html_textraction(parsed_event_name)
     else:
-        parsed_event_name = re.sub("  +", " ", event_name).strip()
-        return parsed_event_name
-
-
-def get_events():
-    '''
-    Scrapes events from Arlington Country website
-
-    Parameters:
-        None
+        event_name = html_textraction(event_name)
     
+    return event_name
+
+def schematize_events(event_items):
+    '''
+    Parses the events API output so that it conforms to our schema
+    
+    Parameters:
+        event_items (list): a list of dictionaries, each of which represents an event. 
+                            Output by get_arlington_events()
+
     Returns:
-        events (list): a list of dicts, with each representing an envent.
+        events (list): a list of dictionaries, each of which represents an event in our schema
     '''
     events = []
-    page_counter = 0
-    while page_counter < 10:
-        if page_counter == 0:
-            url = 'https://environment.arlingtonva.us/events/'
+    for event_item in event_items:
+        event_item = event_item['vwEventWithLocation']
+        event_name = parse_event_name(event_item['eventName'])
+        if 'Task Force' in event_name or 'Forestry Commission' in event_name:
+            continue
+        event_description = html_textraction(event_item['eventDsc'])
+        start_date = event_item['eventStartDate']
+        end_date = event_item['eventEndDate']
+        start_time = event_item['eventStartTime']
+        end_time = event_item['eventEndTime']
+        event_website = event_item['eventUrlText']
+        if event_item['freeOfChargeInd']:
+            event_cost = 'Free' 
+        elif event_item['eventCostDsc']:
+            event_cost = event_item['eventCostDsc']
         else:
-            url = f'https://environment.arlingtonva.us/events/?pno={page_counter}'
-        r = requests.get(url)
-        content = r.content
-        soup = BeautifulSoup(content, "html.parser")
-        table = soup.find('table')
-        rows = table.findChildren(['tr'])
-        for i, row in enumerate(rows):
-            if i == 0:
-                continue
-            else:
-                try:
-                  start_date, times = [re.sub(" +", " ", x).strip() for x in row.find('td').text.strip().split("\n")]
-                except AttributeError:
-                  continue
-                start_time, end_time = times.split("-")
-                event_website = row.find('a')['href']
-                event_name = row.find('a').text
-                event_name = parse_event_name(event_name)
-                try:
-                    event_location = row.find('i').text
-                except AttributeError:
-                    event_location = ''
-                event_cost, event_description = get_event_cost_and_description(event_website)
-                event = {'Event Start Date': start_date,
-                         'Event End Date': start_date,
-                         'Event Start Time': start_time,
-                         'Event End Time': end_time,
-                         'Event Website': event_website,
-                         'Event Name': event_name,
-                         'Event Venue Name': event_location,
-                         'Event Cost': event_cost,
-                         'Event Description': event_description}
-                events.append(event)
-        page_counter += 1
+            event_cost =  "See event website."
+        event_venue = html_textraction(event_item['locationName'])
+        if event_venue == 'Earth Products Yard' or 'Library' in event_venue:
+            continue
 
+        event = {'Event Start Date':start_date,
+                 'Event End Date': end_date,
+                 'Event Start Time':start_time,
+                 'Event End Time':end_time,
+                 'Event Website':event_website,
+                 'Event Name':event_name,
+                 'Event Venue Name':event_venue,
+                 'Event Cost':event_cost,
+                 'Event Description':event_description}
+        events.append(event)
+        
     return events
-
 
 def arlington_handler(event, context):
     '''
     AWS lambda function for Arlington County events.
     '''
-    url = event['url']
+    _ = event['url']
     source_name = event['source_name']
-    events = get_events()
+    event_items = get_arlington_events()
+    events = schematize_events(event_items)
     filename = '{0}-results.csv'.format(source_name)
     fieldnames = list(events[0].keys())
     if not is_local:
@@ -143,12 +156,11 @@ def arlington_handler(event, context):
             writer = csv.DictWriter(f, fieldnames = fieldnames)
             writer.writeheader()
             for arlington_event in events:
-                writer.writerow(arlington_event)
+                writer.writerow(arlington_event)    
 
-
-# For local testing (it'll write the csv as nps-results.csv into your working dir)
+#For local testing (it'll write the csv as arlington-results.csv into your working dir
 #event = {
-#'url': 'https://environment.arlingtonva.us/events/',
+#'url': 'https://today.arlingtonva.us/',
 #'source_name': 'arlington'
 #}
 #is_local = True
