@@ -36,9 +36,9 @@ def get_arlington_events():
             data = r.json()
             items = data['items']
             for item in items:
-                event_items.append(item) 
+                event_items.append(item)
         from_param += 5
-            
+
     return event_items
 
 def html_textraction(html):
@@ -56,13 +56,13 @@ def html_textraction(html):
     else:
         soup = BeautifulSoup(html, 'html.parser')
         text = soup.get_text().strip()
-    
+
     return text
 
 def parse_event_name(event_name):
     '''
     Clarifies the invasive plant removal event names and extracts text from html.
-    
+
     Parameters:
         event_name (str): the event name as a string
 
@@ -81,15 +81,15 @@ def parse_event_name(event_name):
         event_name = html_textraction(parsed_event_name)
     else:
         event_name = html_textraction(event_name)
-    
+
     return event_name
 
 def schematize_events(event_items):
     '''
     Parses the events API output so that it conforms to our schema
-    
+
     Parameters:
-        event_items (list): a list of dictionaries, each of which represents an event. 
+        event_items (list): a list of dictionaries, each of which represents an event.
                             Output by get_arlington_events()
 
     Returns:
@@ -108,7 +108,7 @@ def schematize_events(event_items):
         end_time = event_item['eventEndTime']
         event_website = event_item['eventUrlText']
         if event_item['freeOfChargeInd']:
-            event_cost = 'Free' 
+            event_cost = 'Free'
         elif event_item['eventCostDsc']:
             event_cost = event_item['eventCostDsc']
         else:
@@ -127,7 +127,7 @@ def schematize_events(event_items):
                  'Event Cost':event_cost,
                  'Event Description':event_description}
         events.append(event)
-        
+
     return events
 
 def arlington_handler(event, context):
@@ -147,8 +147,8 @@ def arlington_handler(event, context):
             for arlington_event in events:
                 writer.writerow(arlington_event)
         s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename), 
-                                    bucket, 
+        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
+                                    bucket,
                                     'capital-nature/{0}'.format(filename)
                                     )
     else:
@@ -156,7 +156,7 @@ def arlington_handler(event, context):
             writer = csv.DictWriter(f, fieldnames = fieldnames)
             writer.writeheader()
             for arlington_event in events:
-                writer.writerow(arlington_event)    
+                writer.writerow(arlington_event)
 
 #For local testing (it'll write the csv as arlington-results.csv into your working dir
 #event = {
