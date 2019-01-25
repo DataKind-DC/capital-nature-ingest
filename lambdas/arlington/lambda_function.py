@@ -65,6 +65,7 @@ def html_textraction(html):
             text = text.strip()
         else:
             text = soup.get_text().strip()
+    text = re.sub('  +', ' ', text)
 
     return text
 

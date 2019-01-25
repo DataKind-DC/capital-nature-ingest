@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch, Mock
 import httpretty
 import requests
-from lambda_function import get_arlington_events, html_textraction
+from lambda_function import get_arlington_events, html_textraction, parse_event_name
 from test_fixtures import page_one_uri_json, page_two_uri_json, page_one_uri_event_items, \
                           page_two_uri_event_items
 
@@ -17,13 +17,12 @@ class ArlingtonTestCase(unittest.TestCase):
     Test cases for the Arlington events
     '''
 
-    @classmethod
-    def setUpClass(cls):
-        cls.foo = None
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.foo = None
+    def setUp(self):
+        self.foo = None
+
+    def tearDown(self):
+        self.foo = None
 
     @httpretty.activate
     def test_get_arlington_events(self):
@@ -48,4 +47,22 @@ class ArlingtonTestCase(unittest.TestCase):
         text = '<p>Families age 3 and up. Register children and adults; children must be accompanied by a registered adult. We&#8217;ll use all sorts of cookies, marshmallows and toppings for the most decadent campfire s&#8217;mores ever! For information: 703-228-6535. Meet at Long Branch Nature Center. Registration Required: Resident registration begins at 8:00am on 11/13/2018. Non-resident registration begins at 8:00am on 11/14/2018.</p>\n<p>Activity #:\xa0622959 &#8211; O</p>\n'
         result = html_textraction(text)
         expected = 'Families age 3 and up. Register children and adults; children must be accompanied by a registered adult. We’ll use all sorts of cookies, marshmallows and toppings for the most decadent campfire s’mores ever! For information: 703-228-6535. Meet at Long Branch Nature Center. Registration Required: Resident registration begins at 8:00am on 11/13/2018. Non-resident registration begins at 8:00am on 11/14/2018.'
+        self.assertEqual(result, expected)
+
+    def test_parse_event_name_rip_case_one(self):
+        event_name = 'RiP – Tuckahoe Park Invasive Plant Removal'
+        result = parse_event_name(event_name)
+        expected = 'Tuckahoe Park Invasive Plant Removal'
+        self.assertEqual(result, expected)
+
+    def test_parse_event_name_rip_case_two(self):
+        event_name = 'RiP – Tuckahoe Park'
+        result = parse_event_name(event_name)
+        expected = 'Tuckahoe Park Invasive Plant Removal'
+        self.assertEqual(result, expected)
+
+    def test_parse_event_name(self):
+        event_name = 'Annual Four Mile  Run Stream Cleanup'
+        result = parse_event_name(event_name)
+        expected = 'Annual Four Mile Run Stream Cleanup'
         self.assertEqual(result, expected)
