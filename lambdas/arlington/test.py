@@ -2,9 +2,10 @@ import unittest
 from unittest.mock import patch, Mock
 import httpretty
 import requests
-from lambda_function import get_arlington_events, html_textraction, parse_event_name
+from lambda_function import get_arlington_events, html_textraction, parse_event_name, \
+                            schematize_events
 from test_fixtures import page_one_uri_json, page_two_uri_json, page_one_uri_event_items, \
-                          page_two_uri_event_items
+                          page_two_uri_event_items, schematized_page_two_event_items
 
 def exceptionCallback(request, uri, headers):
     '''
@@ -66,3 +67,9 @@ class ArlingtonTestCase(unittest.TestCase):
         result = parse_event_name(event_name)
         expected = 'Annual Four Mile Run Stream Cleanup'
         self.assertEqual(result, expected)
+
+    def test_schematize_events(self):
+        result = schematize_events(page_two_uri_event_items)
+        expected = schematized_page_two_event_items
+        for r, e in zip(result, expected):
+            self.assertDictEqual(r, e)
