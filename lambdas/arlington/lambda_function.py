@@ -55,9 +55,19 @@ def html_textraction(html):
         text = "See event website."
     else:
         soup = BeautifulSoup(html, 'html.parser')
-        text = soup.get_text().strip()
+        p_tags = soup.find_all('p')
+        if p_tags:
+            text = ''
+            for p in p_tags:
+                p_text = p.get_text()
+                if "Activity #" not in p_text:
+                    text += p_text + ' '
+            text = text.strip()
+        else:
+            text = soup.get_text().strip()
 
     return text
+
 
 def parse_event_name(event_name):
     '''
