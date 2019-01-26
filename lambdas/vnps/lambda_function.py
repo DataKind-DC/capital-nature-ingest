@@ -9,10 +9,10 @@ is_local = False
 def parse_date_and_time(date_and_time):
     '''
     Get the time-related date from the date-time text.
-    
+
     Parameters:
         date_and_time(bs4 element tag): a <td> tag
-        
+
     Returns:
         all_day (bool): True if the event is all-day
         start_time (str or None): if str, the event's start time. If None, the event is an all-day event
@@ -34,17 +34,17 @@ def parse_date_and_time(date_and_time):
     else:
         start_date = dates.strip()
         end_date = dates.strip()
-    
+
     return all_day, start_time, end_time, start_date, end_date
-                           
+
 
 def get_event_venue_and_categories(event_website):
     '''
     Gets the event's venue and tags from the event's wesbite
-    
+
     Parameters:
         event_website(str): the url for the website
-        
+
     Returns:
         event_venue (str): the event's venue
         event_tags (str): a comma-delimited list of event tags
@@ -65,17 +65,17 @@ def get_event_venue_and_categories(event_website):
                 a_tags = p.find_all('a')
                 if a_tags:
                     event_tags += ", ".join([x.text for x in a_tags])
-    
+
     return event_venue, event_tags
-    
+
 
 def parse_description_and_location(description_and_location):
     '''
     Gets the event website, name and venue
-    
+
     Parameters:
         description_and_location (bs4 element tag): a <td> tag
-        
+
     Returns:
         event_website (str): event's website
         event_name (str): event's name
@@ -90,8 +90,8 @@ def parse_description_and_location(description_and_location):
         event_venue = None
     scraped_event_venue, event_tags = get_event_venue_and_categories(event_website)
     event_venue = event_venue if event_venue else scraped_event_venue
-    
-    return event_website, event_name, event_venue, event_tags   
+
+    return event_website, event_name, event_venue, event_tags
 
 
 def filter_events(events, categories = []):
@@ -119,12 +119,12 @@ def filter_events(events, categories = []):
         Upper James River
         Volunteer Opportunities
         Workshop
-        
+
     Parameters:
-        events (list): get_vnps_events() return object, which is a list of dicts, with each 
-                       dictionary representing an event. 
+        events (list): get_vnps_events() return object, which is a list of dicts, with each
+                       dictionary representing an event.
         categories (list): a list of categories to filter out.
-        
+
     Returns:
         events (list): events that do not contain one of the categories within the categories param
     '''
@@ -135,17 +135,17 @@ def filter_events(events, categories = []):
         event_categories = [x.strip().lower() for x in event_tags.split(",")]
         if not any(x in event_categories for x in categories_lowered):
             filtered_events.append(event)
-            
+
     return filtered_events
 
 
 def get_vnps_events(categories=[]):
     '''
     Gets the event data in oour wordpess schema
-    
+
     Parameters:
         None
-        
+
     Returns:
         events (list): a list of dicts, with each representing a vnps event
     '''
@@ -172,10 +172,13 @@ def get_vnps_events(categories=[]):
                      'Event Name': event_name,
                      'Event Venue Name': event_venue,
                      'All Day Event': all_day,
-                     'Event Tags': event_tags}
+                     'Event Tags': event_tags,
+                     'Event Currency Symbol':'$',
+                     'Event Time Zone':'Eastern Standard Time',
+                     'Event Organizer Name(s) or ID(s)': event_venue}
             events.append(event)
-    filtered_events = filter_events(events, categories)        
-    
+    filtered_events = filter_events(events, categories)
+
     return filtered_events
 
 
@@ -195,8 +198,8 @@ def vnps_handler(event, context):
             for vnps_event in events:
                 writer.writerow(vnps_event)
         s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename), 
-                                    bucket, 
+        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
+                                    bucket,
                                     'capital-nature/{0}'.format(filename)
                                     )
     else:
@@ -205,7 +208,7 @@ def vnps_handler(event, context):
             writer.writeheader()
             for vnps_event in events:
                 writer.writerow(vnps_event)
-           
+
 # For local testing (it'll write the csv as vnps-results.csv into your working dir)
 #event = {
 #'url': 'https://vnps.org',
