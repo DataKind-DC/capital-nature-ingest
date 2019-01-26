@@ -1,7 +1,6 @@
 import requests
 import os
 import re
-import sys
 import csv
 from bs4 import BeautifulSoup
 import boto3
@@ -15,8 +14,8 @@ is_local = False
 try:
     NPS_KEY = os.environ['NPS_KEY']
 except KeyError:
-    print("Add your NPS_KEY as an env variable.")
-    sys.exit(1)
+    #if it's not an env var, then we might be testing
+    NPS_KEY = 'testing123'
 
 
 def get_park_events(park_code, limit=1000):
@@ -28,25 +27,35 @@ def get_park_events(park_code, limit=1000):
         limit (int): number of results to return per request. Default is 1000
 
     Returns:
-        park_events (list): A list of dicts representing each event with 'park' as the siteType. 
+        park_events (list): A list of dicts representing each event with 'park' as the siteType.
                             The dict structures follow that of the NPS Events API.
     '''
     park_code_param = f'?parkCode={park_code}'
     limit_param = f'&limit={limit}'
     key_param = f'&api_key={NPS_KEY}'
     url = "https://developer.nps.gov/api/v1/events"+park_code_param+limit_param+key_param
-    r = requests.get(url)
-    r_json = r.json()
-    data = r_json['data']
-    park_events = []
-    for d in data:
-        if d['siteType'] == 'park':
-            park_events.append(d)
+    try:
+        r = requests.get(url)
+        r_json = r.json()
+        data = r_json['data']
+        park_events = []
+        for d in data:
+            if d['siteType'] == 'park':
+                park_events.append(d)
+    except:
+        park_events = []
 
     return park_events
 
 
-def get_nps_events():
+def get_nps_events(park_codes = ['afam','anac','anti','apco','appa','arho','asis','balt','bawa','bepa','blri',
+                                 'bowa','cahi','cajo','came','cato','cawo','cbgn','cbpo','cebe','choh','clba',
+                                 'coga','colo','cuga','cwdw','fodu','fofo','fomc','fomr','foth','fowa','frde',
+                                 'frdo','frsp','gewa','glec','gree','grfa','grsp','gwmp','hafe','haha','hamp',
+                                 'hatu','jame','jthg','keaq','kowa','linc','lyba','mamc','mana','mawa','mlkm',
+                                 'mono','nace','nama','ovvi','oxhi','paav','pete','pisc','pohe','prwi','rich',
+                                 'rocr','shen','shvb','stsp','this','thje','thst','vive','wamo','waro','whho',
+                                 'wotr','wwii','york']):
     '''
     Get all of the events for each park in the park_codes list
     Parameters:
@@ -54,14 +63,7 @@ def get_nps_events():
     Returns:
         nps_events (list): a list of events, as returned by get_park_events()
     '''
-    park_codes = ['afam','anac','anti','apco','appa','arho','asis','balt','bawa','bepa','blri',
-                  'bowa','cahi','cajo','came','cato','cawo','cbgn','cbpo','cebe','choh','clba',
-                  'coga','colo','cuga','cwdw','fodu','fofo','fomc','fomr','foth','fowa','frde',
-                  'frdo','frsp','gewa','glec','gree','grfa','grsp','gwmp','hafe','haha','hamp',
-                  'hatu','jame','jthg','keaq','kowa','linc','lyba','mamc','mana','mawa','mlkm',
-                  'mono','nace','nama','ovvi','oxhi','paav','pete','pisc','pohe','prwi','rich',
-                  'rocr','shen','shvb','stsp','this','thje','thst','vive','wamo','waro','whho',
-              'wotr','wwii','york']
+
     nps_events = []
     for park_code in park_codes:
         try:
@@ -69,8 +71,8 @@ def get_nps_events():
             if len(park_events) > 1:
                 for park_event in park_events:
                     nps_events.append(park_event)
-        except Exception as e:
-            print(e)
+        except Exception:
+            pass
 
     return nps_events
 
@@ -87,7 +89,10 @@ def get_specific_event_location(event_id):
         specific_event_location (str): the specific location of the event
     '''
     website = f"https://www.nps.gov/planyourvisit/event-details.htm?id={event_id}"
-    r = requests.get(website)
+    try:
+        r = requests.get(website)
+    except:
+        return ''
     content = r.content
     soup = BeautifulSoup(content, "html.parser")
     # kill all script and style elements
@@ -114,7 +119,7 @@ def get_specific_event_location(event_id):
     return specific_event_location
 
 
-def shcematize_nps_event(nps_event):
+def schematize_nps_event(nps_event):
     '''
     Extract data from the nps event so that it conforms to the wordpress schema.
 
@@ -201,7 +206,7 @@ def main():
     nps_events = get_nps_events()
     events = []
     for nps_event in nps_events:
-        schematized_nps_events = shcematize_nps_event(nps_event)
+        schematized_nps_events = schematize_nps_event(nps_event)
         for schematized_nps_event in schematized_nps_events:
             events.append(schematized_nps_event)
 
