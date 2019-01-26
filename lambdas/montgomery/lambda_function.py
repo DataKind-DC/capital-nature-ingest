@@ -15,7 +15,7 @@ def get_category_id_map(url = 'https://www.montgomeryparks.org/calendar/'):
     Gets a mapping of event categories and their page ids
 
     Parameters:
-        url (str): Default value is the calendar page, which contains filters for each 
+        url (str): Default value is the calendar page, which contains filters for each
                    category
 
     Returns:
@@ -55,7 +55,7 @@ def parse_event_date(event_date):
     start_date = " ".join(split_date[:4])
     start_time = split_date[-2]
     end_time = split_date[-1]
-    
+
     return start_date, start_time, end_time
 
 
@@ -68,7 +68,7 @@ def get_event_description(soup):
     cookie_notice_index = [i for i, s in enumerate(p_texts) if 'website uses cookies' in s]
     del p_texts[cookie_notice_index.pop()]
     event_description = max(p_texts, key=len).strip()
-    
+
     return event_description
 
 
@@ -82,7 +82,7 @@ def get_event_cost(soup):
         event_cost = "".join(s for s in fee_text if s.isdigit())
     except IndexError:
         event_cost = ''
-        
+
     return event_cost
 
 
@@ -92,7 +92,7 @@ def canceled_test(soup):
     '''
     h1_tags = soup.find_all('h1', {'class':'section-head'})
     h_texts = [h.get_text() for h in h1_tags]
-    
+
     return any(i in t for t in h_texts for i in ['CANCELED'])
 
 
@@ -134,14 +134,14 @@ def parse_event_item(event_item, event_category):
     href = event_item.find('a', href=True)['href']
     if 'https' not in href:
         event_website = f'https://www.montgomeryparks.org/events{href}'
-    else:    
+    else:
         event_website = href
     event_description, event_cost = parse_event_website(event_website)
     if not event_description:
         event = None
     else:
         event_date = event_item.find('span',{'class':'time'}).get_text().strip().replace("to",'').replace("Ocber","October")
-        start_date, start_time, end_time = parse_event_date(event_date) 
+        start_date, start_time, end_time = parse_event_date(event_date)
         event_name = event_item.find('span',{'class':'event-name'}).get_text().strip()
         event_venue = ", ".join([i.get_text() for i in event_item.find_all('span',{'class':'location'})])
         event = {'Event Start Date': start_date,
@@ -152,8 +152,11 @@ def parse_event_item(event_item, event_category):
                  'Event Venue Name': event_venue,
                  'Event Cost': event_cost,
                  'Event Description': event_description,
-                 'Event Category': event_category}
-    
+                 'Event Category': event_category,
+                 'Event Time Zone': 'Eastern Standard Time',
+                 'Event Organizer Name(s) or ID(s)': event_venue,
+                 'Event Currency Symbol':'$'}
+
     return event
 
 
@@ -163,7 +166,7 @@ def no_events_test(soup):
     '''
     h2_tags = soup.find_all('h2')
     h2_texts = [h.get_text() for h in h2_tags]
-    
+
     return any(i in h2_texts for i in ['No events found'])
 
 
@@ -173,7 +176,7 @@ def next_page_test(soup):
     '''
     a_tags = soup.find_all('a')
     a_texts = [a.get_text() for a in a_tags]
-    
+
     return any(i in a_texts for i in ['Next Page'])
 
 
@@ -224,7 +227,7 @@ def get_category_events(event_category, category_id_map):
                     continue
             is_next_page = next_page_test(soup)
             page_counter += 1
-    
+
     return events
 
 
@@ -233,7 +236,7 @@ def dedupe_events(events):
     De-dupes a list of dicts
     '''
     events = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in events)]
-    
+
     return events
 
 
@@ -262,8 +265,8 @@ def get_montgomery_events(category_id_map,
         category_events = get_category_events(event_category, category_id_map)
         for category_event in category_events:
             events.append(category_event)
-    events = dedupe_events(events)        
-    
+    events = dedupe_events(events)
+
     return events
 
 
@@ -285,8 +288,8 @@ def montgomery_handler(event, context):
             for montgomery_event in events:
                 writer.writerow(montgomery_event)
         s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename), 
-                                    bucket, 
+        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
+                                    bucket,
                                     'capital-nature/{0}'.format(filename)
                                     )
     else:
