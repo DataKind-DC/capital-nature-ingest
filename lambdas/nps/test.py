@@ -19,10 +19,10 @@ class NPSTestCase(unittest.TestCase):
     '''
 
     def setUp(self):
-        self.foo = None
+        pass
 
     def tearDown(self):
-        self.foo = None
+        pass
 
     @httpretty.activate
     def test_get_park_events(self):
