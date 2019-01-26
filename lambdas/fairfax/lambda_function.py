@@ -19,7 +19,9 @@ def get_event_cost(soup):
 def get_event_date_from_event_website(event_website):
     url_tail = event_website.split('/')[-1]
     if all(s.isdigit() for s in url_tail):
-        event_date = '-'.join([url_tail[i:i+2] for i in range(0, len(url_tail), 2)])
+        event_date = '/'.join([url_tail[i:i+2] for i in range(0, len(url_tail), 2)])
+        event_date_year = f'20{event_date[-2:]}'
+        event_date = event_date[:-2] + event_date_year
         return event_date
     return
 
@@ -34,7 +36,11 @@ def get_event_start_date(soup, event_website):
             start_date = h5_divs[-1].text.split()[0]
         except IndexError:
             start_date = ''
-
+    split_date = start_date.split("/")
+    if len(start_date) > 0:
+        if len(split_date[0]) == 1:
+            split_date[0] = f'0{split_date[0]}'
+        start_date = "/".join(split_date)
     return start_date
 
 
