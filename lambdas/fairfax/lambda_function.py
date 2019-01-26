@@ -34,7 +34,7 @@ def get_event_start_date(soup, event_website):
             start_date = h5_divs[-1].text.split()[0]
         except IndexError:
             start_date = ''
-    
+
     return start_date
 
 
@@ -44,7 +44,7 @@ def get_start_times(soup):
     for calendar_description in calendar_descriptions:
         start_time = calendar_description.get_text().strip().split(",")[0]
         start_times.append(start_time)
-    
+
     return start_times
 
 
@@ -111,7 +111,7 @@ def parse_event_website(event_website):
         start_date = get_event_start_date(soup, event_website)
 
     return event_cost, event_description, event_venue, start_date
-    
+
 
 def get_fairfax_events():
     r = requests.get('https://www.fairfaxcounty.gov/parks/park-events-calendar')
@@ -139,9 +139,12 @@ def get_fairfax_events():
                      'Event Name': event_name,
                      'Event Venue Name': event_venue,
                      'Event Cost': event_cost,
-                     'Event Description': event_description}
+                     'Event Description': event_description,
+                     'Event Currency Symbol':'$',
+                     'Event Time Zone':'Eastern Standard Time',
+                     'Event Organizer Name(s) or ID(s)': event_venue}
             events.append(event)
-    
+
     return events
 
 def fairfax_handler(event, context):
@@ -160,8 +163,8 @@ def fairfax_handler(event, context):
             for fairfax_event in events:
                 writer.writerow(fairfax_event)
         s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename), 
-                                    bucket, 
+        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
+                                    bucket,
                                     'capital-nature/{0}'.format(filename)
                                     )
     else:
@@ -170,7 +173,7 @@ def fairfax_handler(event, context):
             writer.writeheader()
             for fairfax_event in events:
                 writer.writerow(fairfax_event)
-           
+
 #For local testing (it'll write the csv as fairfax-results.csv into your working dir
 #event = {
 #'url': 'https://www.fairfaxcounty.gov',
