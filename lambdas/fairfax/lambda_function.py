@@ -69,6 +69,8 @@ def get_event_description(soup):
     if event_description.startswith('Please wait while we redirect'):
         return
     else:
+        if event_description.startswith("Event Description\n"):
+            event_description = event_description.replace("Event Description\n",'', 1)
         if event_description.startswith("("):
             between_parentheses = event_description[event_description.find("(")+1:event_description.find(")")]
             to_replace = f'({between_parentheses})'
@@ -101,7 +103,14 @@ def get_event_venue(soup):
     return event_venue
 
 def parse_event_website(event_website):
-    r = requests.get(event_website)
+    try:
+        r = requests.get(event_website)
+    except:
+        event_cost = None
+        event_description = None
+        event_venue = None
+        start_date = None
+        return event_cost, event_description, event_venue, start_date
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
     page_title_lowered = soup.find('div', {'class':'page-title'}).text.strip().lower()
