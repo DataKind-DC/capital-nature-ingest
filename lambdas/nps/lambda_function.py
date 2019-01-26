@@ -22,11 +22,11 @@ except KeyError:
 def get_park_events(park_code, limit=1000):
     '''
     Get events data from the National Parks Service Events API for a given park_code
-        
+
     Parameters:
         park_code (str): a park_code as returned by the NPS parkCode API through get_park_codes_by_state()
         limit (int): number of results to return per request. Default is 1000
-    
+
     Returns:
         park_events (list): A list of dicts representing each event with 'park' as the siteType. 
                             The dict structures follow that of the NPS Events API.
@@ -36,19 +36,19 @@ def get_park_events(park_code, limit=1000):
     key_param = f'&api_key={NPS_KEY}'
     url = "https://developer.nps.gov/api/v1/events"+park_code_param+limit_param+key_param
     r = requests.get(url)
-    r_json = r.json()        
+    r_json = r.json()
     data = r_json['data']
     park_events = []
     for d in data:
         if d['siteType'] == 'park':
             park_events.append(d)
-    
+
     return park_events
 
 
 def get_nps_events():
     '''
-    Get all of the events for each park in the park_codes list 
+    Get all of the events for each park in the park_codes list
     Parameters:
         None
     Returns:
@@ -71,16 +71,16 @@ def get_nps_events():
                     nps_events.append(park_event)
         except Exception as e:
             print(e)
-       
+
     return nps_events
 
 
 def get_specific_event_location(event_id):
     '''
     Some parks are large, and the events have a more specific location than just the park name.
-    To get this location, use the event id to find the event page and then scrape that specific 
+    To get this location, use the event id to find the event page and then scrape that specific
     location from the page.
-    
+
     Parameters:
         event_id (str): unique identifier for this event
     Returns:
@@ -110,19 +110,18 @@ def get_specific_event_location(event_id):
                 specific_event_location += split_text[i+1]
             except IndexError:
                 pass
-    
+
     return specific_event_location
 
 
 def shcematize_nps_event(nps_event):
     '''
     Extract data from the nps event so that it conforms to the wordpress schema.
-    
+
     Parameters:
         nps_event (dict): an NPS event, as returned by the NPS API
     Returns:
         schematized_nps_events (list): a list of dicts, with each dict representing an event
-    
     '''
     date_end = nps_event['dateStart']
     date_start = nps_event['dateEnd']
@@ -144,8 +143,10 @@ def shcematize_nps_event(nps_event):
                 specific_event_location = get_specific_event_location(event_id)
                 venue_name = re.sub(' +', ' ', nps_event['parkFullName'] + ", " + specific_event_location)
                 event_organization = nps_event['organizationName']
+                event_organization = event_organization if len(event_organization) > 0 else nps_event['parkFullName']
+                event_organization = re.sub('  +', ' ', event_organization)
                 event_cost = 'free' if nps_event['isFree'] else nps_event['feeInfo']
-                event_category = nps_event['category']
+                _ = nps_event['category']
                 event_tags = ", ".join(nps_event['tags'])
                 regResURL = nps_event['regResURL']
                 infoURL = nps_event['infoURL']
@@ -162,7 +163,7 @@ def shcematize_nps_event(nps_event):
                     else:
                         event_website = f"https://www.nps.gov/planyourvisit/event-details.htm?id={event_id}"
                 try:
-                    event_image = nps_event['images'][0]['url'] 
+                    event_image = nps_event['images'][0]['url']
                 except IndexError:
                     event_image = None
                 if event_image:
@@ -178,16 +179,16 @@ def shcematize_nps_event(nps_event):
                                             "All Day Event":event_all_day,
                                             "Event Venue Name":venue_name,
                                             "Event Organizer Name(s) or ID(s)":event_organization,
+                                            "Event Time Zone":'Eastern Standard Time',
                                             "Event Cost":event_cost,
-                                            "Event Category":event_category,
+                                            "Event Currency Symbol":"$",
                                             "Event Tags":event_tags,
                                             "Event Website":event_website,
                                             "Event Featured Image":event_image
                                           }
-                                        
                 schematized_nps_events.append(schematized_nps_event)
     else:
-        #TODO maybe log these occurrences, which I don't think really occur given the API's schema 
+        #TODO maybe log these occurrences, which I don't think really occur given the API's schema
         schematized_nps_events = []
 
     return schematized_nps_events
@@ -203,7 +204,7 @@ def main():
         schematized_nps_events = shcematize_nps_event(nps_event)
         for schematized_nps_event in schematized_nps_events:
             events.append(schematized_nps_event)
-    
+
     return events
 
 
@@ -223,8 +224,8 @@ def nps_handler(event, context):
             for nps_event in events:
                 writer.writerow(nps_event)
         s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename), 
-                                    bucket, 
+        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
+                                    bucket,
                                     'capital-nature/{0}'.format(filename)
                                     )
     else:
