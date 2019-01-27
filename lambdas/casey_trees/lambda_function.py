@@ -7,7 +7,8 @@ import pprint
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
-url = "https://caseytrees.org/events/2019-01/"
+current_date = datetime.today()
+url="https://caseytrees.org/events/"+current_date.strftime("%Y-%m")+"/"
 
 def extract_data(url):
     html_doc = requests.get(url).content
@@ -67,8 +68,6 @@ def extract_events(url):
         result_all_event.extend(extract_events(next))
     except:
         pass
-
-
 
     return result_all_event
 
