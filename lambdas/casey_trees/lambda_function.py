@@ -1,4 +1,4 @@
-import  requests
+import requests
 from bs4 import BeautifulSoup
 import ast
 from datetime import datetime
@@ -7,15 +7,15 @@ import pprint
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
+url = "https://caseytrees.org/events/2019-01/"
 
-def extract_data():
-    url = "https://caseytrees.org/events/2019-01/"
+def extract_data(url):
     html_doc = requests.get(url).content
     return html_doc
 
 
-def extract_events():
-    page = extract_data()
+def extract_events(url):
+    page = extract_data(url)
     soup = BeautifulSoup(page, "html.parser")
     events_url = soup.find_all('td')
     websites = []
@@ -40,7 +40,7 @@ def extract_events():
     result_all_event = []
     for con in final_content:
         ind_event = {}
-        ind_event['url'] = con['url']
+        ind_event['url'] = con.get('url','no url')
         start = datetime.strptime(con['startDate'][:-6],"%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime(con['endDate'][:-6],"%Y-%m-%dT%H:%M:%S")
         ind_event['startDate'] = start.strftime('%Y-%m-%d')
@@ -48,12 +48,29 @@ def extract_events():
         ind_event['startTime'] = start.strftime('%H:%M')
         ind_event['endTime'] = end.strftime('%H:%M')
         ind_event['address'] = ' '.join(str(x) for x in con['location']['address'].values())
-        ind_event['latitude'] = con['location']['geo']['latitude']
-        ind_event['venueName'] = con['name']
-        ind_event['longitude'] = con['location']['geo']['longitude']
+        ind_event['latitude'] = con.get('location','no location')
+        ind_event['venueName'] = con.get('name','no name')
+        ind_event['latitude'] = "no location"
+        ind_event['longitude'] = "no location"
+        location = con.get('location',False)
+        if(location):
+            geo = location.get('geo',False)
+            if(geo):
+                ind_event['latitude'] = location.get('latitude',"no latitude")
+                ind_event['longitude'] = location.get('longitude',"no longitude")
+            else:
+                ind_event['latitude'] = "no geo"
+                ind_event['longitude'] = "no geo"
         result_all_event.append(ind_event)
+    try:
+        next = soup.find('li', {'class': 'tribe-events-nav-next'}).a['href']
+        result_all_event.extend(extract_events(next))
+    except:
+        pass
+
+
 
     return result_all_event
 
 
-pprint.pprint(extract_events())
+pprint.pprint(extract_events(url))
