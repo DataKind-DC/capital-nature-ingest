@@ -1,25 +1,27 @@
-import requests
-from bs4 import BeautifulSoup
 import ast
+import boto3
+import bs4
+import csv
 from datetime import datetime
-import pprint
-
+import requests
+import json
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
 current_date = datetime.today()
 url="https://caseytrees.org/events/"+current_date.strftime("%Y-%m")+"/"
 
-def extract_data(url):
+
+def fetch_page(options):
+    url = options['url']
     html_doc = requests.get(url).content
     return html_doc
 
 
-def extract_events(url):
-    page = extract_data(url)
-    soup = BeautifulSoup(page, "html.parser")
+def handle_ans_page(soup):
     events_url = soup.find_all('td')
     websites = []
+    #extracts the url for the events
     for row in events_url:
         for column in row.find_all('div'):
             temp = column.text.strip()
@@ -28,48 +30,79 @@ def extract_events(url):
             else:
                 websites.append(column.find('a')['href'])
 
+    #extracts the complete details about events
     events_content = soup.find_all('script',{'type':'application/ld+json'})
-    final_content = set()
+    events_complete_data = set()
     for event in events_content:
         for website in websites:
             if(website in event.text.strip()):
-                final_content.add(event.text.strip())
+                events_complete_data.add(event.text.strip())
 
-    final_content = ast.literal_eval(list(final_content)[0])
+    #converts the string to dict
+    events_complete_data = ast.literal_eval(list(events_complete_data)[0])
 
     #extracts the required fields in the output schema
     result_all_event = []
-    for con in final_content:
-        ind_event = {}
-        ind_event['url'] = con.get('url','no url')
+    for con in events_complete_data:
+        events_data = {}
+        events_data['url'] = con.get('url','no url')
         start = datetime.strptime(con['startDate'][:-6],"%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime(con['endDate'][:-6],"%Y-%m-%dT%H:%M:%S")
-        ind_event['startDate'] = start.strftime('%Y-%m-%d')
-        ind_event['endDate'] = end.strftime('%Y-%m-%d')
-        ind_event['startTime'] = start.strftime('%H:%M')
-        ind_event['endTime'] = end.strftime('%H:%M')
-        ind_event['address'] = ' '.join(str(x) for x in con['location']['address'].values())
-        ind_event['latitude'] = con.get('location','no location')
-        ind_event['venueName'] = con.get('name','no name')
-        ind_event['latitude'] = "no location"
-        ind_event['longitude'] = "no location"
+        events_data['startDate'] = start.strftime('%Y-%m-%d')
+        events_data['endDate'] = end.strftime('%Y-%m-%d')
+        events_data['startTime'] = start.strftime('%H:%M')
+        events_data['endTime'] = end.strftime('%H:%M')
+        events_data['address'] = ' '.join(str(x) for x in con['location']['address'].values())
+        events_data['latitude'] = con.get('location','no location')
+        events_data['venueName'] = con.get('name','no name')
+        events_data['latitude'] = "no location"
+        events_data['longitude'] = "no location"
         location = con.get('location',False)
         if(location):
             geo = location.get('geo',False)
             if(geo):
-                ind_event['latitude'] = location.get('latitude',"no latitude")
-                ind_event['longitude'] = location.get('longitude',"no longitude")
+                events_data['latitude'] = geo.get('latitude',"no latitude")
+                events_data['longitude'] = geo.get('longitude',"no longitude")
             else:
-                ind_event['latitude'] = "no geo"
-                ind_event['longitude'] = "no geo"
-        result_all_event.append(ind_event)
+                events_data['latitude'] = "no geo"
+                events_data['longitude'] = "no geo"
+        result_all_event.append(events_data)
     try:
+        #checks if next month calender is present and passes the url to handle_ans_page function
         next = soup.find('li', {'class': 'tribe-events-nav-next'}).a['href']
-        result_all_event.extend(extract_events(next))
+        page = fetch_page({'url': next})
+        soup = bs4.BeautifulSoup(page, 'html.parser')
+        result_all_event.extend(handle_ans_page(soup))
     except:
         pass
 
     return result_all_event
 
 
-pprint.pprint(extract_events(url))
+def handler(event, context):
+    url = event['url']
+    source_name = event['source_name']
+    page = fetch_page({'url': url})
+    soup = bs4.BeautifulSoup(page, 'html.parser')
+    event_output = handle_ans_page(soup)
+    filename = '{0}-results.csv'.format(source_name)
+    if not is_local:
+        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
+            writer = csv.DictWriter(f, fieldnames = event_output[0].keys())
+            writer.writeheader()
+            [writer.writerow(event) for event in event_output]
+    s3 = boto3.resource('s3')
+    s3.meta.client.upload_file(
+      '/tmp/{0}'.format(filename),
+      bucket,
+      'capital-nature/{0}'.format(filename)
+    )
+    return json.dumps(event_output, indent=2)
+
+# For local testing
+event = {
+  'url': url,
+  'source_name': 'casey_trees'
+}
+# is_local = False
+# print(handler(event, {}))
