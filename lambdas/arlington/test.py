@@ -20,10 +20,10 @@ class ArlingtonTestCase(unittest.TestCase):
 
 
     def setUp(self):
-        self.foo = None
+        pass
 
     def tearDown(self):
-        self.foo = None
+        pass
 
     @httpretty.activate
     def test_get_arlington_events(self):
