@@ -89,3 +89,18 @@ class NPSTestCase(unittest.TestCase):
         expected = schematize_nps_event_expected
         self.assertListEqual(result, expected)
 
+    def test_schematize_nps_event_schema(self):
+        event = schematize_nps_event(get_park_events_expected[0])
+        keys = set().union(*(d.keys() for d in event))
+        schema = {'Do Not Import','Event Name','Event Description','Event Excerpt',
+                  'Event Start Date','Event Start Time','Event End Date','Event End Time',
+                  'Event Time Zone','All Day Event','Hide Event From Event Listings',
+                  'Event Sticky in Month View','Feature Event','Event Venue Name',
+                  'Event Organizer Name(s) or ID(s)','Event Show Map Link',
+                  'Event Show Map','Event Cost','Event Currency Symbol',
+                  'Event Currency Position','Event Category','Event Tags',
+                  'Event Website','Event Featured Image','Event Allow Comments',
+                  'Event Allow Trackbacks and Pingbacks'}
+        result = keys.issubset(schema)
+        expected = True
+        self.assertEqual(result, expected)
