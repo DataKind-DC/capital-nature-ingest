@@ -130,4 +130,31 @@ class FairfaxTestCase(unittest.TestCase):
         expected = get_fairfax_events_expected
         self.assertListEqual(result, expected)
 
-
+    @httpretty.activate
+    def test_get_fairfax_events_schema(self):
+        httpretty.register_uri(method=httpretty.GET,
+                               uri=self.calendar_page,
+                               status=200,
+                               body=self.calendar_page_content)
+        httpretty.register_uri(method=httpretty.GET,
+                               uri=self.event_one_uri,
+                               status=200,
+                               body=self.event_page_content)
+        httpretty.register_uri(method=httpretty.GET,
+                               uri=self.event_two_uri,
+                               status=200,
+                               body=self.event_page_content)
+        events = get_fairfax_events()
+        keys = set().union(*(d.keys() for d in events))
+        schema = {'Do Not Import','Event Name','Event Description','Event Excerpt',
+                  'Event Start Date','Event Start Time','Event End Date','Event End Time',
+                  'Event Time Zone','All Day Event','Hide Event From Event Listings',
+                  'Event Sticky in Month View','Feature Event','Event Venue Name',
+                  'Event Organizer Name(s) or ID(s)','Event Show Map Link',
+                  'Event Show Map','Event Cost','Event Currency Symbol',
+                  'Event Currency Position','Event Category','Event Tags',
+                  'Event Website','Event Featured Image','Event Allow Comments',
+                  'Event Allow Trackbacks and Pingbacks'}
+        result = keys.issubset(schema)
+        expected = True
+        self.assertEqual(result, expected)
