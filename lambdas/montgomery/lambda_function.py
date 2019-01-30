@@ -56,7 +56,7 @@ def parse_event_date(event_date):
     date_times = re.sub('  +',' ', event_date)
     split_date = date_times.split()
     start_date = " ".join(split_date[:4])
-    start_time = split_date[-2]
+    start_time = split_date[-3]
     end_time = split_date[-1]
 
     return start_date, start_time, end_time
