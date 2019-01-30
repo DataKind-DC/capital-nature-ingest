@@ -96,7 +96,7 @@ def canceled_test(soup):
     h1_tags = soup.find_all('h1', {'class':'section-head'})
     h_texts = [h.get_text() for h in h1_tags]
 
-    return any(i in t for t in h_texts for i in ['CANCELED'])
+    return any(i in t.lower() for t in h_texts for i in ['canceled', 'cancelled'])
 
 
 def parse_event_website(event_website):
