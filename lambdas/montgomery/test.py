@@ -2,8 +2,10 @@ import unittest
 from unittest.mock import patch, Mock
 import httpretty
 import requests
-from lambda_function import get_category_id_map
-from test_fixtures import calendar_page_content
+from lambda_function import get_category_id_map, parse_event_date, get_event_description, get_event_cost, \
+                            canceled_test
+from test_fixtures import calendar_page_content, event_page_content, event_page_canceled
+from bs4 import BeautifulSoup
 
 def exceptionCallback(request, uri, headers):
     '''
@@ -19,10 +21,16 @@ class FairfaxTestCase(unittest.TestCase):
     def setUp(self):
         self.calendar_page = 'https://www.montgomeryparks.org/calendar/'
         self.calendar_page_content = calendar_page_content
+        self.event_date = 'Fri. January 18th, 2019 10:00am 11:00am'
+        self.event_page_content = event_page_content
+        self.event_page_canceled = event_page_canceled
 
     def tearDown(self):
         self.calendar_page = None
         self.calendar_page_content = None
+        self.event_date = None
+        self.event_page_content = None
+        self.event_page_canceled = None
 
     @httpretty.activate
     def test_get_category_id_map(self):
@@ -91,3 +99,36 @@ class FairfaxTestCase(unittest.TestCase):
         result = get_category_id_map()
         expected = None
         self.assertEqual(result, expected)
+
+    def test_parse_event_date(self):
+        start_date, start_time, end_time = parse_event_date(self.event_date)
+        result = [start_date, start_time, end_time]
+        expected = ['Fri. January 18th, 2019', '10:00am', '11:00am']
+        self.assertListEqual(result, expected)
+
+    def test_get_event_description(self):
+        soup = BeautifulSoup(self.event_page_content, 'html.parser')
+        result = get_event_description(soup)
+        expected = "February is Maple Sugaring Month at Brookside Nature Center. Every Saturday and Sunday you’ll have an opportunity to experience an American tradition: maple sugaring! Watch the whole maple sugaring process from start to finish. See sap drip from trees and taste it. Watch us boil it down into sweet maple syrup, then sample a tasty treat. Join in the fun and activities and learn something new at this family-friendly program! Space is limited so pre-registration is encouraged."
+        self.assertEqual(result, expected)
+
+    def test_get_event_cost(self):
+        soup = BeautifulSoup(self.event_page_content, 'html.parser')
+        result = get_event_cost(soup)
+        expected = '7'
+        self.assertEqual(result, expected)
+
+    def test_canceled_test(self):
+        soup = BeautifulSoup(self.event_page_canceled, 'html.parser')
+        result = canceled_test(soup)
+        expected = True
+        self.assertEqual(result, expected)
+
+    #TODO: patch return values for canceled_test, get_event_description, and get_event_cost. HTTPretty register event page
+    def test_parse_event_website(self):
+        pass
+
+
+    
+
+        
