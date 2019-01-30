@@ -6,6 +6,8 @@ from datetime import datetime
 import requests
 import json
 
+import pprint
+
 bucket = 'aimeeb-datasets-public'
 is_local = False
 current_date = datetime.today()
@@ -45,16 +47,20 @@ def handle_ans_page(soup):
     result_all_event = []
     for con in events_complete_data:
         events_data = {}
+        pprint.pprint(con)
         events_data['url'] = con.get('url','no url')
         start = datetime.strptime(con['startDate'][:-6],"%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime(con['endDate'][:-6],"%Y-%m-%dT%H:%M:%S")
-        events_data['startDate'] = start.strftime('%Y-%m-%d')
-        events_data['endDate'] = end.strftime('%Y-%m-%d')
-        events_data['startTime'] = start.strftime('%H:%M')
-        events_data['endTime'] = end.strftime('%H:%M')
+        events_data['Event Start Date'] = start.strftime('%Y-%m-%d')
+        events_data['Event End Date'] = end.strftime('%Y-%m-%d')
+        events_data['Event Start Time'] = start.strftime('%H:%M')
+        events_data['Event End Time'] = end.strftime('%H:%M')
+        events_data['Event Time Zone'] = "America/New_York"
         events_data['address'] = ' '.join(str(x) for x in con['location']['address'].values())
         events_data['latitude'] = con.get('location','no location')
         events_data['venueName'] = con.get('name','no name')
+        events_data['Event Featured Image'] = con.get('image','no image')
+        events_data['Event Description'] = con.get('description','no description')
         events_data['latitude'] = "no location"
         events_data['longitude'] = "no location"
         location = con.get('location',False)
@@ -85,6 +91,7 @@ def handler(event, context):
     page = fetch_page({'url': url})
     soup = bs4.BeautifulSoup(page, 'html.parser')
     event_output = handle_ans_page(soup)
+    pprint.pprint(event_output)
     filename = '{0}-results.csv'.format(source_name)
     if not is_local:
         with open('/tmp/{0}'.format(filename), mode = 'w') as f:
@@ -105,4 +112,4 @@ event = {
   'source_name': 'casey_trees'
 }
 # is_local = False
-# print(handler(event, {}))
+print(handler(event, {}))
