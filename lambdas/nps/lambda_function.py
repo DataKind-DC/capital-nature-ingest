@@ -184,7 +184,7 @@ def schematize_nps_event(nps_event):
                                             "All Day Event":event_all_day,
                                             "Event Venue Name":venue_name,
                                             "Event Organizer Name(s) or ID(s)":event_organization,
-                                            "Event Time Zone":'Eastern Standard Time',
+                                            "Event Time Zone":'America/New_York',
                                             "Event Cost":event_cost,
                                             "Event Currency Symbol":"$",
                                             "Event Tags":event_tags,

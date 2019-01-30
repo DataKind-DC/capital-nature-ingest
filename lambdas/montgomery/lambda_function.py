@@ -22,7 +22,10 @@ def get_category_id_map(url = 'https://www.montgomeryparks.org/calendar/'):
         category_id_map (dict): a mapping of categories (e.g. Camp) to their ids, which are
                                 used to construct urls for webscraping that category's events
     '''
-    r = requests.get(url)
+    try:
+        r = requests.get(url)
+    except:
+        return
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
     category_list = soup.find('ul',{'class':'filters accordion-wrap'})

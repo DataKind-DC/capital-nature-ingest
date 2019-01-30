@@ -721,7 +721,7 @@ schematize_nps_event_expected = [{'Event Name': 'Loss of Greatness: The Death of
   'All Day Event': False,
   'Event Venue Name': 'National Mall and Memorial Parks, Lincoln Memorial (Bottom of the Stairs by the Plaza)',
   'Event Organizer Name(s) or ID(s)': 'National Mall and Memorial Parks',
-  'Event Time Zone': 'Eastern Standard Time',
+  'Event Time Zone': 'America/New_York',
   'Event Cost': 'free',
   'Event Currency Symbol': '$',
   'Event Tags': 'Lincoln Memorial, Presidents',
