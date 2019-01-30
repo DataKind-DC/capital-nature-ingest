@@ -46,7 +46,7 @@ def parse_event_date(event_date):
     Extract the start date and start/end times from the scraped event_date string
 
     Parameters:
-        event_date (str): A str representing the event's date (e.g. Fri. January 18th, 2019 10:00am to 11:00am) 
+        event_date (str): A str representing the event's date (e.g. Fri. January 18th, 2019 10:00am 11:00am) 
 
     Returns:
         start_date (str): the event's start date
@@ -56,7 +56,7 @@ def parse_event_date(event_date):
     date_times = re.sub('  +',' ', event_date)
     split_date = date_times.split()
     start_date = " ".join(split_date[:4])
-    start_time = split_date[-3]
+    start_time = split_date[-2]
     end_time = split_date[-1]
 
     return start_date, start_time, end_time
