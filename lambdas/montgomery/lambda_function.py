@@ -22,7 +22,10 @@ def get_category_id_map(url = 'https://www.montgomeryparks.org/calendar/'):
         category_id_map (dict): a mapping of categories (e.g. Camp) to their ids, which are
                                 used to construct urls for webscraping that category's events
     '''
-    r = requests.get(url)
+    try:
+        r = requests.get(url)
+    except:
+        return
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
     category_list = soup.find('ul',{'class':'filters accordion-wrap'})
@@ -43,7 +46,7 @@ def parse_event_date(event_date):
     Extract the start date and start/end times from the scraped event_date string
 
     Parameters:
-        event_date (str): A str representing the event's date (e.g. Fri. January 18th, 2019 10:00am to 11:00am) 
+        event_date (str): A str representing the event's date (e.g. Fri. January 18th, 2019 10:00am 11:00am) 
 
     Returns:
         start_date (str): the event's start date
@@ -93,7 +96,7 @@ def canceled_test(soup):
     h1_tags = soup.find_all('h1', {'class':'section-head'})
     h_texts = [h.get_text() for h in h1_tags]
 
-    return any(i in t for t in h_texts for i in ['CANCELED'])
+    return any(i in t.lower() for t in h_texts for i in ['canceled', 'cancelled'])
 
 
 def parse_event_website(event_website):
@@ -188,11 +191,15 @@ def get_category_events(event_category, category_id_map):
         event_category (str): the event category (e.g. Hikes)
 
     Returns:
-        events (list): a list of dicts, with each dict representing an event
+        events (list): a list of dicts, with each dict representing an event. Returns
+                       None if there aren't any events or if the request fails.
     '''
     category_id = category_id_map[event_category]
     url = f'https://www.montgomeryparks.org/calendar/?cat={category_id}&v=0'
-    r = requests.get(url)
+    try:
+        r = requests.get(url)
+    except:
+        return
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
     if no_events_test(soup):
@@ -211,7 +218,10 @@ def get_category_events(event_category, category_id_map):
     page_counter = 2
     while is_next_page:
         url = f'https://www.montgomeryparks.org/calendar/page/{page_counter}/?cat={category_id}&v=0'
-        r = requests.get(url)
+        try:
+            r = requests.get(url)
+        except:
+            break
         content = r.content
         soup = BeautifulSoup(content,'html.parser')
         if no_events_test(soup):
@@ -263,8 +273,9 @@ def get_montgomery_events(category_id_map,
     events = []
     for event_category in event_categories:
         category_events = get_category_events(event_category, category_id_map)
-        for category_event in category_events:
-            events.append(category_event)
+        if category_events:
+            for category_event in category_events:
+                events.append(category_event)
     events = dedupe_events(events)
 
     return events
