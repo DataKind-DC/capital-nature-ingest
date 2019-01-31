@@ -16,7 +16,7 @@ def exceptionCallback(request, uri, headers):
 
 class FairfaxTestCase(unittest.TestCase):
     '''
-    Test cases for the NPS events
+    Test cases for the Fairfax events
     '''
 
     def setUp(self):

@@ -137,7 +137,7 @@ def schematize_events(event_items):
                  'Event Venue Name':event_venue,
                  'Event Cost':event_cost,
                  'Event Description':event_description,
-                 'Event Time Zone':'Eastern Standard Time',
+                 'Event Time Zone':'America/New_York',
                  'Event Organizer Name(s) or ID(s)':event_venue,
                  'Event Currency Symbol':'$'}
         events.append(event)

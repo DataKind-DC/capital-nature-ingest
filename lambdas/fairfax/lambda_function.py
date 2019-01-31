@@ -156,7 +156,7 @@ def get_fairfax_events():
                      'Event Cost': event_cost,
                      'Event Description': event_description,
                      'Event Currency Symbol':'$',
-                     'Event Time Zone':'Eastern Standard Time',
+                     'Event Time Zone':'America/New_York',
                      'Event Organizer Name(s) or ID(s)': event_venue}
             events.append(event)
 
