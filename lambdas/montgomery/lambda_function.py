@@ -191,11 +191,15 @@ def get_category_events(event_category, category_id_map):
         event_category (str): the event category (e.g. Hikes)
 
     Returns:
-        events (list): a list of dicts, with each dict representing an event
+        events (list): a list of dicts, with each dict representing an event. Returns
+                       None if there aren't any events or if the request fails.
     '''
     category_id = category_id_map[event_category]
     url = f'https://www.montgomeryparks.org/calendar/?cat={category_id}&v=0'
-    r = requests.get(url)
+    try:
+        r = requests.get(url)
+    except:
+        return
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
     if no_events_test(soup):
@@ -214,7 +218,10 @@ def get_category_events(event_category, category_id_map):
     page_counter = 2
     while is_next_page:
         url = f'https://www.montgomeryparks.org/calendar/page/{page_counter}/?cat={category_id}&v=0'
-        r = requests.get(url)
+        try:
+            r = requests.get(url)
+        except:
+            break
         content = r.content
         soup = BeautifulSoup(content,'html.parser')
         if no_events_test(soup):
@@ -266,8 +273,9 @@ def get_montgomery_events(category_id_map,
     events = []
     for event_category in event_categories:
         category_events = get_category_events(event_category, category_id_map)
-        for category_event in category_events:
-            events.append(category_event)
+        if category_events:
+            for category_event in category_events:
+                events.append(category_event)
     events = dedupe_events(events)
 
     return events
