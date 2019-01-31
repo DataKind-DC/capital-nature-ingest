@@ -1,4 +1,4 @@
-[{'Event Cost': '0',
+{'Event Cost': '0',
   'Event Description': '&lt;p&gt;Learn how you can protect D.C.\\u2019s trees at this fun, interactive workshop. Stand Up for Trees will prepare you to navigate D.C.\\u2019s unique political geography to help increase tree canopy in your neighborhood and across the District. By the end of the class you will be on your way to reviewing development plans, writing persuasive [&hellip;]&lt;/p&gt;\\n',
   'Event End Date': '2019-01-12',
   'Event End Time': '15:00',
@@ -57,4 +57,4 @@
   'Event Website': 'https://caseytrees.org/event/tree-advocates-meetings-parts-1-2-budget-hearings-discussion-workshop/',
   'address': 'PostalAddress',
   'latitude': 'no geo',
-  'longitude': 'no geo'}]
+  'longitude': 'no geo'}
