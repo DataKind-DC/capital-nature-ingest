@@ -31,6 +31,7 @@ def handle_ans_page(soup):
                 pass
             else:
                 websites.append(column.find('a')['href'])
+                # pprint.pprint(ast.literal_eval(column['data-tribejson'])['categoryClasses'].split(" ")[:2])
 
     #extracts the complete details about events
     events_content = soup.find_all('script',{'type':'application/ld+json'})
@@ -47,8 +48,8 @@ def handle_ans_page(soup):
     result_all_event = []
     for con in events_complete_data:
         events_data = {}
-        pprint.pprint(con)
-        events_data['url'] = con.get('url','no url')
+        events_data['Event Name'] = con.get('name','no name')
+        events_data['Event Website'] = con.get('url','no url')
         start = datetime.strptime(con['startDate'][:-6],"%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime(con['endDate'][:-6],"%Y-%m-%dT%H:%M:%S")
         events_data['Event Start Date'] = start.strftime('%Y-%m-%d')
@@ -57,15 +58,23 @@ def handle_ans_page(soup):
         events_data['Event End Time'] = end.strftime('%H:%M')
         events_data['Event Time Zone'] = "America/New_York"
         events_data['address'] = ' '.join(str(x) for x in con['location']['address'].values())
+        events_data['Event Venue Name'] = con['location']['name']
         events_data['latitude'] = con.get('location','no location')
-        events_data['venueName'] = con.get('name','no name')
         events_data['Event Featured Image'] = con.get('image','no image')
         events_data['Event Description'] = con.get('description','no description')
+        events_data['Event Cost'] = con['offers']['price']
+        organizer = con.get('organizer', False)
+        if(organizer):
+            events_data['Event Organizer Name(s) or ID(s)'] = organizer.get('name',"no organizer name")
+        else:
+            events_data['Event Organizer Name(s) or ID(s)'] = "no details about the Organizer"
+            # extract the organizer name from the organizer dictionary and continue working on adding new fields from event cost
+            # change the dict keys
         events_data['latitude'] = "no location"
         events_data['longitude'] = "no location"
-        location = con.get('location',False)
+        location = con.get('location', False)
         if(location):
-            geo = location.get('geo',False)
+            geo = location.get('geo', False)
             if(geo):
                 events_data['latitude'] = geo.get('latitude',"no latitude")
                 events_data['longitude'] = geo.get('longitude',"no longitude")
@@ -91,7 +100,6 @@ def handler(event, context):
     page = fetch_page({'url': url})
     soup = bs4.BeautifulSoup(page, 'html.parser')
     event_output = handle_ans_page(soup)
-    pprint.pprint(event_output)
     filename = '{0}-results.csv'.format(source_name)
     if not is_local:
         with open('/tmp/{0}'.format(filename), mode = 'w') as f:
