@@ -31,7 +31,10 @@ def handle_ans_page(soup):
                 pass
             else:
                 websites.append(column.find('a')['href'])
-                categoryclasses[column.find('a')['href']] = ast.literal_eval(column['data-tribejson'])['categoryClasses'].split(" ")[:2]
+                # not sure if this is a good way. to get the exact tags we might have to call the url and get the values
+                # under event tag
+                categoryclasses[column.find('a')['href']] = ast.literal_eval(column['data-tribejson'])\
+                                                            ['categoryClasses'].split(" ")[:2]
 
     #extracts the complete details about events
     events_content = soup.find_all('script',{'type':'application/ld+json'})
@@ -69,8 +72,6 @@ def handle_ans_page(soup):
             events_data['Event Organizer Name(s) or ID(s)'] = organizer.get('name',"no organizer name")
         else:
             events_data['Event Organizer Name(s) or ID(s)'] = "no details about the Organizer"
-            # extract the organizer name from the organizer dictionary and continue working on adding new fields from event cost
-            # change the dict keys
         events_data['latitude'] = "no location"
         events_data['longitude'] = "no location"
         location = con.get('location', False)
