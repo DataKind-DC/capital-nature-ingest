@@ -49,7 +49,10 @@ def get_event_venue_and_categories(event_website):
         event_venue (str): the event's venue
         event_tags (str): a comma-delimited list of event tags
     '''
-    r = requests.get(event_website)
+    try:
+        r = requests.get(event_website)
+    except:
+        return None, None
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
     paras = soup.find_all('p')
@@ -165,6 +168,8 @@ def get_vnps_events(categories=[]):
             date_and_time, description_and_location = row.find_all('td')
             all_day, start_time, end_time, start_date, end_date = parse_date_and_time(date_and_time)
             event_website, event_name, event_venue, event_tags = parse_description_and_location(description_and_location)
+            event_venue = event_venue if event_venue else ''
+            event_tags = event_tags if event_tags else ''
             event = {'Event Start Date': start_date,
                      'Event End Date': end_date,
                      'Event Start Time': start_time,
