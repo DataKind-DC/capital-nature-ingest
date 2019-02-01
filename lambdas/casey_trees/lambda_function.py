@@ -6,7 +6,6 @@ from datetime import datetime
 import requests
 import json
 
-import pprint
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
@@ -23,6 +22,7 @@ def fetch_page(options):
 def handle_ans_page(soup):
     events_url = soup.find_all('td')
     websites = []
+    categoryclasses = {}
     #extracts the url for the events
     for row in events_url:
         for column in row.find_all('div'):
@@ -31,7 +31,7 @@ def handle_ans_page(soup):
                 pass
             else:
                 websites.append(column.find('a')['href'])
-                # pprint.pprint(ast.literal_eval(column['data-tribejson'])['categoryClasses'].split(" ")[:2])
+                categoryclasses[column.find('a')['href']] = ast.literal_eval(column['data-tribejson'])['categoryClasses'].split(" ")[:2]
 
     #extracts the complete details about events
     events_content = soup.find_all('script',{'type':'application/ld+json'})
@@ -50,6 +50,7 @@ def handle_ans_page(soup):
         events_data = {}
         events_data['Event Name'] = con.get('name','no name')
         events_data['Event Website'] = con.get('url','no url')
+        events_data['Event Tags'] = categoryclasses.get(events_data['Event Website'],'no tags')
         start = datetime.strptime(con['startDate'][:-6],"%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime(con['endDate'][:-6],"%Y-%m-%dT%H:%M:%S")
         events_data['Event Start Date'] = start.strftime('%Y-%m-%d')
