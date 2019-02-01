@@ -144,7 +144,8 @@ def get_vnps_events(categories=[]):
     Gets the event data in oour wordpess schema
 
     Parameters:
-        None
+        categories (list): a list of categories to filter out. See filter_events docstring for
+                           possible values.
 
     Returns:
         events (list): a list of dicts, with each representing a vnps event
