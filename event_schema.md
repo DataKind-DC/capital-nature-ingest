@@ -1,6 +1,8 @@
 # WordPress Event Plugin
 
-capitalnature.org is hosted on WordPress. The site is using a WP events plugin to populate scraped events. That plugin expects our event data to be in a certain schema, which can be found [here](https://support.theeventscalendar.com/969953-CSV-file-examples-for-importing). I've reproduced the table below for convenience:
+capitalnature.org is hosted on WordPress. The site is using a WP events plugin to populate scraped events. That plugin expects our event data to be in a certain schema, which is documented fully [here](https://support.theeventscalendar.com/969953-CSV-file-examples-for-importing).
+
+## Schema
 
 |Field Name|Example Data|Field Type|Notes|
 |--- |--- |--- |--- |
@@ -29,3 +31,16 @@ capitalnature.org is hosted on WordPress. The site is using a WP events plugin t
 |Event Featured Image|http://doyounot.com/wp-content/uploads/thumbs/event.png|URL|This should be a direct URL to the image.|
 |Allow Comments|TRUE|Boolean|When true, comments will be allowed on the event.|
 |Allow Trackbacks and Pingbacks|FALSE|Boolean|When true, trackbacks and pingbacks will be allowed on the event.|
+
+
+
+## Field types
+ - **HTML** - Accepts HTML. Further, it is run through [`wpautop()`](https://codex.wordpress.org/Function_Reference/wpautop), meaning that two new line characters in a row are interpreted as a new paragraph (just like in the WordPress post/event editor).
+ - **String** - Accepts most any text including numbers and special characters. New lines are typically ignored.
+ - **Boolean** - Accepts boolean values such as true or false, 1 or 0, yes or no. These values are not case sensitive, so TRUE would also be a valid value. When left blank the default option is applied, which is typically false.
+ - **Date** - Accepts formatted dates. Preferably use the ISO 8601 date format YYYY-MM-DD as it is unambiguous (ex. 2015-12-31). If you wish to use the North American "middle-endian" format, slashes are recommended (ex. MM/DD/YYYY). If you wish to use the international little-endian format separate it with dashes (ex. DD-MM-YYYY).
+ - **Time** - Accepts formatted hours. Preferably use the ISO 8601 format HH:MM:SS (ex. 23:59:59).
+ - **URL** - Prefers full URLs with the protocol (ex. http://) included.
+ - **Comma Separated** - There is a certain bit of irony with this type. Accepts a comma-separated list of values (ex. "Concert, Barbecue" will be interpreted as the 2 separate values "Concert" and "Barbecue"). If you are not exporting your data from  Microsoft Excel or a similar tool, make sure to properly escape the field so the commas are not interpreted as new CSV columns.
+ - **Email Address** - Accepts any string, but prefers valid email addresses.
+ - **Phone Number** - For proper internationalization include the full phone number with a country code and leading + (ex: +1-800-867-5309)
