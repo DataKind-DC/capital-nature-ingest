@@ -153,7 +153,11 @@ def get_vnps_events(categories=[]):
     Returns:
         events (list): a list of dicts, with each representing a vnps event
     '''
-    r = requests.get('https://vnps.org/events/')
+    try:
+        r = requests.get('https://vnps.org/events/')
+    except:
+        #TODO: log something like this
+        return []
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
     tables = soup.find_all('table')
