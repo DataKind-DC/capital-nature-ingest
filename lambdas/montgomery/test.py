@@ -259,3 +259,34 @@ class FairfaxTestCase(unittest.TestCase):
             result = None
             expected = None
             self.assertEqual(result, expected)
+
+    @httpretty.activate
+    def test_event_schema(self):
+        httpretty.register_uri(method=httpretty.GET,
+                               uri='https://www.montgomeryparks.org/calendar/?cat=2901&v=0',
+                               status=200,
+                               body=self.single_event_calendar_page_content)
+        httpretty.register_uri(method=httpretty.GET,
+                               uri='https://www.montgomeryparks.org/events/volunteer-fair-for-montgomery-parks-historic-sites/',
+                               status=200,
+                               body=self.open_house_page_content)
+        category_id_map = {'open house': '2901'}
+        try:
+            events = get_category_events('open house', category_id_map)
+            keys = set().union(*(d.keys() for d in events))
+            schema = {'Do Not Import','Event Name','Event Description','Event Excerpt',
+                    'Event Start Date','Event Start Time','Event End Date','Event End Time',
+                    'Event Time Zone','All Day Event','Hide Event From Event Listings',
+                    'Event Sticky in Month View','Feature Event','Event Venue Name',
+                    'Event Organizer Name(s) or ID(s)','Event Show Map Link',
+                    'Event Show Map','Event Cost','Event Currency Symbol',
+                    'Event Currency Position','Event Category','Event Tags',
+                    'Event Website','Event Featured Image','Event Allow Comments',
+                    'Event Allow Trackbacks and Pingbacks'}
+            result = keys.issubset(schema)
+            self.assertTrue(result)
+        except requests.exceptions.SSLError:
+            result = None
+            expected = None
+            self.assertEqual(result, expected)
+        
