@@ -61,12 +61,13 @@ def handle_ans_page(soup):
         events_data['Event Start Time'] = start.strftime('%H:%M')
         events_data['Event End Time'] = end.strftime('%H:%M')
         events_data['Event Time Zone'] = "America/New_York"
-        events_data['address'] = ' '.join(str(x) for x in con['location']['address'].values())
+        # commenting addresss for now
+        # events_data['address'] = ' '.join(str(x) for x in con['location']['address'].values())
         events_data['Event Venue Name'] = con['location']['name']
-        events_data['latitude'] = con.get('location','no location')
         events_data['Event Featured Image'] = con.get('image','no image')
         events_data['Event Description'] = con.get('description','no description')
         events_data['Event Cost'] = con['offers']['price']
+        events_data['Event Currency Symbol'] = "$"
         organizer = con.get('organizer', False)
         if(organizer):
             events_data['Event Organizer Name(s) or ID(s)'] = organizer.get('name',"no organizer name")
@@ -74,15 +75,16 @@ def handle_ans_page(soup):
             events_data['Event Organizer Name(s) or ID(s)'] = "no details about the Organizer"
         events_data['latitude'] = "no location"
         events_data['longitude'] = "no location"
-        location = con.get('location', False)
-        if(location):
-            geo = location.get('geo', False)
-            if(geo):
-                events_data['latitude'] = geo.get('latitude',"no latitude")
-                events_data['longitude'] = geo.get('longitude',"no longitude")
-            else:
-                events_data['latitude'] = "no geo"
-                events_data['longitude'] = "no geo"
+        # commenting the latitude and longtide fields
+        # location = con.get('location', False)
+        # if(location):
+        #     geo = location.get('geo', False)
+        #     if(geo):
+        #         events_data['latitude'] = geo.get('latitude',"no latitude")
+        #         events_data['longitude'] = geo.get('longitude',"no longitude")
+        #     else:
+        #         events_data['latitude'] = "no geo"
+        #         events_data['longitude'] = "no geo"
         result_all_event.append(events_data)
     try:
         #checks if next month calender is present and passes the url to handle_ans_page function
