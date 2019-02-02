@@ -139,6 +139,31 @@ class VNPSTestCase(unittest.TestCase):
         expected = []
         self.assertListEqual(result, expected)
 
+    @httpretty.activate
+    def test_events_schema(self):
+        httpretty.register_uri(method=httpretty.GET,
+                               uri=self.event_website,
+                               status=200,
+                               body=self.event_website_content)
+        httpretty.register_uri(method=httpretty.GET,
+                               uri=self.events_page,
+                               status=200,
+                               body=self.events_page_content)
+        events = get_vnps_events()
+        keys = set().union(*(d.keys() for d in events))
+        schema = {'Do Not Import','Event Name','Event Description','Event Excerpt',
+                  'Event Start Date','Event Start Time','Event End Date','Event End Time',
+                  'Event Time Zone','All Day Event','Hide Event From Event Listings',
+                  'Event Sticky in Month View','Feature Event','Event Venue Name',
+                  'Event Organizer Name(s) or ID(s)','Event Show Map Link',
+                  'Event Show Map','Event Cost','Event Currency Symbol',
+                  'Event Currency Position','Event Category','Event Tags',
+                  'Event Website','Event Featured Image','Event Allow Comments',
+                  'Event Allow Trackbacks and Pingbacks'}
+        result = keys.issubset(schema)
+        expected = True
+        self.assertEqual(result, expected)
+
 if __name__ == '__main__':
     unittest.main()
 
