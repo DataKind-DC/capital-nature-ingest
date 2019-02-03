@@ -71,12 +71,12 @@ def handle_ans_page(soup):
             events_data['Event Organizer Name(s) or ID(s)'] = organizer.get('name',"no organizer name")
         else:
             events_data['Event Organizer Name(s) or ID(s)'] = "no details about the Organizer"
-        events_data['latitude'] = "no location"
-        events_data['longitude'] = "no location"
         # commenting addresss, latitude and longitude fields for now as The WordPress Event plugin doesn't
         # expect these fields, but we might eventually use their Map plugin, which would need those geo fields 
         # events_data['address'] = ' '.join(str(x) for x in con['location']['address'].values())
         # commenting the latitude and longtide fields
+        # events_data['latitude'] = "no location"
+        # events_data['longitude'] = "no location"
         # location = con.get('location', False)
         # if(location):
         #     geo = location.get('geo', False)
@@ -125,4 +125,4 @@ event = {
   'source_name': 'casey_trees'
 }
 # is_local = False
-print(handler(event, {}))
+# print(handler(event, {}))
