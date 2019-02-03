@@ -45,7 +45,10 @@ def handle_ans_page(soup):
                 events_complete_data.add(event.text.strip())
 
     #converts the string to dict
-    events_complete_data = ast.literal_eval(list(events_complete_data)[0])
+    try:
+        events_complete_data = ast.literal_eval(list(events_complete_data)[0])
+    except:
+        return []
 
     #extracts the required fields in the output schema
     result_all_event = []
