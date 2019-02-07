@@ -3,7 +3,7 @@ import bs4
 import httpretty
 import requests
 from lambda_function import handle_ans_page
-from test_fixtures import event_website_content
+from test_fixtures import event_website_content_feb, event_website_content_mar
 
 def exceptionCallback(request, uri, headers):
     '''
@@ -14,8 +14,11 @@ def exceptionCallback(request, uri, headers):
 class CaseyTreesTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.event_website = 'https://caseytrees.org/event/trees-101-2/'
-        self.event_website_content = event_website_content
+        self.event_website_feb = 'https://caseytrees.org/events/2019-02/'
+        self.event_website_mar = 'https://caseytrees.org/events/2019-03/'
+        self.event_website_content_feb = event_website_content_feb
+        self.event_website_content_mar = event_website_content_mar
+        self.maxDiff = None
 
     def tearDown(self):
         self.event_website = None
@@ -24,11 +27,16 @@ class CaseyTreesTestCase(unittest.TestCase):
     @httpretty.activate
     def test_handle_ans_page_success(self):
         httpretty.register_uri(method=httpretty.GET,
-                                            uri=self.event_website,
+                                            uri=self.event_website_feb,
                                             status=200,
-                                            body=self.event_website_content)
+                                            body=self.event_website_content_feb)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.event_website_mar,
+                                            status=200,
+                                            body=self.event_website_content_mar)
 
-        r = requests.get(self.event_website)
+
+        r = requests.get(self.event_website_feb)
         content = r.content
         soup = bs4.BeautifulSoup(content, 'html.parser')
         result = handle_ans_page(soup)
@@ -61,8 +69,8 @@ class CaseyTreesTestCase(unittest.TestCase):
                      'Event Description': '&lt;p&gt;Please note: This is an invite-only event for Casey Trees Advocates.'
                                           ' Volunteers must be able to attend both Part 1: The Discussion and Part 2: '
                                           'The Workshop in order to participate in this tree advocates meeting series. '
-                                          'To register, select tickets for both events.\\u00a0 Part 1: The Discussion '
-                                          'Tuesday, March 5, 2019 6:30-8 pm Join\\u00a0the [&hellip;]&lt;/p&gt;\\n',
+                                          'To register, select tickets for both events. Part 1: The Discussion '
+                                          'Tuesday, March 5, 2019 6:30-8 pm Join the [&hellip;]&lt;/p&gt;\\n',
                      'Event Featured Image': 'https://caseytrees.org/wp-content/uploads/2018/12/P1010719.jpg',
                      'Event Currency Symbol': '$',
                      'Event End Time': '20:00',
@@ -72,10 +80,10 @@ class CaseyTreesTestCase(unittest.TestCase):
     @httpretty.activate
     def test_handle_ans_page_failure(self):
         httpretty.register_uri(method=httpretty.GET,
-                               uri=self.event_website,
+                               uri=self.event_website_feb,
                                status=200,
                                body="getting the wrong data from fetch page")
-        r = requests.get(self.event_website)
+        r = requests.get(self.event_website_feb)
         content = r.content
         soup = bs4.BeautifulSoup(content, 'html.parser')
         result = handle_ans_page(soup)
