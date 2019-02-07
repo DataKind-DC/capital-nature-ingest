@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import csv
 import boto3
+from datetime import datetime
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
@@ -34,6 +35,18 @@ def parse_date_and_time(date_and_time):
     else:
         start_date = dates.strip()
         end_date = dates.strip()
+    if start_time:
+        start_time_obj = datetime.strptime(start_time,'%I:%M %p')
+        start_time = datetime.strftime(start_time_obj, "%H:%M:%S")
+    if end_time:
+        end_time_obj = datetime.strptime(end_time,'%I:%M %p')
+        end_time = datetime.strftime(end_time_obj, "%H:%M:%S")
+    if start_date:
+        start_date_obj = datetime.strptime(start_date, "%A, %B %d, %Y")
+        start_date = datetime.strftime(start_date_obj, "%Y-%m-%d")
+    if end_date:
+        end_date_obj = datetime.strptime(end_date, "%A, %B %d, %Y")
+        end_date = datetime.strftime(end_date_obj, "%Y-%m-%d")
 
     return all_day, start_time, end_time, start_date, end_date
 
@@ -47,7 +60,7 @@ def get_event_venue_and_categories(event_website):
 
     Returns:
         event_venue (str): the event's venue
-        event_tags (str): a comma-delimited list of event tags
+        event_categories (str): a comma-delimited list of event categories
     '''
     try:
         r = requests.get(event_website)
@@ -57,7 +70,7 @@ def get_event_venue_and_categories(event_website):
     soup = BeautifulSoup(content, 'html.parser')
     paras = soup.find_all('p')
     event_venue = ''
-    event_tags = ''
+    event_categories = ''
     for p in paras:
         p_strong = p.find('strong')
         if p_strong:
@@ -67,9 +80,9 @@ def get_event_venue_and_categories(event_website):
             elif p_strong_text == 'Categories':
                 a_tags = p.find_all('a')
                 if a_tags:
-                    event_tags += ", ".join([x.text for x in a_tags])
+                    event_categories += ", ".join([x.get_text() for x in a_tags])
 
-    return event_venue, event_tags
+    return event_venue, event_categories
 
 
 def parse_description_and_location(description_and_location):
@@ -91,10 +104,10 @@ def parse_description_and_location(description_and_location):
         event_venue = description_and_location.find('i').text
     except AttributeError:
         event_venue = None
-    scraped_event_venue, event_tags = get_event_venue_and_categories(event_website)
+    scraped_event_venue, event_categories = get_event_venue_and_categories(event_website)
     event_venue = event_venue if event_venue else scraped_event_venue
 
-    return event_website, event_name, event_venue, event_tags
+    return event_website, event_name, event_venue, event_categories
 
 
 def filter_events(events, categories = []):
@@ -134,8 +147,8 @@ def filter_events(events, categories = []):
     categories_lowered = [x.lower() for x in categories]
     filtered_events = []
     for event in events:
-        event_tags = event['Event Tags']
-        event_categories = [x.strip().lower() for x in event_tags.split(",")]
+        event_categories = event['Event Category']
+        event_categories = [x.strip().lower() for x in event_categories.split(",")]
         if not any(x in event_categories for x in categories_lowered):
             filtered_events.append(event)
 
@@ -171,20 +184,22 @@ def get_vnps_events(categories=[]):
         for row in rows:
             date_and_time, description_and_location = row.find_all('td')
             all_day, start_time, end_time, start_date, end_date = parse_date_and_time(date_and_time)
-            event_website, event_name, event_venue, event_tags = parse_description_and_location(description_and_location)
+            event_website, event_name, event_venue, event_categories = parse_description_and_location(description_and_location)
             event_venue = event_venue if event_venue else ''
-            event_tags = event_tags if event_tags else ''
+            event_categories = event_categories if event_categories else ''
             event = {'Event Start Date': start_date,
                      'Event End Date': end_date,
                      'Event Start Time': start_time,
                      'Event End Time': end_time,
                      'Event Website': event_website,
                      'Event Name': event_name,
+                     'Event Description':'',
                      'Event Venue Name': event_venue,
                      'All Day Event': all_day,
-                     'Event Tags': event_tags,
+                     'Event Category':event_categories,
+                     'Event Cost':'',
                      'Event Currency Symbol':'$',
-                     'Event Time Zone':'Eastern Standard Time',
+                     'Timezone':'America/New_York',
                      'Event Organizer Name(s) or ID(s)': event_venue}
             events.append(event)
     filtered_events = filter_events(events, categories)
