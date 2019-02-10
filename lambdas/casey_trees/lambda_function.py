@@ -5,7 +5,7 @@ import csv
 from datetime import datetime
 import requests
 import json
-
+import pprint
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
@@ -33,8 +33,15 @@ def handle_ans_page(soup):
                 websites.append(column.find('a')['href'])
                 # not sure if this is a good way. to get the exact tags we might have to call the url and get the values
                 # under event tag
-                categoryclasses[column.find('a')['href']] = ast.literal_eval(column['data-tribejson'])\
-                                                            ['categoryClasses'].split(" ")[:2]
+                category_classes_dict = ast.literal_eval(column['data-tribejson'])\
+                                                            ['categoryClasses'].split(" ")
+                event_category_classes=""
+                for each_categoryclasses in category_classes_dict:
+                    if("tribe-events-category-" in each_categoryclasses):
+                        if(event_category_classes != ""):
+                            event_category_classes += ","
+                        event_category_classes += each_categoryclasses.replace("tribe-events-category-","")
+                categoryclasses[column.find('a')['href']] = event_category_classes
 
     #extracts the complete details about events
     events_content = soup.find_all('script',{'type':'application/ld+json'})
