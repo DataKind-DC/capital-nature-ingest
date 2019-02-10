@@ -52,9 +52,9 @@ For example:
 ]
   ```
 
-5. Note that if the code requires any additional libraries (the vnps example only requires `beautifulsoup` and `requests`), you should include them in your directory's requirements.txt.
+4. Note that if the code requires any additional libraries (the vnps example only requires `beautifulsoup` and `requests`), you should include them in your directory's requirements.txt.
 
-6. You can run the code locally by uncommenting the code at the bottom and updating the `event` object to match your source. E.g. for vnps:
+5. You can run the code locally by uncommenting the code at the bottom and updating the `event` object to match your source. E.g. for vnps:
 
   ```python
   # For local testing (it'll write the csv as vnps-results.csv into your working dir)
@@ -74,4 +74,4 @@ You can then open the output csv to see if the column names match our schema and
  
 >You could also do us a huge favor and go one step further by writing some tests. :smile: The [HTTPretty](https://httpretty.readthedocs.io/en/latest/) and [responses](https://github.com/getsentry/responses) libraries are handy when it comes to mocking the content returned by a GET request. You can check out the vnps directory for an example of a full test suite.
 
-7. When you're ready, open a pull request. To build and test a new lambda package I will run `make lambda` in the directory and upload the resulting zip to AWS Lambda for testing.
+6. When you're ready, open a pull request. To build and test a new lambda package I will run `make lambda` in the directory and upload the resulting zip to AWS Lambda for testing.
