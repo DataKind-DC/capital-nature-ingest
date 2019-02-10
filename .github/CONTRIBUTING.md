@@ -6,6 +6,15 @@ We'd love your help! We want to make contributing to this project as easy and tr
 - Submitting a fix
 - Proposing/add new features (like support for a new events source!)
 
+## What to Contribute?!
+There's a spreadsheet of event sources that we need to scrape events data from [here](https://docs.google.com/spreadsheets/d/1znSHrheEjqmb6OhhZ0ADse844A0Qp9RhsApczMGWSKk/edit#gid=1708332455). Use the `Orgs to track (DK Volunteer Assignments)` tab of the sheet.
+
+Each row contains an events source. If there isn't an `owner` in the first column, then we could use your help scraping events from that source! Just be sure to claim that source by adding your name to that column in the sheet.
+
+To learn about how to structure your code and where to add it in the project directory, go [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/lambdas/README.md).
+
+To learn about how to use git to make your contributions, read on!
+
 ## We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), So All Code Changes Happen Through Pull Requests
 Pull requests are the best way to propose changes to the codebase. We use a **Fork and Pull Model**.
 
