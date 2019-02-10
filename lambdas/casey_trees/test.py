@@ -2,8 +2,9 @@ import unittest
 import bs4
 import httpretty
 import requests
-from lambda_function import handle_ans_page
-from test_fixtures import event_website_content_feb, event_website_content_mar
+from unittest.mock import patch, Mock
+from lambda_function import handle_ans_page, get_event_description
+from test_fixtures import event_website_content_feb, event_website_content_mar, event_website_content_trees
 
 def exceptionCallback(request, uri, headers):
     '''
@@ -16,8 +17,10 @@ class CaseyTreesTestCase(unittest.TestCase):
     def setUp(self):
         self.event_website_feb = 'https://caseytrees.org/events/2019-02/'
         self.event_website_mar = 'https://caseytrees.org/events/2019-03/'
+        self.event_website_trees = 'https://caseytrees.org/event/trees-101-2/'
         self.event_website_content_feb = event_website_content_feb
         self.event_website_content_mar = event_website_content_mar
+        self.event_website_content_trees = event_website_content_trees
         self.maxDiff = None
 
     def tearDown(self):
@@ -25,7 +28,9 @@ class CaseyTreesTestCase(unittest.TestCase):
         self.event_website_content = None
 
     @httpretty.activate
-    def test_handle_ans_page_success(self):
+    @patch('lambda_function.get_event_description')
+    def test_handle_ans_page_success(self, mock_get_event_description):
+        mock_get_event_description.return_value = 'different function'
         httpretty.register_uri(method=httpretty.GET,
                                             uri=self.event_website_feb,
                                             status=200,
@@ -48,11 +53,7 @@ class CaseyTreesTestCase(unittest.TestCase):
                      'Event End Date': '2019-02-09',
                      'Event Organizer Name(s) or ID(s)': 'Casey Trees',
                      'Event Venue Name': 'Fort Stanton',
-                     'Event Description': '&lt;p&gt;Do you want to play a greater role in re-treeing D.C.? We need your '
-                                          'help to protect and promote trees in our urban forest! Trees 101 provides a '
-                                          'foundation in tree anatomy, basic tree identification and an overview of how '
-                                          'trees function to provide the benefits we enjoy in the urban forest. The '
-                                          'class will [&hellip;]&lt;/p&gt;\\n',
+                     'Event Description': 'different function',
                      'Event Featured Image': 'https://caseytrees.org/wp-content/uploads/2018/12/a1ed661548bf815eae944860bf897fba.jpg',
                      'Event Currency Symbol': '$',
                      'Event End Time': '15:00',
@@ -66,11 +67,7 @@ class CaseyTreesTestCase(unittest.TestCase):
                      'Event End Date': '2019-03-05',
                      'Event Organizer Name(s) or ID(s)': 'Casey Trees',
                      'Event Venue Name': 'TBD',
-                     'Event Description': '&lt;p&gt;Please note: This is an invite-only event for Casey Trees Advocates.'
-                                          ' Volunteers must be able to attend both Part 1: The Discussion and Part 2: '
-                                          'The Workshop in order to participate in this tree advocates meeting series. '
-                                          'To register, select tickets for both events. Part 1: The Discussion '
-                                          'Tuesday, March 5, 2019 6:30-8 pm Join the [&hellip;]&lt;/p&gt;\\n',
+                     'Event Description': 'different function',
                      'Event Featured Image': 'https://caseytrees.org/wp-content/uploads/2018/12/P1010719.jpg',
                      'Event Currency Symbol': '$',
                      'Event End Time': '20:00',
@@ -89,6 +86,9 @@ class CaseyTreesTestCase(unittest.TestCase):
         result = handle_ans_page(soup)
         expected = []
         self.assertEqual(result, expected)
+
+
+
 
 if __name__ == '__main__':
     unittest.main()
