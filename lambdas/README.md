@@ -1,32 +1,37 @@
 # Capital Nature Ingest Lambda Packages
+We're using AWS Lambda to run the scripts and push the output (csvs) to an S3 bucket.
 
 ## How to Create a New Package
+So you've claimed an event source for yourself [here](https://docs.google.com/spreadsheets/d/1znSHrheEjqmb6OhhZ0ADse844A0Qp9RhsApczMGWSKk/edit#gid=1708332455) and are ready to write some code. That's great!
 
-1. Create a new branch with your name and the Capital Nature source, e.g. `alexidev-casey_trees`
-2. Make a new directory in this `lambdas/` directory and name it after the source
-3. Copy the contents of the ans directory to your new directory
+Here's what to do (assuming you've followed the directions in [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) and have already forked the repo and made a new feature branch)
+
+1. Make a new directory in this `lambdas/` directory and name it after the event source (e.g. `lambdas/montgomery/`)
+2. Copy the contents of a previously finished directory to your new directory:
 
   Example:
   ```bash
-  git checkout -b alexidev-casey_trees
-  mkdir casey-trees && cp -r ans/ casey-trees/
+  mkdir your-event-source && cp -r vnps/ your-event-source/
   ```
 
-4. Update the `lambda_function.py` code to handle your source. The code in the ans example includes a function `handle_ans_page` which should be replaced with code specific to the source you are working on, but the output object should have the same structure. The output schema we are using at the moment is a list of dicts, with each dict representing an event. The keys in the dict should match the values found [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_schema.md).
+3. Update the `lambda_function.py` code to handle your event source. The code in the vnps example includes a function `vnps_handler` which follows [the format that AWS Lambda needs](https://docs.aws.amazon.com/lambda/latest/dg/python-programming-model-handler-types.html).
 
+Within your lambda handler, you should call the function(s) that create your event source's output. That output needs to be a list of dicts, with each dict representing a single event. The key:value pairs in each event dict should match the schema defined [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_schema.md).
+
+For example:
   ```json
 [
     {
         "Event Cost": "$5 fee due upon registration.",
         "Event Currency Symbol": "$",
-        "Event Description": "Families age 3 and up. Register children and adults; children must be accompanied by a registered adult. We\u2019ll use all sorts of cookies, marshmallows and toppings for the most decadent campfire s\u2019mores ever! For information: 703-228-6535. Meet at Long Branch Nature Center. Registration Required: Resident registration begins at 8:00am on 11/13/2018. Non-resident registration begins at 8:00am on 11/14/2018.",
+        "Event Description": "Families age 3 and up. Register children and adults; children must be accompanied by a registered adult. We use all sorts of cookies, marshmallows and toppings for the most decadent campfire mores ever! For information: 703-228-6535. Meet at Long Branch Nature Center. Registration Required: Resident registration begins at 8:00am on 11/13/2018. Non-resident registration begins at 8:00am on 11/14/2018.",
         "Event End Date": "2019-01-26T00:00:00",
         "Event End Time": "19:00:00",
         "Event Name": "Ooey Gooey Campfire",
-        "Event Organizer Name(s) or ID(s)": "Long Branch Nature Center at Glencarlyn Park",
+        "Event Organizers": "Long Branch Nature Center at Glencarlyn Park",
         "Event Start Date": "2019-01-26T00:00:00",
         "Event Start Time": "18:00:00",
-        "Event Time Zone": "America/New_York",
+        "Timezone": "America/New_York",
         "Event Venue Name": "Long Branch Nature Center at Glencarlyn Park",
         "Event Website": "https://parks.arlingtonva.us/events/ooey-gooey-campfire/"
     },
@@ -37,31 +42,36 @@
         "Event End Date": "2019-01-27T00:00:00",
         "Event End Time": "12:00:00",
         "Event Name": "Ft. Bennett Park Invasive Plant Removal",
-        "Event Organizer Name(s) or ID(s)": "Dawson Terrace",
+        "Event Organizers": "Dawson Terrace",
         "Event Start Date": "2019-01-27T00:00:00",
         "Event Start Time": "10:00:00",
-        "Event Time Zone": "America/New_York",
+        "Timezone": "America/New_York",
         "Event Venue Name": "Dawson Terrace",
         "Event Website": "https://environment.arlingtonva.us/events/rip-ft-bennett-park-2019-01-27/"
     }
 ]
   ```
 
-5. Note that if the code requires any additional libraries (right now the ans example only requires beautifulsoup and requests), you should include them in your directory's requirements.txt.
+4. Note that if the code requires any additional libraries (the vnps example only requires `beautifulsoup` and `requests`), you should include them in your directory's requirements.txt.
 
-6. You can test the code locally by uncommenting the code at the bottom and updating the `event` object to match your source. E.g. for casey trees:
+5. You can run the code locally by uncommenting the code at the bottom and updating the `event` object to match your source. E.g. for vnps:
 
   ```python
+  # For local testing (it'll write the csv as vnps-results.csv into your working dir)
   event = {
-    'url': 'https://caseytrees.org/events/',
-    'source_name': 'casey-trees'
+    'url': 'https://vnps.org',
+    'source_name': 'vnps'
   }
+  is_local = True
+  vnps_handler(event, None)
   ```
+  
+ ```bash
+  python lambda_function.py
+ ```
+
+You can then open the output csv to see if the column names match our schema and if the values are of the appropriate type (e.g. event start and end times being formatted in 24hr time as '00:50:00' for 12:50 AM or '21:30:00' for 9:30 PM)
  
-   ```bash
-    python lambda_handler.py
-   ```
->You could also do us a huge favor and write some unit tests. :smile: The [HTTPretty](https://httpretty.readthedocs.io/en/latest/) or [responses](https://github.com/getsentry/responses) libraries are handy when it comes to mocking the content returned by a get request.
+>You could also do us a huge favor and go one step further by writing some tests. :smile: The [HTTPretty](https://httpretty.readthedocs.io/en/latest/) and [responses](https://github.com/getsentry/responses) libraries are handy when it comes to mocking the content returned by a GET request. You can check out the vnps directory for an example of a full test suite.
 
-
-7. Open a pull request. To build and test a new lambda package I will run `make lambda` in the directory and upload the resulting zip to AWS Lambda for testing.
+6. When you're ready, open a pull request. To build and test a new lambda package I will run `make lambda` in the directory and upload the resulting zip to AWS Lambda for testing.
