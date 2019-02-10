@@ -712,18 +712,19 @@ commonspot.csPage.subsiteRoot = '/planyourvisit/';
 //-->
 </script>
 </body></html>'''
-schematize_nps_event_expected = [{'Event Name': 'Loss of Greatness: The Death of Presidents',
+schematize_nps_event_expected = [{
+  'Event Name': 'Loss of Greatness: The Death of Presidents',
   'Event Description': 'Walk to the presidential memorials and learn how these legendary leaders met their demises. Hear the heroic, heartwarming, tragic and sometimes gruesome details of Presidential deaths.',
   'Event Start Date': '2019-01-26',
-  'Event Start Time': '10:00 AM',
+  'Event Start Time': '10:00:00',
   'Event End Date': '2019-01-26',
-  'Event End Time': '12:00 PM',
+  'Event End Time': '12:00:00',
   'All Day Event': False,
   'Event Venue Name': 'National Mall and Memorial Parks, Lincoln Memorial (Bottom of the Stairs by the Plaza)',
   'Event Organizer Name(s) or ID(s)': 'National Mall and Memorial Parks',
-  'Event Time Zone': 'America/New_York',
-  'Event Cost': 'free',
+  'Timezone': 'America/New_York',
+  'Event Cost': '0',
   'Event Currency Symbol': '$',
-  'Event Tags': 'Lincoln Memorial, Presidents',
+  'Event Category': 'Lincoln Memorial, Presidents',
   'Event Website': 'https://www.nps.gov/planyourvisit/event-details.htm?id=691C8DCE-BFF3-B3A6-3D05AF87066F5FDD',
   'Event Featured Image': None}]
