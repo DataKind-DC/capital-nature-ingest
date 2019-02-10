@@ -40,7 +40,7 @@ class CaseyTreesTestCase(unittest.TestCase):
         content = r.content
         soup = bs4.BeautifulSoup(content, 'html.parser')
         result = handle_ans_page(soup)
-        expected = [{'Event Tags': ['tribe-events-category-care', 'tribe-events-category-class'],
+        expected = [{'Event Tags': 'care,class',
                      'Event Website': 'https://caseytrees.org/event/trees-101-2/',
                      'Event Name': 'Trees 101', 'Event Cost': '0',
                      'Event Start Date': '2019-02-09',
@@ -57,7 +57,7 @@ class CaseyTreesTestCase(unittest.TestCase):
                      'Event Currency Symbol': '$',
                      'Event End Time': '15:00',
                      'Event Start Time': '10:30'},
-                    {'Event Tags': ['tribe-events-category-advocate', 'tribe-events-category-class'],
+                    {'Event Tags': 'advocate,class',
                      'Event Website': 'https://caseytrees.org/event/tree-advocates-meetings-parts-1-2-budget-hearings-discussion-workshop/',
                      'Event Name': 'Tree Advocates Meetings Parts 1 &#038; 2: Budget Hearings Discussion &#038; Workshop',
                      'Event Cost': 'Donation',
