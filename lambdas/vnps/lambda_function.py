@@ -200,7 +200,7 @@ def get_vnps_events(categories=[]):
                      'Event Cost':'',
                      'Event Currency Symbol':'$',
                      'Timezone':'America/New_York',
-                     'Event Organizer Name(s) or ID(s)': event_venue}
+                     'Event Organizers': event_venue}
             events.append(event)
     filtered_events = filter_events(events, categories)
 

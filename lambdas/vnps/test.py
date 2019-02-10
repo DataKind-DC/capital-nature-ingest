@@ -162,7 +162,7 @@ class VNPSTestCase(unittest.TestCase):
                      'Event Category': 'Field Trips, Piedmont',
                      'Event Currency Symbol':'$',
                      'Timezone':'America/New_York',
-                     'Event Organizer Name(s) or ID(s)':'Blandy Experimental Farm, Boyce Virginia'}]
+                     'Event Organizers':'Blandy Experimental Farm, Boyce Virginia'}]
         self.assertListEqual(result, expected)
 
     @httpretty.activate
@@ -196,7 +196,7 @@ class VNPSTestCase(unittest.TestCase):
         keys = set().union(*(d.keys() for d in events))
         schema = {'Event Name','Event Description','Event Start Date','Event Start Time',
                   'Event End Date','Event End Time','Timezone','All Day Event',
-                  'Event Venue Name','Event Organizer Name(s) or ID(s)',
+                  'Event Venue Name','Event Organizers',
                   'Event Cost','Event Currency Symbol',
                   'Event Category','Event Website'}
         result = schema.issubset(keys)
@@ -222,7 +222,7 @@ class VNPSTestCase(unittest.TestCase):
                   'Event Start Date','Event Start Time','Event End Date','Event End Time',
                   'Timezone','All Day Event','Hide Event From Event Listings',
                   'Event Sticky in Month View','Feature Event','Event Venue Name',
-                  'Event Organizer Name(s) or ID(s)','Event Show Map Link',
+                  'Event Organizers','Event Show Map Link',
                   'Event Show Map','Event Cost','Event Currency Symbol',
                   'Event Currency Position','Event Category','Event Tags',
                   'Event Website','Event Featured Image','Allow Comments',
