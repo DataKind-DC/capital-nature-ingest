@@ -397,7 +397,7 @@ class VNPSTestCase(unittest.TestCase):
                     val = event[k]
                     vals.append(val)
         try:
-            result = [datetime.strptime(x, "%H:%M:%S") for x in vals]
+            result = [datetime.strptime(x, "%H:%M:%S") for x in vals if x != '']
         except ValueError:
             result = None
             raise EventTimeFormatError
