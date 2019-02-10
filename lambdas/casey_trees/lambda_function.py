@@ -5,7 +5,6 @@ import csv
 from datetime import datetime
 import requests
 import json
-import pprint
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
