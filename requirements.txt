@@ -1,4 +1,4 @@
-BeautifulSoup4
-requests
-extruct
-geocoder
+beautifulsoup4>=4.6.3
+requests==2.19.1
+httpretty==0.9.6
+

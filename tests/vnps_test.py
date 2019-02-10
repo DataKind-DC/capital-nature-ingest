@@ -4,11 +4,16 @@ import httpretty
 import requests
 from datetime import datetime
 import re
-from lambda_function import parse_date_and_time, get_event_venue_and_categories, parse_description_and_location, \
-                            filter_events, get_vnps_events
-from test_fixtures import date_and_time_tag, date_and_time_tag_all_day, event_website_content, \
-                          description_and_location_tag, description_and_location_tag_no_venue, \
-                          events, filtered_events, events_page_content
+import sys
+from os import path
+sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
+from lambdas.vnps.lambda_function import parse_date_and_time, get_event_venue_and_categories,\
+                                         parse_description_and_location, filter_events, \
+                                         get_vnps_events
+from fixtures.vnps_test_fixtures import date_and_time_tag, date_and_time_tag_all_day, \
+                                        event_website_content, description_and_location_tag, \
+                                        description_and_location_tag_no_venue, events, \
+                                        filtered_events, events_page_content
 
 url_regex = re.compile(
             r'^(?:http|ftp)s?://' # http:// or https://
