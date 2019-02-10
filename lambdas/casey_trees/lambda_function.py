@@ -73,7 +73,7 @@ def handle_ans_page(soup):
         events_data['Event Time Zone'] = "America/New_York"
         events_data['Event Venue Name'] = con['location']['name']
         events_data['Event Featured Image'] = con.get('image','no image')
-        events_data['Event Description'] = con.get('description','no description')
+        events_data['Event Description'] = get_event_description(events_data['Event Website'])
         events_data['Event Cost'] = con['offers']['price']
         events_data['Event Currency Symbol'] = "$"
         organizer = con.get('organizer', False)
@@ -109,6 +109,14 @@ def handle_ans_page(soup):
     return result_all_event
 
 
+
+def get_event_description(url):
+    page = fetch_page({'url': url})
+    soup = bs4.BeautifulSoup(page, 'html.parser')
+    events_url = soup.find('meta', {'property': 'og:description'})['content']
+    return events_url
+
+
 def handler(event, context):
     url = event['url']
     source_name = event['source_name']
@@ -129,6 +137,7 @@ def handler(event, context):
     )
     return json.dumps(event_output, indent=2)
 
+
 # For local testing
 event = {
   'url': url,
@@ -136,3 +145,4 @@ event = {
 }
 # is_local = False
 # print(handler(event, {}))
+
