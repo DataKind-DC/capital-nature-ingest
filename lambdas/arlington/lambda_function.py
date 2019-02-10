@@ -95,6 +95,18 @@ def parse_event_name(event_name):
 
     return event_name
 
+def schematize_date(event_date):
+    '''
+    Converts a date string like '2019-01-25T00:00:00' into '2019-01-25'
+    '''
+    try:
+        datetime_obj = datetime.strptime(event_date, "%Y-%m-%dT%H:%M:%S")
+        schematized_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
+    except ValueError:
+        return ''
+    
+    return schematized_date
+
 def schematize_events(event_items):
     '''
     Parses the events API output so that it conforms to our schema
@@ -113,21 +125,21 @@ def schematize_events(event_items):
         if 'Task Force' in event_name or 'Forestry Commission' in event_name:
             continue
         event_description = html_textraction(event_item['eventDsc'])
-        start_date = event_item['eventStartDate']
-        end_date = event_item['eventEndDate']
+        start_date = schematize_date(event_item['eventStartDate'])
+        end_date = schematize_date(event_item['eventEndDate'])
         start_time = event_item['eventStartTime']
         end_time = event_item['eventEndTime']
         event_website = event_item['eventUrlText']
         if event_item['freeOfChargeInd']:
-            event_cost = 'Free'
+            event_cost = '0'
         elif event_item['eventCostDsc']:
-            event_cost = event_item['eventCostDsc']
+            event_cost_desc = event_item['eventCostDsc']
+            event_cost = ''.join(s for s in event_cost_desc if s.isdigit())
         else:
-            event_cost =  "See event website."
+            event_cost =  ''
         event_venue = html_textraction(event_item['locationName'])
         if event_venue == 'Earth Products Yard' or 'Library' in event_venue:
             continue
-
         event = {'Event Start Date':start_date,
                  'Event End Date': end_date,
                  'Event Start Time':start_time,
@@ -137,9 +149,11 @@ def schematize_events(event_items):
                  'Event Venue Name':event_venue,
                  'Event Cost':event_cost,
                  'Event Description':event_description,
-                 'Event Time Zone':'America/New_York',
-                 'Event Organizer Name(s) or ID(s)':event_venue,
-                 'Event Currency Symbol':'$'}
+                 'Timezone':'America/New_York',
+                 'Event Organizers':event_venue,
+                 'Event Currency Symbol':'$',
+                 'All Day Event':False,
+                 'Event Category':''}
         events.append(event)
 
     return events
