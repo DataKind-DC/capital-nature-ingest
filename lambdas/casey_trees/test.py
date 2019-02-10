@@ -87,7 +87,18 @@ class CaseyTreesTestCase(unittest.TestCase):
         expected = []
         self.assertEqual(result, expected)
 
-
+    @httpretty.activate
+    def test_get_event_description(self):
+        httpretty.register_uri(method=httpretty.GET,
+                               uri=self.event_website_trees,
+                               status=200,
+                               body=self.event_website_content_trees)
+        result = get_event_description(self.event_website_trees)
+        expected = 'Do you want to play a greater role in re-treeing D.C.? We need your help to protect and promote ' \
+                   'trees in our urban forest! Trees 101 provides a foundation in tree anatomy, basic tree ' \
+                   'identification and an overview of how trees function to provide the benefits we enjoy in the ' \
+                   'urban forest. The class will …'
+        self.assertEqual(result, expected)
 
 
 if __name__ == '__main__':
