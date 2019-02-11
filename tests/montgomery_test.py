@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import patch, Mock
 import httpretty
 import requests
-import responses
 from bs4 import BeautifulSoup
 import sys
 from os import path
