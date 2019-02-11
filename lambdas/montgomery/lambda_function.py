@@ -55,9 +55,9 @@ def parse_event_date(event_date):
     '''
     date_times = re.sub('  +',' ', event_date)
     split_date = date_times.split()
-    start_date = " ".join(split_date[:4])
-    start_time = split_date[-2]
-    end_time = split_date[-1]
+    start_date = schematize_event_date(" ".join(split_date[:4]))
+    start_time = schematize_event_time(split_date[-2])
+    end_time = schematize_event_time(split_date[-1])
 
     return start_date, start_time, end_time
 
@@ -122,6 +122,30 @@ def parse_event_website(event_website):
 
     return event_description, event_cost
 
+def schematize_event_date(event_date):
+    '''
+    Converts and event date like 'Sat. March 23rd, 2019' to '2019-03-23'
+    '''
+    event_date = re.sub(r'(\d)(st|nd|rd|th)', r'\1', event_date)
+    try:
+        datetime_obj = datetime.strptime(event_date, "%a. %B %d, %Y")
+        schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
+    except ValueError:
+        schematized_event_date = ''
+    
+    return schematized_event_date
+
+def schematize_event_time(event_time):
+    '''
+    Converts an event time like '9:00am' to 24hr time like '09:00:00'
+    '''
+    try:
+        datetime_obj = datetime.strptime(event_time, "%I:%M%p")
+        schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
+    except ValueError:
+        schematized_event_time = ''
+
+    return schematized_event_time
 
 def parse_event_item(event_item, event_category):
     '''
@@ -136,7 +160,7 @@ def parse_event_item(event_item, event_category):
     '''
     href = event_item.find('a', href=True)['href']
     if 'https' not in href:
-        event_website = f'https://www.montgomeryparks.org/events{href}'
+        event_website = f'https://www.montgomeryparks.org{href}'
     else:
         event_website = href
     event_description, event_cost = parse_event_website(event_website)
@@ -148,6 +172,7 @@ def parse_event_item(event_item, event_category):
         event_name = event_item.find('span',{'class':'event-name'}).get_text().strip()
         event_venue = ", ".join([i.get_text() for i in event_item.find_all('span',{'class':'location'})])
         event = {'Event Start Date': start_date,
+                 'Event End Date': start_date, #assuing events are just one day
                  'Event Start Time': start_time,
                  'Event End Time': end_time,
                  'Event Website': event_website,
@@ -156,9 +181,10 @@ def parse_event_item(event_item, event_category):
                  'Event Cost': event_cost,
                  'Event Description': event_description,
                  'Event Category': event_category,
-                 'Event Time Zone': 'Eastern Standard Time',
-                 'Event Organizer Name(s) or ID(s)': event_venue,
-                 'Event Currency Symbol':'$'}
+                 'Timezone': 'America/New_York',
+                 'Event Organizers': event_venue,
+                 'Event Currency Symbol':'$',
+                 'All Day Event':False}
 
     return event
 
