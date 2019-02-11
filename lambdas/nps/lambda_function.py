@@ -3,6 +3,7 @@ import os
 import re
 import csv
 from bs4 import BeautifulSoup
+from datetime import datetime
 import boto3
 
 bucket = 'aimeeb-datasets-public'
@@ -118,6 +119,23 @@ def get_specific_event_location(event_id):
 
     return specific_event_location
 
+def schematize_time(event_time):
+    '''
+    Converts a time string like '10:00 AM' to 24hr time like '10:00:00'
+
+    Parameters:
+        event_time (str): e.g. '10:00 AM'
+    
+    Returns:
+        formatted_event_time (str): e.g. '10:00:00'
+    '''
+    try:
+        datetime_obj = datetime.strptime(event_time, "%H:%M %p")
+    except ValueError:
+        return ''
+    formatted_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
+    
+    return formatted_event_time
 
 def schematize_nps_event(nps_event):
     '''
@@ -136,8 +154,8 @@ def schematize_nps_event(nps_event):
         for date in dates:
             times = nps_event['times']
             for time in times:
-                event_start_time = time['timeStart']
-                event_end_time = time['timeEnd']
+                event_start_time = schematize_time(time['timeStart'])
+                event_end_time = schematize_time(time['timeEnd'])
                 event_name = nps_event['title']
                 try:
                     event_description = BeautifulSoup(nps_event['description'], "html.parser").find("p").text
@@ -150,7 +168,7 @@ def schematize_nps_event(nps_event):
                 event_organization = nps_event['organizationName']
                 event_organization = event_organization if len(event_organization) > 0 else nps_event['parkFullName']
                 event_organization = re.sub('  +', ' ', event_organization)
-                event_cost = 'free' if nps_event['isFree'] else nps_event['feeInfo']
+                event_cost = '0' if nps_event['isFree'] else nps_event['feeInfo']
                 _ = nps_event['category']
                 event_tags = ", ".join(nps_event['tags'])
                 regResURL = nps_event['regResURL']
@@ -184,10 +202,10 @@ def schematize_nps_event(nps_event):
                                             "All Day Event":event_all_day,
                                             "Event Venue Name":venue_name,
                                             "Event Organizer Name(s) or ID(s)":event_organization,
-                                            "Event Time Zone":'America/New_York',
+                                            "Timezone":'America/New_York',
                                             "Event Cost":event_cost,
                                             "Event Currency Symbol":"$",
-                                            "Event Tags":event_tags,
+                                            "Event Category":event_tags,
                                             "Event Website":event_website,
                                             "Event Featured Image":event_image
                                           }

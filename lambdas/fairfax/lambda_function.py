@@ -2,17 +2,23 @@ from bs4 import BeautifulSoup
 import requests
 import csv
 import re
+from datetime import datetime
 import boto3
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
 
 def get_event_cost(soup):
+    currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
     b_tags = soup.find_all('b')
     for b in b_tags:
         if 'Cost' in b.text:
             event_cost = b.nextSibling.strip()
-            return event_cost
+            event_cost = re.findall(currency_re, event_cost)
+            if len(event_cost) > 0:
+                event_cost = event_cost[0].split(".")[0].replace("$",'')
+                event_cost = ''.join(s for s in event_cost if s.isdigit())
+                return event_cost
     return ''
 
 
@@ -22,8 +28,10 @@ def get_event_date_from_event_website(event_website):
         event_date = '/'.join([url_tail[i:i+2] for i in range(0, len(url_tail), 2)])
         event_date_year = f'20{event_date[-2:]}'
         event_date = event_date[:-2] + event_date_year
+        event_date = schematize_event_date(event_date)
         return event_date
-    return
+    else:
+        return
 
 
 def get_event_start_date(soup, event_website):
@@ -41,6 +49,7 @@ def get_event_start_date(soup, event_website):
         if len(split_date[0]) == 1:
             split_date[0] = f'0{split_date[0]}'
         start_date = "/".join(split_date)
+    start_date = schematize_event_date(start_date)
     return start_date
 
 
@@ -50,7 +59,7 @@ def get_start_times(soup):
     for calendar_description in calendar_descriptions:
         start_time = calendar_description.get_text().strip().split(",")[0]
         start_times.append(start_time)
-
+    start_times = [schematize_event_time(x) for x in start_times]
     return start_times
 
 
@@ -127,6 +136,36 @@ def parse_event_website(event_website):
 
     return event_cost, event_description, event_venue, start_date
 
+def schematize_event_date(event_date):
+    '''
+    Converts a date string like '01/27/2019' to '2019-01-27'
+    '''
+    try:
+        datetime_obj = datetime.strptime(event_date, "%m/%d/%Y")
+        schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
+    except ValueError:
+        #format might be like 012619
+        try:
+            datetime_obj = datetime.strptime(event_date, "%m%d%y")
+            schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
+        except ValueError:
+            schematized_event_date = ''
+    
+    return schematized_event_date
+
+
+def schematize_event_time(event_time):
+    '''
+    Converts a time string like '1:30PM' to 24hr time like '13:30:00'
+    '''
+    try:
+        datetime_obj = datetime.strptime(event_time, "%I:%M%p")
+        schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
+    except ValueError:
+        schematized_event_time = ''
+    
+    return schematized_event_time
+
 
 def get_fairfax_events():
     r = requests.get('https://www.fairfaxcounty.gov/parks/park-events-calendar')
@@ -149,15 +188,19 @@ def get_fairfax_events():
         event_cost, event_description, event_venue, start_date = parse_event_website(event_website)
         if event_cost and event_description:
             event = {'Event Start Date': start_date,
+                     'Event End Date': start_date, #same as start date
                      'Event Start Time': start_time,
+                     'Event End Time':'',#there are never any end times
                      'Event Website': event_website,
                      'Event Name': event_name,
                      'Event Venue Name': event_venue,
                      'Event Cost': event_cost,
                      'Event Description': event_description,
                      'Event Currency Symbol':'$',
-                     'Event Time Zone':'America/New_York',
-                     'Event Organizer Name(s) or ID(s)': event_venue}
+                     'Timezone':'America/New_York',
+                     'Event Organizers': event_venue,
+                     'Event Category':'',
+                     'All Day Event':False} #doesn't seem like any events are all day
             events.append(event)
 
     return events
