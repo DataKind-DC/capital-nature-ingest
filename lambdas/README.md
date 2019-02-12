@@ -19,7 +19,7 @@ Here's what to do (assuming you've followed the directions in [CONTRIBUTING](htt
 Within your lambda handler, you should call the function(s) that create your event source's output. That output needs to be a list of dicts, with each dict representing a single event. The key:value pairs in each event dict should match the schema defined [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_schema.md).
 
 For example:
-  ```json
+  ```python
 [
     {
         "Event Cost": "$5 fee due upon registration.",
