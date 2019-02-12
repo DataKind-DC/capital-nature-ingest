@@ -4,9 +4,9 @@ We're using AWS Lambda to run the scripts and push the output (csvs) to an S3 bu
 ## How to Create a New Package
 So you've claimed an event source for yourself [here](https://docs.google.com/spreadsheets/d/1znSHrheEjqmb6OhhZ0ADse844A0Qp9RhsApczMGWSKk/edit#gid=1708332455) and are ready to write some code. That's great!
 
-Here's what to do (assuming you've followed the directions in [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) and have already forked the repo and made a new feature branch)
+Here's what to do (assuming you've followed the directions in [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) and have already forked the repo and made a new feature branch):
 
-1. Make a new directory in this `lambdas/` directory and name it after the event source (e.g. `lambdas/montgomery/`)
+1. Make a new directory in this `lambdas/` directory and name it after your event source (e.g. `lambdas/montgomery/`)
 2. Copy the contents of a previously finished directory to your new directory:
 
   Example:
@@ -33,7 +33,8 @@ For example:
         "Event Start Time": "18:00:00",
         "Timezone": "America/New_York",
         "Event Venue Name": "Long Branch Nature Center at Glencarlyn Park",
-        "Event Website": "https://parks.arlingtonva.us/events/ooey-gooey-campfire/"
+        "Event Website": "https://parks.arlingtonva.us/events/ooey-gooey-campfire/",
+        "All Day Event: False
     },
     {
         "Event Cost": "See event website.",
@@ -47,14 +48,15 @@ For example:
         "Event Start Time": "10:00:00",
         "Timezone": "America/New_York",
         "Event Venue Name": "Dawson Terrace",
-        "Event Website": "https://environment.arlingtonva.us/events/rip-ft-bennett-park-2019-01-27/"
+        "Event Website": "https://environment.arlingtonva.us/events/rip-ft-bennett-park-2019-01-27/",
+        "All Day Event":False
     }
 ]
   ```
 
-4. Note that if the code requires any additional libraries (the vnps example only requires `beautifulsoup` and `requests`), you should include them in your directory's requirements.txt.
+4. Note that if the code requires any additional libraries (the vnps example only requires `beautifulsoup` and `requests`), you should include them in your directory's requirements.txt. Add those requirements to the root requirements.txt file (CircleCI uses that).
 
-5. You can run the code locally by uncommenting the code at the bottom and updating the `event` object to match your source. E.g. for vnps:
+5. You should structure your code so that uncommenting a few lines and changing the gloal variable `is_local` create a csv locally. You can see an example of this in the vnps module:
 
   ```python
   # For local testing (it'll write the csv as vnps-results.csv into your working dir)
@@ -66,12 +68,19 @@ For example:
   vnps_handler(event, None)
   ```
   
+  Then running the following:
+  
  ```bash
   python lambda_function.py
  ```
+produces a csv of the output.
 
 You can then open the output csv to see if the column names match our schema and if the values are of the appropriate type (e.g. event start and end times being formatted in 24hr time as '00:50:00' for 12:50 AM or '21:30:00' for 9:30 PM)
  
->You could also do us a huge favor and go one step further by writing some tests. :smile: The [HTTPretty](https://httpretty.readthedocs.io/en/latest/) and [responses](https://github.com/getsentry/responses) libraries are handy when it comes to mocking the content returned by a GET request. You can check out the vnps directory for an example of a full test suite.
+>You could also do us a huge favor and go one step further by writing some tests in the tests directory. :smile: The [HTTPretty](https://httpretty.readthedocs.io/en/latest/) and [responses](https://github.com/getsentry/responses) libraries are handy when it comes to mocking the content returned by a GET request.
 
-6. When you're ready, open a pull request. To build and test a new lambda package I will run `make lambda` in the directory and upload the resulting zip to AWS Lambda for testing.
+6. When you're ready, open a pull request. When reviewing your PR, we'll want to see:
+ - if the tests you wrote pass
+ - if your code runs locally, producing a csv
+ - that you've got all of the required fields
+ - that your data types are correct
