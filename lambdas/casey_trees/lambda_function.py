@@ -3,6 +3,7 @@ import boto3
 import bs4
 import csv
 from datetime import datetime
+import re
 import requests
 import json
 import unicodedata
@@ -18,6 +19,19 @@ def fetch_page(options):
     html_doc = requests.get(url).content
     return html_doc
 
+def parse_event_cost(event_cost):
+    if event_cost == "Donation":
+        event_cost = event_cost.replace("Donation","0")
+        return event_cost
+    else:
+        currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
+        event_cost = re.findall(currency_re, event_cost)
+        if len(event_cost) > 0:
+            event_cost = event_cost[0].split(".")[0].replace("$",'')
+            event_cost = ''.join(s for s in event_cost if s.isdigit())
+            return event_cost
+        else:
+            return ''
 
 def handle_ans_page(soup):
     events_url = soup.find_all('td')
@@ -62,27 +76,28 @@ def handle_ans_page(soup):
     for con in events_complete_data:
         events_data = {}
         # some html string is present in event name default adding this to format it
-        events_name_data = bs4.BeautifulSoup(con.get('name','no name'))
+        events_name_data = bs4.BeautifulSoup(con.get('name',''))
         events_data['Event Name'] = events_name_data.get_text()
-        events_data['Event Website'] = con.get('url','no url')
-        events_data['Event Tags'] = categoryclasses.get(events_data['Event Website'],'no tags')
+        events_data['Event Website'] = con.get('url','')
+        events_data['Event Category'] = categoryclasses.get(events_data['Event Website'],'')
         start = datetime.strptime(con['startDate'][:-6],"%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime(con['endDate'][:-6],"%Y-%m-%dT%H:%M:%S")
         events_data['Event Start Date'] = start.strftime('%Y-%m-%d')
         events_data['Event End Date'] = end.strftime('%Y-%m-%d')
-        events_data['Event Start Time'] = start.strftime('%H:%M')
-        events_data['Event End Time'] = end.strftime('%H:%M')
-        events_data['Event Time Zone'] = "America/New_York"
+        events_data['Event Start Time'] = start.strftime('%H:%M:%S')
+        events_data['Event End Time'] = end.strftime('%H:%M:%S')
+        events_data['Timezone'] = "America/New_York"
         events_data['Event Venue Name'] = con['location']['name']
-        events_data['Event Featured Image'] = con.get('image','no image')
+        events_data['Event Featured Image'] = con.get('image','')
         events_data['Event Description'] = unicodedata.normalize('NFKD', get_event_description(events_data['Event Website']))
-        events_data['Event Cost'] = con['offers']['price']
+        events_data['Event Cost'] = parse_event_cost(con['offers']['price'])
         events_data['Event Currency Symbol'] = "$"
+        events_data['All Day Event'] = False
         organizer = con.get('organizer', False)
         if(organizer):
-            events_data['Event Organizer Name(s) or ID(s)'] = organizer.get('name',"no organizer name")
+            events_data['Event Organizers'] = organizer.get('name',"")
         else:
-            events_data['Event Organizer Name(s) or ID(s)'] = "no details about the Organizer"
+            events_data['Event Organizers'] = ""
         # commenting addresss, latitude and longitude fields for now as The WordPress Event plugin doesn't
         # expect these fields, but we might eventually use their Map plugin, which would need those geo fields 
         # events_data['address'] = ' '.join(str(x) for x in con['location']['address'].values())
