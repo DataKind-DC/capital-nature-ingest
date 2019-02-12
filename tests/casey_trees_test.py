@@ -3,8 +3,11 @@ import bs4
 import httpretty
 import requests
 from unittest.mock import patch, Mock
-from lambda_function import handle_ans_page, get_event_description
-from test_fixtures import event_website_content_feb, event_website_content_mar, event_website_content_trees
+import sys
+from os import path
+sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
+from lambdas.casey_trees.lambda_function import handle_ans_page, get_event_description
+from fixtures.casey_test_fixtures import event_website_content_feb, event_website_content_mar, event_website_content_trees
 
 def exceptionCallback(request, uri, headers):
     '''
@@ -28,7 +31,7 @@ class CaseyTreesTestCase(unittest.TestCase):
         self.event_website_content = None
 
     @httpretty.activate
-    @patch('lambda_function.get_event_description')
+    @patch('lambdas.casey_trees.lambda_function.get_event_description')
     def test_handle_ans_page_success(self, mock_get_event_description):
         mock_get_event_description.return_value = 'different function'
         httpretty.register_uri(method=httpretty.GET,
@@ -60,7 +63,7 @@ class CaseyTreesTestCase(unittest.TestCase):
                      'Event Start Time': '10:30'},
                     {'Event Tags': 'advocate,class',
                      'Event Website': 'https://caseytrees.org/event/tree-advocates-meetings-parts-1-2-budget-hearings-discussion-workshop/',
-                     'Event Name': 'Tree Advocates Meetings Parts 1 &#038; 2: Budget Hearings Discussion &#038; Workshop',
+                     'Event Name': 'Tree Advocates Meetings Parts 1 & 2: Budget Hearings Discussion & Workshop',
                      'Event Cost': 'Donation',
                      'Event Start Date': '2019-03-05',
                      'Event Time Zone': 'America/New_York',
