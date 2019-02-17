@@ -22,33 +22,33 @@ For example:
   ```python
 [
     {
-        "Event Cost": "$5 fee due upon registration.",
+        "Event Cost": "5",
         "Event Currency Symbol": "$",
-        "Event Description": "Families age 3 and up. Register children and adults; children must be accompanied by a registered adult. We use all sorts of cookies, marshmallows and toppings for the most decadent campfire mores ever! For information: 703-228-6535. Meet at Long Branch Nature Center. Registration Required: Resident registration begins at 8:00am on 11/13/2018. Non-resident registration begins at 8:00am on 11/14/2018.",
-        "Event End Date": "2019-01-26T00:00:00",
+        "Event Description": "This event is awesome.",
+        "Event End Date": "2019-01-26",
         "Event End Time": "19:00:00",
-        "Event Name": "Ooey Gooey Campfire",
-        "Event Organizers": "Long Branch Nature Center at Glencarlyn Park",
-        "Event Start Date": "2019-01-26T00:00:00",
+        "Event Name": "foo",
+        "Event Organizers": "baz",
+        "Event Start Date": "2019-01-26",
         "Event Start Time": "18:00:00",
         "Timezone": "America/New_York",
-        "Event Venue Name": "Long Branch Nature Center at Glencarlyn Park",
-        "Event Website": "https://parks.arlingtonva.us/events/ooey-gooey-campfire/",
+        "Event Venue Name": "fiz",
+        "Event Website": "https://foo.bar.com",
         "All Day Event: False
     },
     {
-        "Event Cost": "See event website.",
+        "Event Cost": "0",
         "Event Currency Symbol": "$",
-        "Event Description": "Do you like working outside? Join community volunteers in protecting the local environment from invasive plants. This is a continuing project on the fourth Sunday of each month to reclaim the natural area around Ft. Bennett Park from invasive plants. If you have your own garden gloves and tools, please bring them along. Training and additional tools will be provided. Be sure to come dressed for work, wear long pants, long sleeves, and perhaps a hat. You may also want to bring along a water bottle. These events are for volunteers ages 9 to adult. If you are under 18 years old, a parent or guardian will have to sign our volunteer sign-in sheet before you can participate. Training will be provided at the events. There is no need to RSVP unless you are interested in bringing a group of more than five volunteers. Meet in the parking lot behind Dawson Terrace Community Center.",
-        "Event End Date": "2019-01-27T00:00:00",
+        "Event Description": "Yet another event",
+        "Event End Date": "2019-01-27",
         "Event End Time": "12:00:00",
-        "Event Name": "Ft. Bennett Park Invasive Plant Removal",
-        "Event Organizers": "Dawson Terrace",
-        "Event Start Date": "2019-01-27T00:00:00",
+        "Event Name": "foo",
+        "Event Organizers": "bar",
+        "Event Start Date": "2019-01-27",
         "Event Start Time": "10:00:00",
         "Timezone": "America/New_York",
-        "Event Venue Name": "Dawson Terrace",
-        "Event Website": "https://environment.arlingtonva.us/events/rip-ft-bennett-park-2019-01-27/",
+        "Event Venue Name": "baz",
+        "Event Website": "https://www.foo.com",
         "All Day Event":False
     }
 ]
@@ -77,9 +77,51 @@ produces a csv of the output.
 
 You can then open the output csv to see if the column names match our schema and if the values are of the appropriate type (e.g. event start and end times being formatted in 24hr time as '00:50:00' for 12:50 AM or '21:30:00' for 9:30 PM)
  
->You could also do us a huge favor and go one step further by writing some tests in the tests directory. :smile: The [HTTPretty](https://httpretty.readthedocs.io/en/latest/) and [responses](https://github.com/getsentry/responses) libraries are handy when it comes to mocking the content returned by a GET request.
+6. Once you're confident in the output, add some unit/integration tests to the tests directory. At a minimum, you should have a test that asserts the result of your script being equal to what's expected by the schema. For example:
 
-6. When you're ready, open a pull request. When reviewing your PR, we'll want to see:
+```python
+import unittest
+from lambdas.myevent.lambda_function import get_my_events
+import sys
+from os import path
+sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
+
+class MyEventsTestCase(unittest.TestCase):
+    '''
+    Test cases for My Events
+    '''
+    
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_get_my_events(self):
+        result = get_my_events()
+        expected = [{
+                    "Event Cost": "0",
+                    "Event Currency Symbol": "$",
+                    "Event Description": "foo",
+                    "Event End Date": "2019-01-27",
+                    "Event End Time": "12:00:00",
+                    "Event Name": "baz",
+                    "Event Organizers": "buz",
+                    "Event Start Date": "2019-01-27",
+                    "Event Start Time": "10:00:00",
+                    "Timezone": "America/New_York",
+                    "Event Venue Name": "Dawson Terrace",
+                    "Event Website": "https://www.fizbuz.com",
+                    "All Day Event":False}]
+        self.assertCountEqual(result, expected)
+        
+if __name__ == '__main__':
+    unittest.main()
+```
+
+>NOTE: For any functions that make requests, you should mock the content of a response ([HTTPretty](https://httpretty.readthedocs.io/en/latest/) and [responses](https://github.com/getsentry/responses) are handy here). Doing so prevents our tests from relying on the ephemeral content of website, which is beyond our control.
+
+7. When you're ready, open a pull request. When reviewing your PR, we'll want to see:
  - if the tests you wrote pass
  - if your code runs locally, producing a csv
  - that you've got all of the required fields
