@@ -22,14 +22,14 @@ Pull requests are the best way to propose changes to the codebase. We use a **Fo
 ### Short Version
 Before you start to work on something, fork this repo, clone the repository, and then make a new branch for your feature.
 
-As you implement changes, commit them to your local branch, ideally following the [style guide](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md). When you're ready, push that branch to GitHub and then make a pull request. Then await review and, if necessary, make push more changes.
+As you implement changes, commit them to your local branch, ideally following our [style guide](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md). When you're ready, push that branch to GitHub and then make a pull request. Then await review and, if necessary, push some more changes.
 
 ### Long Version
 #### Writing your Code
 
 1. Fork the repository
 
-Go to the project's [homepage](https://github.com/DataKind-DC/capital-nature-ingest) and hit the `Fork` button.
+Go to the project's [homepage](https://github.com/DataKind-DC/capital-nature-ingest) and hit the `Fork` button. This creates a copy of the repository in your GitHub account.
 
 2. `clone` the repository
 
@@ -51,7 +51,7 @@ You want your master branch to reflect only production-ready code, so create a f
 git checkout -b shiny-new-feature
 ```
 
-This changes your working directory to the shiny-new-feature branch. Keep any changes in this branch specific to one bug or feature so it is clear what the branch brings to capital-nature-ingest.
+This changes your working directory to the shiny-new-feature branch. Keep any changes in this branch specific to one bug/feature so it is clear what the branch brings to capital-nature-ingest.
 
 When creating this branch, make sure your master branch is up to date with the latest upstream master version. To update your local master branch, you can do:
 
@@ -84,13 +84,13 @@ Doing ‘git status’ again should give something like:
 
 5. `commit` your changes to your local branch
 
-Commit your changes to your local repository with an explanatory message. Use the `-m` flag if you don't want to include a full commit body. See the [style guide](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md) for details on how to format your commit messags.
+Once you've added files, you're ready to commit your changes to your local repository with an explanatory message. Use the `-m` flag if you don't want to include a full commit body. See the [style guide](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md) for details on how to format your commit messags.
 
 ```bash
-git commit -m "ENH: add scraper for awesome new source"
+git commit -m "ENH: add scraper for awesome new source (#123)"
 ```
 
-6. When you want your changes to appear publicly on your GitHub page, push your forked feature branch’s commits
+6. When you want your changes to appear publicly on your GitHub page, push your forked feature-branch’s commits
 
 ```bash
 git push origin shiny-new-feature
@@ -133,7 +133,7 @@ This request then goes to the repository maintainers, and they will review the c
 #### Updating a Pull Request
 Sometimes, you'll need to update your pull request.
 
-If there's a gray bar saying "This pull request cannot be automatically merged.", then you've got some updates to make. That's because the file(s) that your pull request modifies was/were updated in the meantime. To avoid a conflict on the remote, GitHub won't let you automatically merge into master. This means you need to update your Pull Request by merging the origin's master branch into your feature branch. In short, you need to “merge upstream master” in your branch:
+If there's a gray bar saying "This pull request cannot be automatically merged.", then you've got some updates to make. That's because the file(s) that your pull request modifies was/were updated in the meantime. To avoid a conflict on the remote, GitHub won't let you automatically merge into master. This means you need to update your Pull Request by merging the upstream's master branch into your feature branch. In short, you need to “merge upstream master” in your branch:
 
 ```bash
 git checkout shiny-new-feature
@@ -141,11 +141,11 @@ git fetch origin
 git merge origin/master
 ```
 
-If there are no conflicts (or they could be fixed automatically), a file with a default commit message will open, and you can simply save and quit this file.
+If there are no conflicts (or if they could be fixed automatically), a file with a default commit message will open, and you can simply save and quit this file.
 
 If there are merge conflicts, you'll need to solve those conflicts. See [this](https://help.github.com/articles/resolving-a-merge-conflict-using-the-command-line/) for an explanation on how to do this. Once the conflicts are fixed and merged and the files where the conflicts were solved are added, you can run `git commit` to save those fixes.
 
-If you have uncommitted changes at the moment you want to update the branch with master, you will need to stash them prior to updating (see the [stash docs](https://git-scm.com/book/en/v2/Git-Tools-Stashing-and-Cleaning)). This will effectively store your changes and they can be reapplied after updating.
+>If you have uncommitted changes at the moment you want to update the branch with master, you will need to stash them prior to updating (see the [stash docs](https://git-scm.com/book/en/v2/Git-Tools-Stashing-and-Cleaning)). This will effectively store your changes and they can be reapplied after updating.
 
 After your feature branch has been updated locally, you can now update your pull request by pushing to the branch on GitHub:
 ```bash
@@ -153,7 +153,7 @@ git push origin shiny-new-feature
 ```
 
 #### Deleting your Branch (optional)
-Once your pull request is accepted, you’ll probably want to get rid of the feature branch. You can do that to the remote master right within the pull request page. To delete the branch locally, you need to pull the remote master down into your local master. Then git will know it's safe to delete your branch.
+Once your pull request is accepted, you’ll probably want to get rid of the feature branch. You can do that to the remote master right within the pull request page. To delete the branch locally, you need to first pull the remote master down into your local master. Then git will know it's safe to delete your branch.
 
 ```bash
 git checkout master
