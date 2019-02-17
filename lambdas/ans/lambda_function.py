@@ -50,7 +50,6 @@ def schematize_event_date(event_date):
     '''
     Converts a date like '2019-12-2' to '2019-12-02'
     '''
-    event_date = '2019-2-2'
     datetime_obj = datetime.strptime(event_date, "%Y-%m-%d")
     schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
     schematized_event_date
