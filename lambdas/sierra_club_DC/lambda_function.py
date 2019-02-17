@@ -7,6 +7,8 @@ import re
 import requests
 import json
 import unicodedata
+from selenium import webdriver
+import pprint
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
@@ -14,12 +16,15 @@ url="https://www.sierraclub.org/dc/calendar"
 
 
 def fetch_page(options):
+    driver = webdriver.Chrome("/Applications/chromedriver")
     url = options['url']
-    html_doc = requests.get(url).content
+    driver.get(url)
+    html_doc = driver.execute_script("return document.documentElement.outerHTML")
+    driver.quit()
     return html_doc
 
 def handle_ans_page(soup):
-    events_url = soup
+    events_url = soup.find_all('tr')
     return events_url
 
 
@@ -29,7 +34,7 @@ def handler(event, context):
     page = fetch_page({'url': url})
     soup = bs4.BeautifulSoup(page, 'html.parser')
     event_output = handle_ans_page(soup)
-    print (event_output)
+    pprint.pprint(event_output)
     # filename = '{0}-results.csv'.format(source_name)
     # if not is_local:
     #     with open('/tmp/{0}'.format(filename), mode = 'w') as f:
