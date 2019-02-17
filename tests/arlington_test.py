@@ -117,8 +117,7 @@ class ArlingtonTestCase(unittest.TestCase):
     def test_schematize_events(self):
         result = schematize_events(page_two_uri_event_items)
         expected = schematized_page_two_event_items
-        for r, e in zip(result, expected):
-            self.assertDictEqual(r, e)
+        self.assertCountEqual(result, expected)
 
     def test_events_schema_required_fields(self):
         '''
