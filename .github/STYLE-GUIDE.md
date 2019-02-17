@@ -17,13 +17,6 @@
   $ git checkout -b data_fix
   ```
 
-* It's also a fine idea to use issue #'s in the branch name. For example:
-
-  ```shell
-  # GitHub issue #15
-  $ git checkout -b issue-15
-  ```
-
 * Use *hyphens* to separate words.
 
 * Delete your branch from the upstream repository after it's merged, unless
@@ -37,9 +30,12 @@
   ```
 
 ### Commits
-The following defines how a commit message should be structured. Please reference the relevant GitHub issues in your commit message using GH1234 or #1234. Either style is fine.
+In projects with lots of collaborators, it's helpful if commit messages are structured similarly.
 
- - an appropriately prefixed (see below) subject line with < 80 chars and the relevant issues(s)
+We suggest:
+
+ - an appropriately prefixed (see below) subject line with < 80 chars and the relevant issues(s) referenced
+   - you can reference an issue using `GH1234` or `#1234`. Either style is fine.
  - one blank line.
  - optionally, a commit message body.
 
@@ -52,10 +48,11 @@ For the subject line, we'd prefer it if you prefixed the line with one of these 
  - BLD: Updates to the build process/scripts
  - PERF: Performance improvement
  - CLN: Code cleanup
+ - FIX: Fixng small things like typos (similar to CLN)
 
-Here's an example:
+Here's an example with just a subject line:
 ```bash
-git commit -m "TST: add test cases for foo (#1)"
+git commit -m "TST: add schema test cases for foo (#1)"
 ```
 
 ## Merging
