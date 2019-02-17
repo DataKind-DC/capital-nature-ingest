@@ -7,10 +7,12 @@ import requests
 import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from lambdas.nps.lambda_function import get_park_events, get_nps_events, get_specific_event_location, \
-                            schematize_nps_event, schematize_time, main
-from fixtures.nps_test_fixtures import get_park_events_expected, nama_events_json, event_page_content, \
-                          schematize_nps_event_expected
+from lambdas.nps.lambda_function import get_park_events, get_nps_events, \
+                                        get_specific_event_location, \
+                                        schematize_nps_event, schematize_time, main
+from fixtures.nps_test_fixtures import get_park_events_expected, nama_events_json, \
+                                       event_page_content, \
+                                       schematize_nps_event_expected
 
 url_regex = re.compile(
             r'^(?:http|ftp)s?://' # http:// or https://
@@ -77,8 +79,7 @@ class NPSTestCase(unittest.TestCase):
                                content_type = "application/json")
         result = get_park_events('nama')
         expected = get_park_events_expected
-        for r, e in zip(result, expected):
-            self.assertDictEqual(r, e)
+        self.assertCountEqual(result, expected)
 
     @httpretty.activate
     def test_get_park_events_404(self):
@@ -101,8 +102,7 @@ class NPSTestCase(unittest.TestCase):
                                content_type = "application/json")
         result = get_nps_events(park_codes = ['nama'])
         expected = get_park_events_expected
-        for r, e in zip(result, expected):
-            self.assertDictEqual(r, e)
+        self.assertCountEqual(result, expected)
 
     @httpretty.activate
     def test_get_specific_event_location(self):
@@ -247,7 +247,7 @@ class NPSTestCase(unittest.TestCase):
                 val = event[k]
                 vals.append(val)
         try:
-            result = [datetime.strptime(x, "%Y-%m-%d") for x in vals]
+            result = [datetime.strptime(x, "%Y-%m-%d") for x in vals if x != '']
         except ValueError:
             result = None
             raise EventDateFormatError
