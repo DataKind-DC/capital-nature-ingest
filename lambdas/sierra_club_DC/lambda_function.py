@@ -1,15 +1,12 @@
-import ast
 import boto3
 import bs4
 import csv
-from datetime import datetime
 import re
 import requests
 import json
 import unicodedata
 from selenium import webdriver
 import pprint
-import time
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
