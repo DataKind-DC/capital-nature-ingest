@@ -4,12 +4,11 @@ import csv
 import re
 import requests
 import json
-import unicodedata
-from selenium import webdriver
 import pprint
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
+# The value ent/6300,5015 is hardcoded in the html and the last numeric part might be unix timestamp
 url="https://www.sierraclub.org/sc/proxy?url=https://act.sierraclub.org/events/services/apexrest/eventfeed/ent/6300,5051&_=1548294791086"
 
 
