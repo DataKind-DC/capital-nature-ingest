@@ -142,9 +142,9 @@ def handle_fona_eventbrite_api():
             'Event Organizers': 'Friends of the National Arboretum',
             'Event Website': data['url'],
             'Event Start Date': start.strftime('%Y-%m-%d'),
-            'Event Start Time': start.strftime('%I:%M %p'),
+            'Event Start Time': start.strftime('%H:%M:%S'),
             'Event End Date': end.strftime('%Y-%m-%d'),
-            'Event End Time': end.strftime('%I:%M %p'),
+            'Event End Time': end.strftime('%H:%M:%S'),
             'Event Venue Name': data['location']['name'],
         }
         event_output.append(event_data)
