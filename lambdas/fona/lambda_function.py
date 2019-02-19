@@ -149,13 +149,21 @@ def handle_fona_eventbrite_api():
         longitude = float(data['geo']['lon'])
         event_data = {
             'Event Name': data['name'],
-            'Event Organizers': 'Friends of the National Arboretum',
-            'Event Website': data['url'],
+            'Event Description': data['description'].strip('\r'),
+        # TODO: replace newlines with double for WP formatting
             'Event Start Date': start.strftime('%Y-%m-%d'),
             'Event Start Time': start.strftime('%H:%M:%S'),
             'Event End Date': end.strftime('%Y-%m-%d'),
             'Event End Time': end.strftime('%H:%M:%S'),
+            'All Day Event': "False",
+            'Timezone': "America/New_York",
             'Event Venue Name': venue_name,
+            'Event Organizers': 'Friends of the National Arboretum',
+            'Event Cost': "",  # TODO: parse description for cost
+            'Event Currency Symbol': "$",
+            'Event Category': "",  # TODO: parse event data for optional category fields if present
+            'Event Website': data['url'],
+            'Event Featured Image': data['image']
         }
         event_output.append(event_data)
     return event_output
