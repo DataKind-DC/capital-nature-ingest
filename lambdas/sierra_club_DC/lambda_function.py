@@ -4,6 +4,7 @@ import csv
 import re
 import requests
 import json
+from datetime import datetime
 import pprint
 
 bucket = 'aimeeb-datasets-public'
@@ -17,6 +18,21 @@ def fetch_page(options):
     html_doc = requests.get(url).content
     return html_doc
 
+
+def schematize_event_time(event_time):
+    '''
+    Converts a time string like '1:30 pm' to 24hr time like '13:30:00'
+    '''
+    try:
+        datetime_obj = datetime.strptime(event_time, "%I:%M %p")
+        schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
+    except ValueError:
+        schematized_event_time = ''
+
+    return schematized_event_time
+
+
+
 def handle_ans_page(events):
     events_list = []
 
@@ -25,9 +41,9 @@ def handle_ans_page(events):
         events_data['Event Name'] = event.get('eventName','')
         events_data['Event Description'] = event.get('description', '')
         events_data['Event Start Date'] = event.get('startDate','')
-        events_data['Event Start Time'] = event.get('startTime','')
+        events_data['Event Start Time'] = schematize_event_time(event.get('startTime',''))
         events_data['Event End Date'] = event.get('endDate','')
-        events_data['Event End Time'] = event.get('endTime','')
+        events_data['Event End Time'] = schematize_event_time(event.get('endTime',''))
         events_data['All Day Event'] = False
         events_data['Timezone'] = "America/New_York"
         organizer_list = event.get('leaderList','')
