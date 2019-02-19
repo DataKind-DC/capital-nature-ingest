@@ -139,7 +139,7 @@ def handle_fona_eventbrite_api():
         longitude = float(data['geo']['lon'])
         event_data = {
             'Event Name': data['name'],
-            'Event Organizer Name(s) or ID(s)': 'Friends of the National Arboretum',
+            'Event Organizers': 'Friends of the National Arboretum',
             'Event Website': data['url'],
             'Event Start Date': start.strftime('%Y-%m-%d'),
             'Event Start Time': start.strftime('%I:%M %p'),
@@ -175,10 +175,10 @@ def handler(event, context):
     return json.dumps(event_output, indent=2)
 
 # For local testing
-# if __name__=="__main__":
-#     event = {
-#         'url': f'https://www.eventbriteapi.com/v3/events/search/?token={EVENTBRITE_TOKEN}&organizer.id={FONA_EVENTBRITE_ORG_ID}&',
-#         'source_name': 'fona'
-#     }
-#     is_local = True
-#     print(handler(event, {}))
+if __name__ == "__main__":
+    event = {
+        'url': f'https://www.eventbriteapi.com/v3/events/search/?token={EVENTBRITE_TOKEN}&organizer.id={FONA_EVENTBRITE_ORG_ID}&',
+        'source_name': 'fona'
+    }
+    is_local = True
+    print(handler(event, {}))
