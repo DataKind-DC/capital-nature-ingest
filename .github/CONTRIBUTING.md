@@ -7,7 +7,7 @@ We'd love your help! We want to make contributing to this project as easy and tr
 - Proposing/add new features (like support for a new events source!)
 
 ## What to Contribute?!
-There's a table of event sources that we need to scrape events data from [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_sources.md). Use the `Orgs to track (DK Volunteer Assignments)` tab of the sheet.
+There's a table of event sources that we need to scrape events data from [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_sources.md).
 
 Each row contains an events source. If there isn't an `owner` in the first column, then we could use your help scraping events from that source! Just be sure to claim that source by adding your name to that column in the sheet.
 
