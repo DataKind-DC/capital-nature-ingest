@@ -124,6 +124,15 @@ def fetch_page(options):
     html_doc = requests.get(url).content
     return html_doc
 
+
+def parse_venue_name(name):
+    if name == "United States National Arboretum":
+        return name
+    elif name == "24th & R St NE / National Arboretum":
+        return "National Arboretum"
+    else:
+        return name
+
 # Create an EventbriteParser object, parse API, and convert to
 def handle_fona_eventbrite_api():
     fona_ingester = EventbriteIngester(FONA_EVENTBRITE_ORG_ID)
@@ -134,6 +143,7 @@ def handle_fona_eventbrite_api():
         start = datetime.datetime.strptime(data['startDate'], '%Y-%m-%dT%H:%M:%SZ')
         end = datetime.datetime.strptime(data['endDate'], '%Y-%m-%dT%H:%M:%SZ')
         # Note: no address, latitude, or longitude fields in the current calendar schema...
+        venue_name = parse_venue_name(data['location']['name'])
         venueAddress = f"{data['location']['streetAddress']} {data['location']['addressLocality']}, {data['location']['addressRegion']} {data['location']['postalCode']}, USA"
         latitude = float(data['geo']['lat'])
         longitude = float(data['geo']['lon'])
@@ -145,7 +155,7 @@ def handle_fona_eventbrite_api():
             'Event Start Time': start.strftime('%H:%M:%S'),
             'Event End Date': end.strftime('%Y-%m-%d'),
             'Event End Time': end.strftime('%H:%M:%S'),
-            'Event Venue Name': data['location']['name'],
+            'Event Venue Name': venue_name,
         }
         event_output.append(event_data)
     return event_output
