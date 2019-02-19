@@ -11,10 +11,10 @@
 
   ```shell
   # good
-  $ git checkout -b xml-to-json
+  $ git checkout -b new-event-source
 
   # bad - too vague
-  $ git checkout -b data_fix
+  $ git checkout -b update-event
   ```
 
 * Use *hyphens* to separate words.
