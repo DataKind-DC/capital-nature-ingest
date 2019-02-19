@@ -2,7 +2,7 @@
 We're using AWS Lambda to run the scripts and push the output (csvs) to an S3 bucket.
 
 ## How to Create a New Package
-So you've claimed an event source for yourself [here](https://docs.google.com/spreadsheets/d/1znSHrheEjqmb6OhhZ0ADse844A0Qp9RhsApczMGWSKk/edit#gid=1708332455) and are ready to write some code. That's great!
+So you've claimed an event source for yourself [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_sources.md) and are ready to write some code. That's great!
 
 Here's what to do (assuming you've followed the directions in [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) and have already forked the repo and made a new feature branch):
 
