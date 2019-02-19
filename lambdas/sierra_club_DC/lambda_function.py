@@ -5,6 +5,7 @@ import re
 import requests
 import json
 from datetime import datetime
+import unicodedata
 import pprint
 
 bucket = 'aimeeb-datasets-public'
@@ -32,6 +33,12 @@ def schematize_event_time(event_time):
     return schematized_event_time
 
 
+def encode_event_description(event_description):
+    '''
+    removes if there are any special characters in the description
+    '''
+
+    return unicodedata.normalize('NFKD', event_description)
 
 def handle_ans_page(events):
     events_list = []
@@ -39,7 +46,7 @@ def handle_ans_page(events):
     for event in events:
         events_data = {}
         events_data['Event Name'] = event.get('eventName','')
-        events_data['Event Description'] = event.get('description', '')
+        events_data['Event Description'] = encode_event_description(event.get('description', ''))
         events_data['Event Start Date'] = event.get('startDate','')
         events_data['Event Start Time'] = schematize_event_time(event.get('startTime',''))
         events_data['Event End Date'] = event.get('endDate','')
