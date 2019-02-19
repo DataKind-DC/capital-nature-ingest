@@ -40,6 +40,19 @@ def encode_event_description(event_description):
 
     return unicodedata.normalize('NFKD', event_description)
 
+
+def schematize_event_date(event_date):
+    '''
+    Converts a date like '2019-12-2' to '2019-12-02'
+    '''
+    try:
+        datetime_obj = datetime.strptime(event_date, "%Y-%m-%d")
+        schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
+    except ValueError:
+        schematized_event_date = ''
+
+    return schematized_event_date
+
 def handle_ans_page(events):
     events_list = []
 
@@ -47,9 +60,9 @@ def handle_ans_page(events):
         events_data = {}
         events_data['Event Name'] = event.get('eventName','')
         events_data['Event Description'] = encode_event_description(event.get('description', ''))
-        events_data['Event Start Date'] = event.get('startDate','')
+        events_data['Event Start Date'] = schematize_event_date(event.get('startDate',''))
         events_data['Event Start Time'] = schematize_event_time(event.get('startTime',''))
-        events_data['Event End Date'] = event.get('endDate','')
+        events_data['Event End Date'] = schematize_event_date(event.get('endDate',''))
         events_data['Event End Time'] = schematize_event_time(event.get('endTime',''))
         events_data['All Day Event'] = False
         events_data['Timezone'] = "America/New_York"
