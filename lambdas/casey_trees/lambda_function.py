@@ -76,7 +76,7 @@ def handle_ans_page(soup):
     for con in events_complete_data:
         events_data = {}
         # some html string is present in event name default adding this to format it
-        events_name_data = bs4.BeautifulSoup(con.get('name',''), features="lxml")
+        events_name_data = bs4.BeautifulSoup(con.get('name',''), 'html.parser')
         events_data['Event Name'] = events_name_data.get_text()
         events_data['Event Website'] = con.get('url','')
         events_data['Event Category'] = categoryclasses.get(events_data['Event Website'],'')
