@@ -163,10 +163,10 @@ def handler(event, context):
     
 
 # For local testing
-event = {
-  'url': url,
-  'source_name': 'casey_trees'
-}
-is_local = True
-handler(event, None)
+#event = {
+#  'url': url,
+#  'source_name': 'casey_trees'
+#}
+#is_local = True
+#handler(event, None)
 
