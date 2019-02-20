@@ -16,7 +16,7 @@ try:
     NPS_KEY = os.environ['NPS_KEY']
 except KeyError:
     #if it's not an env var, then we might be testing
-    NPS_KEY = 'testing123'
+    NPS_KEY = input("Enter your NPS API key:")
 
 
 def get_park_events(park_code, limit=1000):
@@ -201,7 +201,7 @@ def schematize_nps_event(nps_event):
                                             "Event End Time":event_end_time,
                                             "All Day Event":event_all_day,
                                             "Event Venue Name":venue_name,
-                                            "Event Organizer Name(s) or ID(s)":event_organization,
+                                            "Event Organizers":event_organization,
                                             "Timezone":'America/New_York',
                                             "Event Cost":event_cost,
                                             "Event Currency Symbol":"$",
@@ -225,8 +225,7 @@ def main():
     events = []
     for nps_event in nps_events:
         schematized_nps_events = schematize_nps_event(nps_event)
-        for schematized_nps_event in schematized_nps_events:
-            events.append(schematized_nps_event)
+        events.extend(schematized_nps_events)
 
     return events
 
@@ -259,9 +258,9 @@ def nps_handler(event, context):
                 writer.writerow(nps_event)
 
 # For local testing (it'll write the csv as nps-results.csv into your working dir)
-# event = {
+#event = {
 #   'url': 'https://nps.gov',
 #   'source_name': 'nps'
 # }
-# is_local = True
-# nps_handler(event,None)
+#is_local = True
+#nps_handler(event,None)

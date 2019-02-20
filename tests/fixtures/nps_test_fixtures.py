@@ -721,7 +721,7 @@ schematize_nps_event_expected = [{
   'Event End Time': '12:00:00',
   'All Day Event': False,
   'Event Venue Name': 'National Mall and Memorial Parks, Lincoln Memorial (Bottom of the Stairs by the Plaza)',
-  'Event Organizer Name(s) or ID(s)': 'National Mall and Memorial Parks',
+  'Event Organizers': 'National Mall and Memorial Parks',
   'Timezone': 'America/New_York',
   'Event Cost': '0',
   'Event Currency Symbol': '$',
