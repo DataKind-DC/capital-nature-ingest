@@ -2,6 +2,8 @@
 
 [Capital Nature](http://capitalnature.org/) is hosted on WordPress (WP). The site is using a WP events plugin to populate a calendar with the events we scrape. However, that plugin expects our event data to follow a certain schema, which we document here.
 
+> *Although **latitude** and **longitude** aren't in this table, please capture this data (if possible) when you scrape a page (just comment that part of the code out afterwards). That's because we might want to eventually use that geo-data to creata an events map!*
+
 **Required fields are bolded**
 
 ## Schema
