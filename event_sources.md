@@ -16,7 +16,7 @@ If you want to claim working on one of the event sources, update this doc by add
 ||Building Bridges Across the River (BBAR)|http://www.thearcdc.org/events/upcoming||||
 |Sri, Kira|Casey Trees|https://caseytrees.org/events|Y||Y|
 |Stefan|City Blossoms|http://cityblossoms.org/calendar|||WIP|
-|Stefan|DC Audubon Society|http://cityblossoms.org/calendar||Events are listed on the right side of the main site. They appear to use Eventbrite for their events.|WIP|
+|Stefan|DC Audubon Society|https://www.eventbrite.com/o/dc-audubon-10726377705||Events are listed on the right side of the main site. They appear to use Eventbrite for their events.|WIP|
 ||DUG Network|http://dugnetwork.org/events/||||
 ||Dumbarton Oaks Park Conservancy|https://dopark.org/volunteer/||||
 ||Earth Conservation Corps|https://www.earthconservationcorps.org/events-1||||
