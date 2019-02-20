@@ -19,7 +19,7 @@ If you want to claim working on one of the event sources, update this doc by add
 |Stefan|DC Audubon Society|https://www.eventbrite.com/o/dc-audubon-10726377705||Events are listed on the right side of the main site. They appear to use Eventbrite for their events.|WIP|
 ||DUG Network|http://dugnetwork.org/events/||||
 ||Dumbarton Oaks Park Conservancy|https://dopark.org/volunteer/||||
-||Earth Conservation Corps|https://www.earthconservationcorps.org/events-1||||
+|Melissa|Earth Conservation Corps|https://www.earthconservationcorps.org/events-1||||
 |Scott|Fairfax County|https://fairfaxcounty.gov/parks/park-events-calendar|Y||Y|
 |Sri, Kira|Friends of Kenilworth Aquatic Gardens|https://www.eventbrite.com/o/friends-of-kenilworth-aquatic-gardens-8632128868||They appear to use Evenbrite as their events page.|WIP|
 ||Little Falls Watershed Alliance|https://www.earthconservationcorps.org/events-1|https://www.lfwa.org/events|||
