@@ -103,7 +103,7 @@ class NPSTestCase(unittest.TestCase):
         keys = set().union(*(d.keys() for d in event))
         schema = {'Event Name','Event Description','Event Start Date','Event Start Time',
                   'Event End Date','Event End Time','Timezone','All Day Event',
-                  'Event Venue Name','Event Organizer Name(s) or ID(s)',
+                  'Event Venue Name','Event Organizers',
                   'Event Cost','Event Currency Symbol',
                   'Event Category','Event Website'}
         result = schema.issubset(keys)
@@ -119,7 +119,7 @@ class NPSTestCase(unittest.TestCase):
                   'Event Start Date','Event Start Time','Event End Date','Event End Time',
                   'Timezone','All Day Event','Hide Event From Event Listings',
                   'Event Sticky in Month View','Feature Event','Event Venue Name',
-                  'Event Organizer Name(s) or ID(s)','Event Show Map Link',
+                  'Event Organizers','Event Show Map Link',
                   'Event Show Map','Event Cost','Event Currency Symbol',
                   'Event Currency Position','Event Category','Event Tags',
                   'Event Website','Event Featured Image','Allow Comments',
