@@ -13,7 +13,7 @@ If you want to claim working on one of the event sources, update this doc by add
 ||Anacostia Watershed Society|https://www.anacostiaws.org/events-calendar.html|||
 |Scott|Arlington County|https://environment.arlingtonva.us/events/|Y||Y|
 |Aimee|Audubon Naturalist|https://anshome.org/events-calendar/|Y||Y|
-||Building Bridges Across the River (BBAR)|http://www.thearcdc.org/events/upcoming||||
+|An|Building Bridges Across the River (BBAR)|http://www.thearcdc.org/events/upcoming||||
 |Sri, Kira|Casey Trees|https://caseytrees.org/events|Y||Y|
 |Stefan|City Blossoms|http://cityblossoms.org/calendar|||WIP|
 |Stefan|DC Audubon Society|https://www.eventbrite.com/o/dc-audubon-10726377705||Events are listed on the right side of the main site. They appear to use Eventbrite for their events.|WIP|
