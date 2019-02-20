@@ -76,7 +76,7 @@ def handle_ans_page(soup):
     for con in events_complete_data:
         events_data = {}
         # some html string is present in event name default adding this to format it
-        events_name_data = bs4.BeautifulSoup(con.get('name',''))
+        events_name_data = bs4.BeautifulSoup(con.get('name',''), features="lxml")
         events_data['Event Name'] = events_name_data.get_text()
         events_data['Event Website'] = con.get('url','')
         events_data['Event Category'] = categoryclasses.get(events_data['Event Website'],'')
@@ -141,25 +141,32 @@ def handler(event, context):
     soup = bs4.BeautifulSoup(page, 'html.parser')
     event_output = handle_ans_page(soup)
     filename = '{0}-results.csv'.format(source_name)
+    fieldnames = list(event_output[0].keys())
     if not is_local:
         with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = event_output[0].keys())
+            writer = csv.DictWriter(f, fieldnames = fieldnames)
             writer.writeheader()
-            [writer.writerow(event) for event in event_output]
-    s3 = boto3.resource('s3')
-    s3.meta.client.upload_file(
-      '/tmp/{0}'.format(filename),
-      bucket,
-      'capital-nature/{0}'.format(filename)
-    )
-    return json.dumps(event_output, indent=2)
-
+            for event in event_output:
+                writer.writerow(event)
+        s3 = boto3.resource('s3')
+        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
+                                    bucket,
+                                    'capital-nature/{0}'.format(filename)
+                                    )
+    else:
+        print(event_output)
+        with open(filename, mode = 'w') as f:
+            writer = csv.DictWriter(f, fieldnames = fieldnames)
+            writer.writeheader()
+            for event in event_output:
+                writer.writerow(event)
+    
 
 # For local testing
 event = {
   'url': url,
   'source_name': 'casey_trees'
 }
-# is_local = False
-# print(handler(event, {}))
+is_local = True
+handler(event, None)
 
