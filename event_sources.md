@@ -10,7 +10,7 @@ If you want to claim working on one of the event sources, update this doc by add
 |--- |--- |--- |--- |--- |--- |
 ||11th Street Bridge Park|https://www.bridgepark.org/events/calendar|||Y|
 ||Anacostia Riverkeeper|https://www.facebook.com/pg/AnacostiaRiverkeeper/events|||
-||Anacostia Watershed Society|https://www.anacostiaws.org/events-calendar.html|||
+|An|Anacostia Watershed Society|https://www.anacostiaws.org/events-calendar.html|||
 |Scott|Arlington County|https://environment.arlingtonva.us/events/|Y||Y|
 |Aimee|Audubon Naturalist|https://anshome.org/events-calendar/|Y||Y|
 |Jaspreet|Building Bridges Across the River (BBAR)|http://www.thearcdc.org/events/upcoming||||
