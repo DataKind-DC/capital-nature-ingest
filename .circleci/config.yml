@@ -28,11 +28,6 @@ jobs:
             - ./venv
           key: v1-dependencies-{{ checksum "requirements.txt" }}
 
-      - run: 
-          name: "Setup env variable"
-          command: |
-            echo 'export NPS_KEY="1TYVVgucyetHXkLxGPjAY9VwqPiNJcRXGYDaxBvq"' >> $BASH_ENV # Redirect MY_ENV_VAR into $BASH_ENV
-
       - run:
           name: run tests
           command: |
