@@ -6,7 +6,6 @@ import requests
 import json
 from datetime import datetime
 import unicodedata
-import pprint
 
 bucket = 'aimeeb-datasets-public'
 is_local = False
@@ -96,23 +95,20 @@ def handler(event, context):
     source_name = event['source_name']
     page = fetch_page({'url': url})
     page = json.loads(page)
-    # soup = bs4.BeautifulSoup(page, 'html.parser')
     event_output = handle_ans_page(page['eventList'])
-    pprint.pprint(event_output)
-    # filename = '{0}-results.csv'.format(source_name)
-    # if not is_local:
-    #     with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-    #         writer = csv.DictWriter(f, fieldnames = event_output[0].keys())
-    #         writer.writeheader()
-    #         [writer.writerow(event) for event in event_output]
-    # s3 = boto3.resource('s3')
-    # s3.meta.client.upload_file(
-    #   '/tmp/{0}'.format(filename),
-    #   bucket,
-    #   'capital-nature/{0}'.format(filename)
-    # )
-    # return json.dumps(event_output, indent=2)
-    return
+    filename = '{0}-results.csv'.format(source_name)
+    if not is_local:
+        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
+            writer = csv.DictWriter(f, fieldnames = event_output[0].keys())
+            writer.writeheader()
+            [writer.writerow(event) for event in event_output]
+    s3 = boto3.resource('s3')
+    s3.meta.client.upload_file(
+      '/tmp/{0}'.format(filename),
+      bucket,
+      'capital-nature/{0}'.format(filename)
+    )
+    return json.dumps(event_output, indent=2)
 
 
 # For local testing
@@ -121,5 +117,5 @@ event = {
   'source_name': 'sierra_club_DC'
 }
 # is_local = False
-print(handler(event, {}))
+# print(handler(event, {}))
 
