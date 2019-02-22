@@ -153,3 +153,26 @@ class SierraClubDCTestCase(unittest.TestCase):
                     vals.append(event[k])
         result = all([x=='$' for x in vals])
         self.assertTrue(result)
+
+
+    @httpretty.activate
+    def test_events_schema_timezone_type(self):
+        '''
+        Tests if the timezone event field is 'America/New_York'
+        '''
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
+        vals = []
+        for event in events:
+            for k in event:
+                if k == 'Timezone':
+                    val = event[k]
+                    vals.append(val)
+        result = all(x == 'America/New_York' for x in vals)
+        self.assertTrue(result)
