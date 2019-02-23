@@ -1,23 +1,16 @@
 import ast
-import boto3
 import bs4
-import csv
 from datetime import datetime
 import re
 import requests
-import json
 import unicodedata
 
-bucket = 'aimeeb-datasets-public'
-is_local = False
-current_date = datetime.today()
-url="https://caseytrees.org/events/"+current_date.strftime("%Y-%m")+"/"
 
-
-def fetch_page(options):
-    url = options['url']
-    html_doc = requests.get(url).content
-    return html_doc
+def fetch_page_soup(url):
+    r = requests.get(url)
+    content = r.content
+    soup = bs4.BeautifulSoup(content, 'html.parser')
+    return soup
 
 def parse_event_cost(event_cost):
     if event_cost == "Donation":
@@ -116,9 +109,8 @@ def handle_ans_page(soup):
         result_all_event.append(events_data)
     try:
         #checks if next month calender is present and passes the url to handle_ans_page function
-        next = soup.find('li', {'class': 'tribe-events-nav-next'}).a['href']
-        page = fetch_page({'url': next})
-        soup = bs4.BeautifulSoup(page, 'html.parser')
+        next_url = soup.find('li', {'class': 'tribe-events-nav-next'}).a['href']
+        soup = fetch_page_soup(next_url)
         result_all_event.extend(handle_ans_page(soup))
     except:
         pass
@@ -128,45 +120,20 @@ def handle_ans_page(soup):
 
 
 def get_event_description(url):
-    page = fetch_page({'url': url})
-    soup = bs4.BeautifulSoup(page, 'html.parser')
+    soup = fetch_page_soup(url)
     events_url = soup.find('meta', {'property': 'og:description'})['content']
+    
     return events_url
 
-
-def handler(event, context):
-    url = event['url']
-    source_name = event['source_name']
-    page = fetch_page({'url': url})
-    soup = bs4.BeautifulSoup(page, 'html.parser')
-    event_output = handle_ans_page(soup)
-    filename = '{0}-results.csv'.format(source_name)
-    fieldnames = list(event_output[0].keys())
-    if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for event in event_output:
-                writer.writerow(event)
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
-                                    bucket,
-                                    'capital-nature/{0}'.format(filename)
-                                    )
-    else:
-        print(event_output)
-        with open(filename, mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for event in event_output:
-                writer.writerow(event)
+def main():
+    current_date = datetime.today()
+    url="https://caseytrees.org/events/"+current_date.strftime("%Y-%m")+"/"
+    soup = fetch_page_soup(url)
+    events = handle_ans_page(soup)
     
+    return events
 
-# For local testing
-#event = {
-#  'url': url,
-#  'source_name': 'casey_trees'
-#}
-#is_local = True
-#handler(event, None)
+if __name__ == '__main__':
+    events = main()
+    
 

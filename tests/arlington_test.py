@@ -7,9 +7,11 @@ from datetime import datetime
 import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from lambdas.arlington.lambda_function import get_arlington_events, html_textraction, parse_event_name, \
+from lambdas.arlington.lambda_function import get_arlington_events, html_textraction, \
+                            parse_event_name, \
                             schematize_events, schematize_date
-from fixtures.arlington_test_fixtures import page_one_uri_json, page_two_uri_json, page_one_uri_event_items, \
+from fixtures.arlington_test_fixtures import page_one_uri_json, page_two_uri_json, \
+                          page_one_uri_event_items, \
                           page_two_uri_event_items, schematized_page_two_event_items
 from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
                   is_phonenumber_valid, exceptionCallback

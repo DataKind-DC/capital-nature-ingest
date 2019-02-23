@@ -1,12 +1,8 @@
 from bs4 import BeautifulSoup
 import requests
-import csv
 import re
 from datetime import datetime
-import boto3
 
-bucket = 'aimeeb-datasets-public'
-is_local = False
 
 def get_event_cost(soup):
     currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
@@ -167,7 +163,7 @@ def schematize_event_time(event_time):
     return schematized_event_time
 
 
-def get_fairfax_events():
+def main():
     r = requests.get('https://www.fairfaxcounty.gov/parks/park-events-calendar')
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
@@ -205,37 +201,5 @@ def get_fairfax_events():
 
     return events
 
-def fairfax_handler(event, context):
-    '''
-    AWS lambda function for Fairfax County events.
-    '''
-    _ = event['url']
-    source_name = event['source_name']
-    events = get_fairfax_events()
-    filename = '{0}-results.csv'.format(source_name)
-    fieldnames = list(events[0].keys())
-    if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for fairfax_event in events:
-                writer.writerow(fairfax_event)
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
-                                    bucket,
-                                    'capital-nature/{0}'.format(filename)
-                                    )
-    else:
-        with open(filename, mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for fairfax_event in events:
-                writer.writerow(fairfax_event)
-
-#For local testing (it'll write the csv as fairfax-results.csv into your working dir
-#event = {
-#'url': 'https://www.fairfaxcounty.gov',
-#'source_name': 'fairfax'
-#}
-#is_local = True
-#fairfax_handler(event, None)
+if __name__ == '__main__':
+    events = main()

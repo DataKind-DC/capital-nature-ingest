@@ -1,13 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
-import csv
 import re
 from datetime import datetime
-import boto3
-
-
-bucket = 'aimeeb-datasets-public'
-is_local = False
 
 
 def get_category_id_map(url = 'https://www.montgomeryparks.org/calendar/'):
@@ -276,17 +270,16 @@ def dedupe_events(events):
     return events
 
 
-def get_montgomery_events(category_id_map,
-                          event_categories = ['Archaeology',
-                                              'Clean Up',
-                                              'Earth Month',
-                                              'Gardens',
-                                              'Hikes',
-                                              'Nature',
-                                              'Trails',
-                                              'Trail Work',
-                                              'Trips',
-                                              'Weed Warrior']):
+def main(event_categories = ['Archaeology',
+                             'Clean Up',
+                             'Earth Month',
+                             'Gardens',
+                             'Hikes',
+                             'Nature',
+                             'Trails',
+                             'Trail Work',
+                             'Trips',
+                             'Weed Warrior']):
     '''
     Gets events for a number of event categories
 
@@ -296,6 +289,7 @@ def get_montgomery_events(category_id_map,
     Returns:
         events (list): a list of dicts, with each dict representing an event
     '''
+    category_id_map = get_category_id_map()
     events = []
     for event_category in event_categories:
         category_events = get_category_events(event_category, category_id_map)
@@ -306,42 +300,10 @@ def get_montgomery_events(category_id_map,
 
     return events
 
-
-
-def montgomery_handler(event, context):
-    '''
-    AWS lambda function for Montgomery County events.
-    '''
-    _ = event['url']
-    source_name = event['source_name']
-    category_id_map = get_category_id_map()
-    events = get_montgomery_events(category_id_map)
-    filename = '{0}-results.csv'.format(source_name)
-    fieldnames = list(events[0].keys())
-    if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for montgomery_event in events:
-                writer.writerow(montgomery_event)
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
-                                    bucket,
-                                    'capital-nature/{0}'.format(filename)
-                                    )
-    else:
-        with open(filename, mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for montgomery_event in events:
-                writer.writerow(montgomery_event)
+if __name__ == '__main__':
+    events = main()
 
 
 
-# For local testing (it'll write the csv as montgomery-results.csv into your working dir)
-#event = {
-#   'url': 'https://www.montgomeryparks.org/calendar/',
-#   'source_name': 'montgomery'
-#}
-#is_local = True
-#montgomery_handler(event,None)
+
+
