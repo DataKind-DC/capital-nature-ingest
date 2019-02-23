@@ -66,16 +66,7 @@ def handle_ans_page(events):
         events_data['All Day Event'] = False
         events_data['Timezone'] = "America/New_York"
         organizer_list = event.get('leaderList','')
-        if(organizer_list):
-            names = ""
-            for organizer in  organizer_list:
-                if(names != ""):
-                    names += ","
-                names += organizer.get('name','')
-
-            events_data['Event Organizers'] = names
-        else:
-            events_data['Event Organizers'] = ""
+        events_data['Event Organizers'] = "Sierra Club"
         events_data['Event Cost'] = event.get('cost','0')
         events_data['Event Currency Symbol'] = "$"
         events_data['Event Category'] = event.get('eventCategory','')
