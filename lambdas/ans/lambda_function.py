@@ -1,16 +1,11 @@
 import bs4
 import requests
-import json
-import csv
 import unicodedata
 import sys
 from datetime import datetime
-import boto3
 
-bucket = 'aimeeb-datasets-public'
-is_local = False
 
-def soupify_event_page(url):
+def soupify_event_page(url = 'https://anshome.org/events-calendar/'):
     try:
         r = requests.get(url)
     except:
@@ -68,7 +63,10 @@ def schematize_event_time(event_time):
     
     return schematized_event_time
 
-def handle_ans_page(soup):
+def main():
+    soup = soupify_event_page()
+    if not soup:
+        sys.exit(1)
     events_divs = soup.find_all('div', {'class': 'event'})
     events = []
     for e in events_divs:
@@ -104,39 +102,6 @@ def handle_ans_page(soup):
     
     return events
 
-def handler(event, context):
-    url = event['url']
-    source_name = event['source_name']
-    soup = soupify_event_page(url)
-    if not soup:
-        sys.exit(1)
-    events = handle_ans_page(soup)
-    filename = '{0}-results.csv'.format(source_name)
-    fieldnames = list(events[0].keys())
-    if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for ans_event in events:
-                writer.writerow(ans_event)
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
-                                    bucket,
-                                    'capital-nature/{0}'.format(filename)
-                                    )
-    else:
-        with open(filename, mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for ans_event in events:
-                writer.writerow(ans_event)
 
-    return json.dumps(events, indent=2)
-
-# For local testing
-# event = {
-#   'url': 'https://anshome.org/events-calendar/',
-#   'source_name': 'ans'
-# }
-# is_local = True
-# print(handler(event, None))
+if __name__ == '__main__':
+    events = main()

@@ -1,17 +1,12 @@
 import requests
 import os
 import re
-import csv
 from bs4 import BeautifulSoup
 from datetime import datetime
-import boto3
 
-bucket = 'aimeeb-datasets-public'
-is_local = False
-
-# Be sure to create an env variable with the NPS API key. For example,
+# For a local run, be sure to create an env variable with the NPS API key. 
+# For example:
 # $ export NPS_KEY=<NPS API Key>
-
 try:
     NPS_KEY = os.environ['NPS_KEY']
 except KeyError:
@@ -230,37 +225,5 @@ def main():
     return events
 
 
-def nps_handler(event, context):
-    '''
-    AWS lambda function for NPS events.
-    '''
-    _ = event['url']
-    source_name = event['source_name']
+if __name__ == '__main__':
     events = main()
-    filename = '{0}-results.csv'.format(source_name)
-    fieldnames = list(events[0].keys())
-    if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for nps_event in events:
-                writer.writerow(nps_event)
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
-                                    bucket,
-                                    'capital-nature/{0}'.format(filename)
-                                    )
-    else:
-        with open(filename, mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for nps_event in events:
-                writer.writerow(nps_event)
-
-# For local testing (it'll write the csv as nps-results.csv into your working dir)
-#event = {
-#   'url': 'https://nps.gov',
-#   'source_name': 'nps'
-# }
-#is_local = True
-#nps_handler(event,None)
