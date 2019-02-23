@@ -155,14 +155,13 @@ def filter_events(events, categories = []):
     return filtered_events
 
 
-def get_vnps_events(categories=[]):
+def main(categories=[]):
     '''
-    Gets the event data in oour wordpess schema
+    Gets the event data in our wordpess schema
 
     Parameters:
         categories (list): a list of categories to filter out. See filter_events docstring for
                            possible values.
-
     Returns:
         events (list): a list of dicts, with each representing a vnps event
     '''
@@ -206,38 +205,5 @@ def get_vnps_events(categories=[]):
 
     return filtered_events
 
-
-def vnps_handler(event, context):
-    '''
-    AWS lambda function for VNPS events.
-    '''
-    _ = event['url']
-    source_name = event['source_name']
-    events = get_vnps_events()
-    filename = '{0}-results.csv'.format(source_name)
-    fieldnames = list(events[0].keys())
-    if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for vnps_event in events:
-                writer.writerow(vnps_event)
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
-                                    bucket,
-                                    'capital-nature/{0}'.format(filename)
-                                    )
-    else:
-        with open(filename, mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for vnps_event in events:
-                writer.writerow(vnps_event)
-
-# For local testing (it'll write the csv as vnps-results.csv into your working dir)
-#event = {
-#'url': 'https://vnps.org',
-#'source_name': 'vnps'
-#}
-#is_local = True
-#vnps_handler(event, None)
+if __name__ == '__main__':
+    events = main()
