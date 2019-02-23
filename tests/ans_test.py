@@ -10,7 +10,7 @@ from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
 from lambdas.ans.lambda_function import soupify_event_page, soupify_event_website, \
                                         get_event_description, schematize_event_date, \
-                                        schematize_event_time, handle_ans_page
+                                        schematize_event_time, main
 from fixtures.ans_test_fixtures import expected_events, get_event_calendar_soup, \
                                        event_website_contents
 from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
@@ -86,7 +86,9 @@ class ANSTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @httpretty.activate
-    def test_handle_ans_page(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_main(self, mocked_soupify_event_page):
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
             content = event_website_content[event_website]
@@ -94,15 +96,17 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        result = handle_ans_page(self.event_calendar_soup)
+        result = main()
         expected = self.expected_events
         self.assertCountEqual(result, expected)
     
     @httpretty.activate
-    def test_events_schema_required_fields(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema_required_fields(self, mocked_soupify_event_page):
         '''
         Tests if the required events fields are present.
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
             content = event_website_content[event_website]
@@ -110,7 +114,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         keys = set().union(*(d.keys() for d in events))
         schema = {'Event Name','Event Description','Event Start Date','Event Start Time',
                   'Event End Date','Event End Time','Timezone','All Day Event',
@@ -121,10 +125,12 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
     
     @httpretty.activate
-    def test_events_schema(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema(self, mocked_soupify_event_page):
         '''
         Tests if all of the event fields conform in name to the schema.
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
             content = event_website_content[event_website]
@@ -132,7 +138,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         keys = set().union(*(d.keys() for d in events))
         schema = {'Do Not Import','Event Name','Event Description','Event Excerpt',
                   'Event Start Date','Event Start Time','Event End Date','Event End Time',
@@ -147,10 +153,12 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
 
     @httpretty.activate
-    def test_events_schema_bool_type(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema_bool_type(self, mocked_soupify_event_page):
         '''
         Tests if the boolean type event fields are bool
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         booleans = ['All Day Event','Hide from Event Listings','Sticky in Month View',
                     'Event Show Map Link','Event Show Map','Allow Comments',
                     'Allow Trackbacks and Pingbacks']
@@ -161,7 +169,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -172,10 +180,12 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
 
     @httpretty.activate
-    def test_events_schema_string_type(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema_string_type(self, mocked_soupify_event_page):
         '''
         Tests if the str and comma delim event field types are strings.
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         comma_delimited = ['Event Venue Name','Event Organizers','Event Category','Event Tags']
         string = ['Event Description','Event Excerpt','Event Name']
         for event_website_content in event_website_contents:
@@ -185,7 +195,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -196,10 +206,12 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
     
     @httpretty.activate
-    def test_events_schema_currency_symbol_type(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema_currency_symbol_type(self, mocked_soupify_event_page):
         '''
         Tests if the currency symbol is a dollar sign
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
             content = event_website_content[event_website]
@@ -207,7 +219,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -217,10 +229,12 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
     
     @httpretty.activate
-    def test_events_schema_event_cost_type(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema_event_cost_type(self, mocked_soupify_event_page):
         '''
         Tests if the event cost is a string of digits
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
             content = event_website_content[event_website]
@@ -228,7 +242,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -240,10 +254,12 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
 
     @httpretty.activate
-    def test_events_schema_timezone_type(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema_timezone_type(self, mocked_soupify_event_page):
         '''
         Tests if the timezone event field is 'America/New_York'
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
             content = event_website_content[event_website]
@@ -251,7 +267,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -262,11 +278,13 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
 
     @httpretty.activate
-    def test_events_schema_date_type(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema_date_type(self, mocked_soupify_event_page):
         '''
         Tests if the event start/end date fields are "%Y-%m-%d" 
         Examples:  '1966-01-01' or '1965-12-31'
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         date = ['Event Start Date', 'Event End Date']
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
@@ -275,7 +293,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -290,11 +308,13 @@ class ANSTestCase(unittest.TestCase):
         self.assertIsNotNone(result)
 
     @httpretty.activate
-    def test_events_schema_time_type(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema_time_type(self, mocked_soupify_event_page):
         '''
         Tests if the Event Start Time and Event End Time fields follow
         the "%H:%M:%S" format. Examples: '21:30:00' or '00:50:00'
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         time = ['Event Start Time','Event End Time']
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
@@ -303,7 +323,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         vals = []
         for event in events:
             for k in event: 
@@ -318,11 +338,13 @@ class ANSTestCase(unittest.TestCase):
         self.assertIsNotNone(result)
             
     @httpretty.activate
-    def test_events_schema_url_type(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema_url_type(self, mocked_soupify_event_page):
         '''
         Tests if the event website and event featured image fields contain strings
         that pass Django's test as urls
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         url = ['Event Website','Event Featured Image']
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
@@ -331,7 +353,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         vals = []
         for event in events:
             for k in event: 
@@ -342,10 +364,12 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
 
     @httpretty.activate
-    def test_events_schema_currency_position_type(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema_currency_position_type(self, mocked_soupify_event_page):
         '''
         Tests if the Event Currency Position is 'prefix', 'suffix', or ''
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
             content = event_website_content[event_website]
@@ -353,7 +377,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         for event in events:
             for k in event: 
                 if k == 'Event Currency Position':
@@ -363,10 +387,12 @@ class ANSTestCase(unittest.TestCase):
                     self.assertTrue(result)
 
     @httpretty.activate
-    def test_events_schema_phone_type(self):
+    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    def test_events_schema_phone_type(self, mocked_soupify_event_page):
         '''
         Tests if the phone number string is formatted like:  "+1-326-437-9663"
         '''
+        mocked_soupify_event_page.return_value = self.event_calendar_soup
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
             content = event_website_content[event_website]
@@ -374,7 +400,7 @@ class ANSTestCase(unittest.TestCase):
                                    uri=event_website,
                                    body=content,
                                    status=200)
-        events = handle_ans_page(self.event_calendar_soup)
+        events = main()
         for event in events:
             for k in event: 
                 if k == 'Event Phone':

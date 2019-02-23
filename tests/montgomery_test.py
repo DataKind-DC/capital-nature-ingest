@@ -11,7 +11,7 @@ sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
 from lambdas.montgomery.lambda_function import get_category_id_map, parse_event_date, get_event_description, \
                             get_event_cost, schematize_event_time, schematize_event_date, \
                             canceled_test, parse_event_website, parse_event_item, no_events_test, \
-                            next_page_test, get_category_events, dedupe_events, get_montgomery_events
+                            next_page_test, get_category_events, dedupe_events, main
 from fixtures.montgomery_test_fixtures import calendar_page_content, event_page_content, \
                           category_id_map_expected, event_page_content_canceled, parse_event_item_expected, \
                           event_item, calendar_page_no_events_content, calendar_page_next_page_content, \
@@ -204,7 +204,9 @@ class MontgomeryTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
     
     @httpretty.activate
-    def test_get_montgomery_events(self):
+    @patch('lambdas.montgomery.lambda_function.get_category_id_map')
+    def test_main(self, mocked_get_category_id_map):
+        mocked_get_category_id_map.return_value = {'open house': '2901'}
         httpretty.register_uri(method=httpretty.GET,
                                uri='https://www.montgomeryparks.org/calendar/?cat=2901&v=0',
                                status=200,
@@ -213,8 +215,7 @@ class MontgomeryTestCase(unittest.TestCase):
                                uri='https://www.montgomeryparks.org/events/volunteer-fair-for-montgomery-parks-historic-sites/',
                                status=200,
                                body=self.open_house_page_content)
-        result = get_montgomery_events({'open house': '2901'}, 
-                                        event_categories = ['open house'])
+        result = main(event_categories = ['open house'])
         expected = self.open_house_event
         self.assertListEqual(result, expected)
 

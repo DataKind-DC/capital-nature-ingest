@@ -10,9 +10,9 @@ sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
 from lambdas.fairfax.lambda_function import get_event_cost, get_event_date_from_event_website, \
                             get_event_start_date, get_start_times, get_event_description, \
                             get_event_venue, parse_event_website, schematize_event_date, \
-                            schematize_event_time, get_fairfax_events
+                            schematize_event_time, main
 from fixtures.fairfax_test_fixtures import get_event_page_soup, get_calendar_page_soup, get_start_times_expected, \
-                          canceled_page_content, get_fairfax_events_expected
+                          canceled_page_content, main_expected
 from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
                   is_phonenumber_valid, exceptionCallback
 
@@ -125,7 +125,7 @@ class FairfaxTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @httpretty.activate
-    def test_get_fairfax_events(self):
+    def test_main(self):
         httpretty.register_uri(method=httpretty.GET,
                                uri=self.calendar_page,
                                status=200,
@@ -138,8 +138,8 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        result = get_fairfax_events()
-        expected = get_fairfax_events_expected
+        result = main()
+        expected = main_expected
         self.assertListEqual(result, expected)
 
     @httpretty.activate
@@ -159,7 +159,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         keys = set().union(*(d.keys() for d in events))
         schema = {'Event Name','Event Description','Event Start Date','Event Start Time',
                   'Event End Date','Event End Time','Timezone','All Day Event',
@@ -186,7 +186,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         keys = set().union(*(d.keys() for d in events))
         schema = {'Do Not Import','Event Name','Event Description','Event Excerpt',
                   'Event Start Date','Event Start Time','Event End Date','Event End Time',
@@ -220,7 +220,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -249,7 +249,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -276,7 +276,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -302,7 +302,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -330,7 +330,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -359,7 +359,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -392,7 +392,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         vals = []
         for event in events:
             for k in event: 
@@ -425,7 +425,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         vals = []
         for event in events:
             for k in event: 
@@ -452,7 +452,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         for event in events:
             for k in event: 
                 if k == 'Event Currency Position':
@@ -478,7 +478,7 @@ class FairfaxTestCase(unittest.TestCase):
                                uri=self.event_two_uri,
                                status=200,
                                body=self.event_page_content)
-        events = get_fairfax_events()
+        events = main()
         for event in events:
             for k in event: 
                 if k == 'Event Phone':
