@@ -1,21 +1,14 @@
-# Capital Nature Ingest Lambda Packages
-We're going to use AWS Lambda to run the scripts and push the output (csvs) to an S3 bucket.
+# Capital Nature Event Scrapers
+This directory contains a `.py` file for each [event source](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_sources.md).
 
 ## How to Create a New Package
 So you've claimed an event source for yourself [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_sources.md) and are ready to write some code. That's great!
 
-Here's what to do (assuming you've read the contributing guidelines in [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) and have already forked the repo and made a new feature branch named after the event source you've claimed):
+Here's what to do (assuming you've read the contributing guidelines in [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) and [STYLE GUIDE](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md) and have already forked the repo and made a new feature branch named after the event source you've claimed):
 
-1. Make a new directory in this `lambdas/` directory and name it after your event source (e.g. `lambdas/your_event_source/`)
-2. Copy the contents of a previously finished directory to your new directory:
+1. Make a new file in this `events/` directory and name it after your event source (e.g. `events/your_event_source.py`)
 
-  Example:
-  ```bash
-  cd lambdas/
-  mkdir your_event_source && cp -r vnps/ your_event_source/
-  ```
-
-3. Update the `lambda_function.py` code to handle your event source. What you want is a `main()` function that contains all of your helper functions. Within your `main()` function, you should call the function(s) that create your event source's output. That output needs to be a list of dicts, with each dict representing a single event. The key:value pairs in each event dict should match the schema defined [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_schema.md).
+2. Write code to scrape your source's events. Your output needs to be a list of dicts, with each dict representing a single event. The key:value pairs in each event dict should match the schema defined [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_schema.md).
 
 For example:
   ```python
@@ -53,16 +46,16 @@ For example:
 ]
   ```
 
-4. Note that if the code requires any additional libraries (the vnps example only requires `beautifulsoup` and `requests`), you should include them in your directory's requirements.txt. Add those requirements to the root requirements.txt file (CircleCI uses that).
+3. If your code requires any additional libraries, you should include them in the project's `requirements.txt`.
 
-5. At the end of your file, include the following snippet:
+4. Once you're able to scrape your events and schematize them, create a `main` function that uses the other function(s) you've written to return your events. Then, at the end of your file, include the following snippet:
 
 ```python
 if __name__ == '__main__'
     events = main()
 ```
- 
-6. Once you're confident in the output, add some unit/integration tests to the tests directory. At a minimum, you should have a test that asserts the result of your script being equal to what's expected by the schema. For example:
+
+5. Add some unit/integration tests to the `tests/` directory in the root of this project. At a minimum, you should have a test that asserts the result of your script being equal to what's expected by the schema. This makes it easy for reviewers to verify your code. For example:
 
 ```python
 import unittest
@@ -104,10 +97,14 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
->NOTE: For any functions that make requests, you should mock the content of a response ([HTTPretty](https://httpretty.readthedocs.io/en/latest/) and [responses](https://github.com/getsentry/responses) are handy here). Doing so prevents our tests from relying on the ephemeral content of website, which is beyond our control.
+Some of the other event files have a lot of other tests that you can adapt to your event source. A best practice is to write these tests first and then write code until all of the tests pass.
 
-7. When you're ready, open a pull request. When reviewing your PR, we'll want to see:
- - if the tests you wrote pass
- - if your code runs locally, producing a csv
- - that you've got all of the required fields
- - that your data types are correct
+>NOTE: For any function(s) that make requests, you should mock the content of a response when calling that function in a test ([HTTPretty](https://httpretty.readthedocs.io/en/latest/) and [responses](https://github.com/getsentry/responses) are handy here). Doing so prevents our tests from relying on the ephemeral content of website, which is beyond our control.
+
+>NOTE: There's a `tests/fixtures/` directory where you can define and then import that mocked content. Doing so makes your tests more readable.
+
+6. When you're ready, open a pull request. When reviewing your PR, we'll want to see:
+ - if the test(s) you wrote pass
+ - if your code runs locally within a virtual environment (meaning you're requirments have been added to `requirements.txt`)
+ - that you've got all of the required fields (you could write a test for this; see `test_events_schema_required_fields` [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/tests/ans_test.py))
+ - that your data types are correct (you could write a test for this; see the other tests [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/tests/ans_test.py))
