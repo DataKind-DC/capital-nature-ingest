@@ -28,12 +28,19 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
+>You can deactivate the virtual environment with:
+```bash
+deactivate
+```
+
 4. Get the events:
 Before getting the events, you'll need to have a National Park Service API key. Get one [here](https://www.nps.gov/subjects/developer/index.htm). Then, add it as an environment variable called `NPS_KEY` or simply input it when prompted by the following script:
 
 ```bash
 python get_events.py
 ```
+
+Running the above will scrape all of the events. It only returns the results, so nothing will print out.
 
 5. Inspect the csv results
 >Coming soon!
