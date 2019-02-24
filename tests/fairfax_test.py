@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import patch, Mock
 import httpretty
 import requests
 import re
@@ -7,12 +6,13 @@ from datetime import datetime
 import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from lambdas.fairfax.lambda_function import get_event_cost, get_event_date_from_event_website, \
-                            get_event_start_date, get_start_times, get_event_description, \
-                            get_event_venue, parse_event_website, schematize_event_date, \
-                            schematize_event_time, main
-from fixtures.fairfax_test_fixtures import get_event_page_soup, get_calendar_page_soup, get_start_times_expected, \
-                          canceled_page_content, main_expected
+from events.fairfax import get_event_cost, get_event_date_from_event_website, \
+                           get_event_start_date, get_start_times, get_event_description, \
+                           get_event_venue, parse_event_website, schematize_event_date, \
+                           schematize_event_time, main
+from fixtures.fairfax_test_fixtures import get_event_page_soup, get_calendar_page_soup, \
+                                           get_start_times_expected, \
+                                           canceled_page_content, main_expected
 from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
                   is_phonenumber_valid, exceptionCallback
 

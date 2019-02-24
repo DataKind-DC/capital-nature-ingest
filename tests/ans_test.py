@@ -8,7 +8,7 @@ from datetime import datetime
 import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from lambdas.ans.lambda_function import soupify_event_page, soupify_event_website, \
+from events.ans import soupify_event_page, soupify_event_website, \
                                         get_event_description, schematize_event_date, \
                                         schematize_event_time, main
 from fixtures.ans_test_fixtures import expected_events, get_event_calendar_soup, \
@@ -86,7 +86,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_main(self, mocked_soupify_event_page):
         mocked_soupify_event_page.return_value = self.event_calendar_soup
         for event_website_content in event_website_contents:
@@ -101,7 +101,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertCountEqual(result, expected)
     
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema_required_fields(self, mocked_soupify_event_page):
         '''
         Tests if the required events fields are present.
@@ -125,7 +125,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
     
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema(self, mocked_soupify_event_page):
         '''
         Tests if all of the event fields conform in name to the schema.
@@ -153,7 +153,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
 
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema_bool_type(self, mocked_soupify_event_page):
         '''
         Tests if the boolean type event fields are bool
@@ -180,7 +180,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
 
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema_string_type(self, mocked_soupify_event_page):
         '''
         Tests if the str and comma delim event field types are strings.
@@ -206,7 +206,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
     
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema_currency_symbol_type(self, mocked_soupify_event_page):
         '''
         Tests if the currency symbol is a dollar sign
@@ -229,7 +229,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
     
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema_event_cost_type(self, mocked_soupify_event_page):
         '''
         Tests if the event cost is a string of digits
@@ -254,7 +254,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
 
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema_timezone_type(self, mocked_soupify_event_page):
         '''
         Tests if the timezone event field is 'America/New_York'
@@ -278,7 +278,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
 
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema_date_type(self, mocked_soupify_event_page):
         '''
         Tests if the event start/end date fields are "%Y-%m-%d" 
@@ -308,7 +308,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertIsNotNone(result)
 
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema_time_type(self, mocked_soupify_event_page):
         '''
         Tests if the Event Start Time and Event End Time fields follow
@@ -338,7 +338,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertIsNotNone(result)
             
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema_url_type(self, mocked_soupify_event_page):
         '''
         Tests if the event website and event featured image fields contain strings
@@ -364,7 +364,7 @@ class ANSTestCase(unittest.TestCase):
         self.assertTrue(result)
 
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema_currency_position_type(self, mocked_soupify_event_page):
         '''
         Tests if the Event Currency Position is 'prefix', 'suffix', or ''
@@ -387,7 +387,7 @@ class ANSTestCase(unittest.TestCase):
                     self.assertTrue(result)
 
     @httpretty.activate
-    @patch('lambdas.ans.lambda_function.soupify_event_page')
+    @patch('events.ans.soupify_event_page')
     def test_events_schema_phone_type(self, mocked_soupify_event_page):
         '''
         Tests if the phone number string is formatted like:  "+1-326-437-9663"

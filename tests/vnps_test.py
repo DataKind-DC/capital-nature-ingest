@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import patch, Mock
 import httpretty
 import requests
 from datetime import datetime
@@ -7,9 +6,9 @@ import re
 import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from lambdas.vnps.lambda_function import parse_date_and_time, get_event_venue_and_categories,\
-                                         parse_description_and_location, filter_events, \
-                                         main
+from events.vnps import parse_date_and_time, get_event_venue_and_categories,\
+                        parse_description_and_location, filter_events, \
+                        main
 from fixtures.vnps_test_fixtures import date_and_time_tag, date_and_time_tag_all_day, \
                                         event_website_content, description_and_location_tag, \
                                         description_and_location_tag_no_venue, events, \
