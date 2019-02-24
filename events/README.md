@@ -4,7 +4,7 @@ This directory contains a `.py` file for each [event source](https://github.com/
 ## How to Create a New Package
 So you've claimed an event source for yourself [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_sources.md) and are ready to write some code. That's great!
 
-Here's what to do (assuming you've read the contributing guidelines in [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) and [STYLE GUIDE](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md) and have already forked the repo and made a new feature branch named after the event source you've claimed):
+Here's what to do (**assuming you've read the contributing guidelines in [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) and [STYLE GUIDE](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md) and have already forked the repo and made a new feature branch named after the event source you've claimed)**:
 
 1. Make a new file in this `events/` directory and name it after your event source (e.g. `events/your_event_source.py`)
 
