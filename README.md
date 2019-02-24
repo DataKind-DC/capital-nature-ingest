@@ -14,4 +14,4 @@ Capital Nature is a 501c3 nonprofit organization dedicated to bringing nature in
 Please read [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) for details on how to contribute.
 
 ## License
-TBD
+[Here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/LICENSE)
