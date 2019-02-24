@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import patch, Mock
 import httpretty
 import re
 from datetime import datetime
@@ -7,9 +6,8 @@ import requests
 import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from lambdas.nps.lambda_function import get_park_events, get_nps_events, \
-                                        get_specific_event_location, \
-                                        schematize_nps_event, schematize_time, main
+from events.nps import get_park_events, get_nps_events, get_specific_event_location, \
+                       schematize_nps_event, schematize_time, main
 from fixtures.nps_test_fixtures import get_park_events_expected, nama_events_json, \
                                        event_page_content, \
                                        schematize_nps_event_expected

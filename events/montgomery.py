@@ -302,8 +302,3 @@ def main(event_categories = ['Archaeology',
 
 if __name__ == '__main__':
     events = main()
-
-
-
-
-
