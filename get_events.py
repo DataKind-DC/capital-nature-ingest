@@ -36,7 +36,7 @@ def get_events():
 
     return events
 
-def events_to_csv(events, is_local = True, bucket = 'aimeeb-datasets-public'):
+def events_to_csv(events, is_local = True, bucket = None):
     '''
     Void function that writes events to csv, either locally or to an S3 bucket.
 
@@ -44,7 +44,7 @@ def events_to_csv(events, is_local = True, bucket = 'aimeeb-datasets-public'):
         events (list): a list of dicts, with each dict representing a single event.
         is_local (bool): True if you want to write the csv locally. False if you want to
                          write the csv to S3 (must supply a valid bucket name as well)
-        bucket (str): the name of the public S3 bucket.
+        bucket (str or None): the name of the public S3 bucket. None by default.
 
     Returns:
         None
@@ -61,7 +61,7 @@ def events_to_csv(events, is_local = True, bucket = 'aimeeb-datasets-public'):
                   'Event Category','Event Tags','Event Website',
                   'Event Featured Image','Allow Comments',
                   'Event Allow Trackbacks and Pingbacks'}
-    if not is_local:
+    if not is_local and bucket:
         with open('/tmp/{0}'.format(filename), 
                   mode = 'w', 
                   encoding = 'utf-8',
