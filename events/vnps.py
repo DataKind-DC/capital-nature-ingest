@@ -187,23 +187,23 @@ def main(categories=[]):
                 #they're tough since the location isn't listed on
                 #https://vnps.org/events/ nor on their event pages
                 continue
-            event_venue = event_venue
-            event_categories = event_categories if event_categories else ''
-            event = {'Event Start Date': start_date,
-                     'Event End Date': end_date,
-                     'Event Start Time': start_time,
-                     'Event End Time': end_time,
-                     'Event Website': event_website,
-                     'Event Name': event_name,
-                     'Event Description':'',
-                     'Event Venue Name': event_venue,
-                     'All Day Event': all_day,
-                     'Event Category':event_categories,
-                     'Event Cost':'',
-                     'Event Currency Symbol':'$',
-                     'Timezone':'America/New_York',
-                     'Event Organizers': 'Virginia Native Plant Society'}
-            events.append(event)
+            else:
+                event_categories = event_categories if event_categories else ''
+                event = {'Event Start Date': start_date,
+                        'Event End Date': end_date,
+                        'Event Start Time': start_time,
+                        'Event End Time': end_time,
+                        'Event Website': event_website,
+                        'Event Name': event_name,
+                        'Event Description':'',
+                        'Event Venue Name': event_venue,
+                        'All Day Event': all_day,
+                        'Event Category':event_categories,
+                        'Event Cost':'',
+                        'Event Currency Symbol':'$',
+                        'Timezone':'America/New_York',
+                        'Event Organizers': 'Virginia Native Plant Society'}
+                events.append(event)
     filtered_events = filter_events(events, categories)
 
     return filtered_events

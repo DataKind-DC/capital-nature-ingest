@@ -89,7 +89,7 @@ def handle_ans_page(soup):
         events_data['Event Cost'] = parse_event_cost(con['offers']['price'])
         events_data['Event Currency Symbol'] = "$"
         events_data['All Day Event'] = False
-        organizer = 'Casey Trees'
+        events_data['Event Organizers'] = 'Casey Trees'
         # commenting addresss, latitude and longitude fields for now as The WordPress Event plugin doesn't
         # expect these fields, but we might eventually use their Map plugin, which would need those geo fields 
         # events_data['address'] = ' '.join(str(x) for x in con['location']['address'].values())
@@ -115,7 +115,6 @@ def handle_ans_page(soup):
         pass
 
     return result_all_event
-
 
 
 def get_event_description(url):
