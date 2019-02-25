@@ -3,6 +3,23 @@ from datetime import datetime
 import csv
 import boto3
 
+def unicoder(value):
+    '''
+    Given an object, decode to utf-8 after trying to encode as windows-1252
+
+    Paramters:
+        value (obj): could be anything, but should be a string
+
+    Returns:
+        If value is a string, return a utf-8 decoded string. Otherwise return value.
+    '''
+    if isinstance(value, str):
+        s = value.encode('windows-1252', errors = 'ignore').decode("utf8", errors='ignore')
+        return s
+    else:
+        return value
+
+
 def get_events():
     '''
     Combines the events output of all the event scrapers.
@@ -13,8 +30,9 @@ def get_events():
     event_sources = [montgomery, ans, arlington, casey_trees, fairfax, nps, vnps]
     events = []
     for event_source in event_sources:
-        event_source_events = event_source.main()
-        events.extend(event_source_events)
+        source_events = event_source.main()
+        unicoded_source_events = [{k: unicoder(v) for k,v in i.items()} for i in source_events]
+        events.extend(unicoded_source_events)
 
     return events
 
@@ -31,7 +49,7 @@ def events_to_csv(events, is_local = True, bucket = 'aimeeb-datasets-public'):
     Returns:
         None
     '''
-    now = datetime.now().strftime("%m-%d%Y")
+    now = datetime.now().strftime("%m-%d-%Y")
     filename = f'cap-nature-events-{now}.csv'
     fieldnames = {'Do Not Import','Event Name','Event Description','Event Excerpt',
                   'Event Start Date','Event Start Time','Event End Date',
@@ -44,7 +62,10 @@ def events_to_csv(events, is_local = True, bucket = 'aimeeb-datasets-public'):
                   'Event Featured Image','Allow Comments',
                   'Event Allow Trackbacks and Pingbacks'}
     if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
+        with open('/tmp/{0}'.format(filename), 
+                  mode = 'w', 
+                  encoding = 'utf-8',
+                  errors = 'ignore') as f:
             writer = csv.DictWriter(f, fieldnames = fieldnames)
             writer.writeheader()
             for event in events:
@@ -55,7 +76,10 @@ def events_to_csv(events, is_local = True, bucket = 'aimeeb-datasets-public'):
                                     'capital-nature/{0}'.format(filename)
                                     )
     else:
-        with open(filename, mode = 'w') as f:
+        with open(filename, 
+                  mode = 'w',
+                  encoding = 'utf-8',
+                  errors = 'ignore') as f:
             writer = csv.DictWriter(f, fieldnames = fieldnames)
             writer.writeheader()
             for montgomery_event in events:
