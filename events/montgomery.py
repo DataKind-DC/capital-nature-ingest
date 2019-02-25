@@ -176,7 +176,7 @@ def parse_event_item(event_item, event_category):
                  'Event Description': event_description,
                  'Event Category': event_category,
                  'Timezone': 'America/New_York',
-                 'Event Organizers': event_venue,
+                 'Event Organizers': "Montgomery Parks",
                  'Event Currency Symbol':'$',
                  'All Day Event':False}
 

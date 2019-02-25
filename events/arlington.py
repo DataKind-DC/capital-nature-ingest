@@ -134,7 +134,7 @@ def schematize_events(event_items):
         else:
             event_cost =  ''
         event_venue = html_textraction(event_item['locationName'])
-        if event_venue == 'Earth Products Yard' or 'Library' in event_venue:
+        if event_venue == 'Earth Products Yard' or 'Library' in event_venue or not event_venue:
             continue
         event = {'Event Start Date':start_date,
                  'Event End Date': end_date,
@@ -146,7 +146,7 @@ def schematize_events(event_items):
                  'Event Cost':event_cost,
                  'Event Description':event_description,
                  'Timezone':'America/New_York',
-                 'Event Organizers':event_venue,
+                 'Event Organizers':"Arlington Parks",
                  'Event Currency Symbol':'$',
                  'All Day Event':False,
                  'Event Category':''}
