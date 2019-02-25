@@ -19,6 +19,18 @@ def fetch_page(options):
     return html_doc
 
 
+def get_event_cost(event_cost_description):
+    event_cost_description_lower = event_cost_description.lower()
+    currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
+    event_costs = re.findall(currency_re, event_cost_description)
+    if len(event_costs) == 1 and "donation" not in event_cost_description_lower and "voluntary" not in event_cost_description_lower:
+        event_cost = event_costs[0].split(".")[0].replace("$", '')
+        event_cost = ''.join(s for s in event_cost if s.isdigit())
+    else:
+        event_cost = '0'
+
+    return event_cost
+
 def schematize_event_time(event_time):
     '''
     Converts a time string like '1:30 pm' to 24hr time like '13:30:00'
@@ -65,9 +77,8 @@ def handle_ans_page(events):
         events_data['Event End Time'] = schematize_event_time(event.get('endTime',''))
         events_data['All Day Event'] = False
         events_data['Timezone'] = "America/New_York"
-        organizer_list = event.get('leaderList','')
         events_data['Event Organizers'] = "Sierra Club"
-        events_data['Event Cost'] = event.get('cost','0')
+        events_data['Event Cost'] = get_event_cost(event.get('cost','0'))
         events_data['Event Currency Symbol'] = "$"
         events_data['Event Category'] = event.get('eventCategory','')
         events_data['Event Website'] = event.get('urlToShare','')
@@ -109,4 +120,4 @@ event = {
 }
 # is_local = False
 # print(handler(event, {}))
-
+# print(get_event_cost("Sierra Club Potomac Region Outings (SCPRO) requests a voluntary donation of $2 per person to help defray the expenses of this all-volunteer program."))
