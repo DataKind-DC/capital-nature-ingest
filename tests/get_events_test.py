@@ -40,3 +40,6 @@ class GetEventsTestCase(unittest.TestCase):
         result = get_events.unicoder('â€œ')
         expected = '“'
         self.assertEqual(result, expected)
+        
+if __name__ == '__main__':
+    unittest.main()
