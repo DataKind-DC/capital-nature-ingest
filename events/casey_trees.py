@@ -68,6 +68,9 @@ def handle_ans_page(soup):
     result_all_event = []
     for con in events_complete_data:
         events_data = {}
+        event_venue = con['location']['name']
+        if event_venue == 'TBD':
+            continue
         # some html string is present in event name default adding this to format it
         events_name_data = bs4.BeautifulSoup(con.get('name',''), 'html.parser')
         events_data['Event Name'] = events_name_data.get_text()
@@ -80,17 +83,13 @@ def handle_ans_page(soup):
         events_data['Event Start Time'] = start.strftime('%H:%M:%S')
         events_data['Event End Time'] = end.strftime('%H:%M:%S')
         events_data['Timezone'] = "America/New_York"
-        events_data['Event Venue Name'] = con['location']['name']
+        events_data['Event Venue Name'] = event_venue
         events_data['Event Featured Image'] = con.get('image','')
         events_data['Event Description'] = unicodedata.normalize('NFKD', get_event_description(events_data['Event Website']))
         events_data['Event Cost'] = parse_event_cost(con['offers']['price'])
         events_data['Event Currency Symbol'] = "$"
         events_data['All Day Event'] = False
-        organizer = con.get('organizer', False)
-        if(organizer):
-            events_data['Event Organizers'] = organizer.get('name',"")
-        else:
-            events_data['Event Organizers'] = ""
+        events_data['Event Organizers'] = 'Casey Trees'
         # commenting addresss, latitude and longitude fields for now as The WordPress Event plugin doesn't
         # expect these fields, but we might eventually use their Map plugin, which would need those geo fields 
         # events_data['address'] = ' '.join(str(x) for x in con['location']['address'].values())
@@ -116,7 +115,6 @@ def handle_ans_page(soup):
         pass
 
     return result_all_event
-
 
 
 def get_event_description(url):

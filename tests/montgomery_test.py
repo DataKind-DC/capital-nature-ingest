@@ -46,6 +46,7 @@ class MontgomeryTestCase(unittest.TestCase):
         self.open_house_event = open_house_event
         self.single_event_calendar_page_content = single_event_calendar_page_content
         self.open_house_page_content = open_house_page_content
+        self.maxDiff = None
         
 
     def tearDown(self):
@@ -149,7 +150,7 @@ class MontgomeryTestCase(unittest.TestCase):
         event_item = soup.find('li')
         result = parse_event_item(event_item, 'category')
         expected = self.parse_event_item_expected
-        self.assertDictEqual(result, expected)
+        self.assertEqual(result, expected)
 
     def test_no_events_test(self):
         soup = BeautifulSoup(self.calendar_page_no_events_content,'html.parser')

@@ -124,7 +124,7 @@ class VNPSTestCase(unittest.TestCase):
                      'Event Category': 'Field Trips, Piedmont',
                      'Event Currency Symbol':'$',
                      'Timezone':'America/New_York',
-                     'Event Organizers':'Blandy Experimental Farm, Boyce Virginia'}]
+                     'Event Organizers':'Virginia Native Plant Society'}]
         self.assertListEqual(result, expected)
 
     @httpretty.activate

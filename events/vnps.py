@@ -180,23 +180,30 @@ def main(categories=[]):
             date_and_time, description_and_location = row.find_all('td')
             all_day, start_time, end_time, start_date, end_date = parse_date_and_time(date_and_time)
             event_website, event_name, event_venue, event_categories = parse_description_and_location(description_and_location)
-            event_venue = event_venue if event_venue else ''
-            event_categories = event_categories if event_categories else ''
-            event = {'Event Start Date': start_date,
-                     'Event End Date': end_date,
-                     'Event Start Time': start_time,
-                     'Event End Time': end_time,
-                     'Event Website': event_website,
-                     'Event Name': event_name,
-                     'Event Description':'',
-                     'Event Venue Name': event_venue,
-                     'All Day Event': all_day,
-                     'Event Category':event_categories,
-                     'Event Cost':'',
-                     'Event Currency Symbol':'$',
-                     'Timezone':'America/New_York',
-                     'Event Organizers': event_venue}
-            events.append(event)
+            if not event_venue:
+                #TODO: attempt to get the event venue for these events
+                #e.g. https://vnps.org/events/texas-hill-country-field-trip/
+                #e.g. https://vnps.org/events/texas-hill-country-field-trip/
+                #they're tough since the location isn't listed on
+                #https://vnps.org/events/ nor on their event pages
+                continue
+            else:
+                event_categories = event_categories if event_categories else ''
+                event = {'Event Start Date': start_date,
+                        'Event End Date': end_date,
+                        'Event Start Time': start_time,
+                        'Event End Time': end_time,
+                        'Event Website': event_website,
+                        'Event Name': event_name,
+                        'Event Description':'',
+                        'Event Venue Name': event_venue,
+                        'All Day Event': all_day,
+                        'Event Category':event_categories,
+                        'Event Cost':'',
+                        'Event Currency Symbol':'$',
+                        'Timezone':'America/New_York',
+                        'Event Organizers': 'Virginia Native Plant Society'}
+                events.append(event)
     filtered_events = filter_events(events, categories)
 
     return filtered_events

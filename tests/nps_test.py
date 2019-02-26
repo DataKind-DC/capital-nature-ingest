@@ -20,7 +20,7 @@ class NPSTestCase(unittest.TestCase):
     '''
 
     def setUp(self):
-        pass
+        self.maxDiff = None
 
     def tearDown(self):
         pass
@@ -91,7 +91,7 @@ class NPSTestCase(unittest.TestCase):
     def test_schematize_nps_event(self):
         result = schematize_nps_event(get_park_events_expected[0])
         expected = schematize_nps_event_expected
-        self.assertListEqual(result, expected)
+        self.assertEqual(result, expected)
 
     def test_events_schema_required_fields(self):
         '''

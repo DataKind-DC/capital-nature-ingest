@@ -194,7 +194,7 @@ def main():
                      'Event Description': event_description,
                      'Event Currency Symbol':'$',
                      'Timezone':'America/New_York',
-                     'Event Organizers': event_venue,
+                     'Event Organizers':'Fairfax Parks',
                      'Event Category':'',
                      'All Day Event':False} #doesn't seem like any events are all day
             events.append(event)
