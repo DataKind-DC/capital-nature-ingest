@@ -22,7 +22,7 @@ class ArlingtonTestCase(unittest.TestCase):
     '''
 
     def setUp(self):
-        pass
+        self.maxDiff = None
 
     def tearDown(self):
         pass
@@ -78,7 +78,7 @@ class ArlingtonTestCase(unittest.TestCase):
     def test_schematize_events(self):
         result = schematize_events(page_two_uri_event_items)
         expected = schematized_page_two_event_items
-        self.assertCountEqual(result, expected)
+        self.assertEqual(result, expected)
 
     def test_events_schema_required_fields(self):
         '''
