@@ -59,7 +59,7 @@ if __name__ == '__main__'
 
 ```python
 import unittest
-from lambdas.myevent.lambda_function import main
+from events.myevent import main
 import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
