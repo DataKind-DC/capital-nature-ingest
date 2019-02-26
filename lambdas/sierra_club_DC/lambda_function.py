@@ -27,7 +27,7 @@ def get_event_cost(event_cost_description):
         event_cost = event_costs[0].split(".")[0].replace("$", '')
         event_cost = ''.join(s for s in event_cost if s.isdigit())
     else:
-        event_cost = '0'
+        event_cost = ''
 
     return event_cost
 
