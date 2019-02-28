@@ -1,5 +1,7 @@
 beautifulsoup4>=4.6.3
 boto3 == 1.9.85
-requests==2.19.1
 httpretty==0.9.6
+responses==0.10.5
+requests==2.19.1
+requests-mock==1.5.2
 
