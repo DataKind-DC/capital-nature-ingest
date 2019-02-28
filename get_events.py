@@ -1,4 +1,5 @@
-from events import montgomery, ans, arlington, casey_trees, fairfax, nps, vnps
+from events import montgomery, ans, arlington, casey_trees, fairfax, nps, vnps, \
+    city_blossoms
 from datetime import datetime
 import csv
 import boto3
@@ -27,7 +28,8 @@ def get_events():
     Returns:
         events (list): a list of dicts, with each dict representing a single event.
     '''
-    event_sources = [montgomery, ans, arlington, casey_trees, fairfax, nps, vnps]
+    event_sources = [montgomery, ans, arlington, casey_trees, fairfax, nps, vnps,
+                     city_blossoms]
     events = []
     for event_source in event_sources:
         source_events = event_source.main()
