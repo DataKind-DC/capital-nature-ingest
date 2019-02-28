@@ -15,7 +15,7 @@ If you want to claim working on one of the event sources, update this doc by add
 |Aimee|Audubon Naturalist|https://anshome.org/events-calendar/|Y||Y|
 |Jaspreet|Building Bridges Across the River (BBAR)|http://www.thearcdc.org/events/upcoming||||
 |Sri, Kira|Casey Trees|https://caseytrees.org/events|Y||Y|
-|Stefan|City Blossoms|http://cityblossoms.org/calendar|||WIP|
+|Scott|City Blossoms|http://cityblossoms.org/calendar|There's an API||Y|
 |Stefan|DC Audubon Society|https://www.eventbrite.com/o/dc-audubon-10726377705||Events are listed on the right side of the main site. They appear to use Eventbrite for their events.|WIP|
 ||DUG Network|http://dugnetwork.org/events/||||
 ||Dumbarton Oaks Park Conservancy|https://dopark.org/volunteer/||||
