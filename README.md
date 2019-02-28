@@ -40,10 +40,7 @@ Before getting the events, you'll need to have a National Park Service API key. 
 python get_events.py
 ```
 
-Running the above will scrape all of the events. It only returns the results, so nothing will print out.
-
-5. Inspect the csv results
->Coming soon!
+Running the above will scrape all of the events and output a csv into the root of the project.
 
 ## Contributing
 Please read [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) for details on how to contribute.
