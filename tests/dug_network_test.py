@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 import httpretty
 import sys
 from bs4 import BeautifulSoup
@@ -9,7 +9,9 @@ from events.dug_network import main, soupify_event_page, get_event_location, sch
 from fixtures.dug_test_fixtures import get_event_calendar_soup, input_description, expected_description, event_website_contents, expected_events
 
 class DugNetworkTestCase(unittest.TestCase):
-
+    '''
+        Test cases for the DUG Network events
+    '''
     def setUp(self):
         self.url = 'http://dugnetwork.org/events/'
         self.event_calendar_uri = 'http://dugnetwork.org/event/sunday-morning-bird-walk-at-dyke-marsh-122/'
