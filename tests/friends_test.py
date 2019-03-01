@@ -1,14 +1,11 @@
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 import httpretty
 from bs4 import BeautifulSoup
-import requests
-import re
-from datetime import datetime
 import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from events.friends_of_kenilworth_gardens import soupify_event_page, main
+from events.friends_of_kenilworth_gardens import soupify_event_page, main, schematize_event_date, schematize_event_time
 from fixtures.friends_test_fixtures import expected_events, get_event_calendar_soup, \
                                        event_website_contents
 from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
@@ -29,13 +26,6 @@ class FRIENDSTestCase(unittest.TestCase):
         self.expected_events = None
         self.event_calendar_soup = None
 
-    @httpretty.activate
-    def test_event_location(self):
-        location = {'@type': 'Place', 'name': 'Dyke Marsh', 'description': '', 'url': False,
-                    'address': {'@type': 'PostalAddress'}, 'telephone': '', 'sameAs': ''}
-        expected = 'Dyke Marsh'
-
-        self.assertEqual(get_event_location(location), expected)
 
     @httpretty.activate
     def test_schematize_event_date(self):
