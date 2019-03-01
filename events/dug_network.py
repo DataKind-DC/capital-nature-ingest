@@ -20,15 +20,15 @@ def schematize_event_date(event_date):
     '''
     Converts a date like '2019-03-22T00:00:00-04:00' to '2019-03-22'
     '''
-    schematized_event_date = event_date[0:10]
-    return schematized_event_date
+    schematize_event_date = event_date[0:10]
+    return schematize_event_date
 
 def schematize_event_time(event_time):
     '''
     Converts a time string like '2019-03-22T00:00:00-04:00' to '13:30:00'
     '''
-    schematized_event_time = event_time[11:19]
-    return schematized_event_time
+    schematize_event_time = event_time[11:19]
+    return schematize_event_time
 
 def get_event_location(location):
     '''
@@ -66,7 +66,10 @@ def main():
         end_date = schematize_event_date(event['endDate'])
         start_time = schematize_event_time(event['startDate'])
         end_time = schematize_event_time(event['endDate'])
-        event_venue = get_event_location(event['location'])
+        if 'location' in event.keys():
+            event_venue = get_event_location(event['location'])
+        else:
+            event_venue = "No location"
         event_description = get_event_description(event['description'])
         event_category = event['@type']
         event_organizers = 'DUG Network'
