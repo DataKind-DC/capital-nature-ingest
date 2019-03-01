@@ -3,6 +3,7 @@ chromedriver*
 lambdas/**/*.zip
 .terraform
 *.tfstate*
+.vscode/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
