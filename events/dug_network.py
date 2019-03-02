@@ -4,6 +4,7 @@ import json
 import re
 import requests
 import sys
+import unicodedata
 
 
 def soupify_event_page(url='http://dugnetwork.org/events/'):
@@ -42,12 +43,17 @@ def get_event_location(location):
 def get_event_description(description):
     '''
     Get event description
-    Decode HTML entitles from the description
-    Remove HTML tags from the description
     '''
+    #Decode HTML entitles from the description
     description = html.unescape(description)
+    #Remove HTML tags from the description
     TAG_RE = re.compile(r'<[^>]+>')
-    return TAG_RE.sub('', description)
+    description = TAG_RE.sub('', description)
+    #Resolving utf-8 issues
+    description = unicodedata.normalize("NFKD", description)
+    #Removing new line character at the end of the string
+    description = description[:-2]
+    return description
 
 
 def main():
