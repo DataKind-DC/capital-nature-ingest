@@ -5,7 +5,7 @@ import requests
 import json
 import re
 from datetime import datetime
-from lambdas.sierra_club_DC.lambda_function import handle_ans_page
+from events.sierra_club import handle_ans_page
 from fixtures.sierra_club_test_fixtures import api_content, events_list
 from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
                   is_phonenumber_valid
