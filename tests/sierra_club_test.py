@@ -5,14 +5,15 @@ import requests
 import json
 import re
 from datetime import datetime
+import sys
+from os import path
+sys.path.append( path.dirname( path.dirname( path.abspath(__file__))))
 from events.sierra_club import handle_ans_page
 from fixtures.sierra_club_test_fixtures import api_content, events_list
 from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
                   is_phonenumber_valid
 
-import sys
-from os import path
-sys.path.append( path.dirname( path.dirname( path.abspath(__file__))))
+
 
 
 class SierraClubDCTestCase(unittest.TestCase):
