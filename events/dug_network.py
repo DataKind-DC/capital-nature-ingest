@@ -66,36 +66,34 @@ def main():
 
     events = []
     for event in events_content:
-        event_name = event['name']
-        event_website = event['url']
-        start_date = schematize_event_date(event['startDate'])
-        end_date = schematize_event_date(event['endDate'])
-        start_time = schematize_event_time(event['startDate'])
-        end_time = schematize_event_time(event['endDate'])
         if 'location' in event.keys():
+            event_name = event['name']
+            event_website = event['url']
+            start_date = schematize_event_date(event['startDate'])
+            end_date = schematize_event_date(event['endDate'])
+            start_time = schematize_event_time(event['startDate'])
+            end_time = schematize_event_time(event['endDate'])
             event_venue = get_event_location(event['location'])
-        else:
-            event_venue = "No location"
-        event_description = get_event_description(event['description'])
-        event_category = event['@type']
-        event_organizers = 'DUG Network'
-        all_day_event = False
-        event = {
-                 'Event Name': event_name,
-                 'Event Website': event_website,
-                 'Event Start Date': start_date,
-                 'Event Start Time': start_time,
-                 'Event End Date': end_date,
-                 'Event End Time': end_time,
-                 'Event Venue Name': event_venue,
-                 'Timezone': 'America/New_York',
-                 'Event Cost': '',
-                 'Event Description': event_description,
-                 'Event Category': event_category,
-                 'Event Organizers': event_organizers,
-                 'Event Currency Symbol':'$',
-                 'All Day Event': all_day_event}
-        events.append(event)
+            event_description = get_event_description(event['description'])
+            event_category = event['@type']
+            event_organizers = 'DUG Network'
+            all_day_event = False
+            event = {
+                     'Event Name': event_name,
+                     'Event Website': event_website,
+                     'Event Start Date': start_date,
+                     'Event Start Time': start_time,
+                     'Event End Date': end_date,
+                     'Event End Time': end_time,
+                     'Event Venue Name': event_venue,
+                     'Timezone': 'America/New_York',
+                     'Event Cost': '',
+                     'Event Description': event_description,
+                     'Event Category': event_category,
+                     'Event Organizers': event_organizers,
+                     'Event Currency Symbol':'$',
+                     'All Day Event': all_day_event}
+            events.append(event)
     return events
 
 
