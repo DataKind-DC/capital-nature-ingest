@@ -237,8 +237,6 @@ def main():
     events = []
     for nps_event in nps_events:
         schematized_nps_events = schematize_nps_event(nps_event)
-        for e in schematized_nps_events:
-            print(json.dumps(e, indent = 2))
         events.extend(schematized_nps_events)
 
     return events
