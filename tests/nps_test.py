@@ -7,7 +7,7 @@ import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
 from events.nps import get_park_events, get_nps_events, get_specific_event_location, \
-                       schematize_nps_event, schematize_time, main
+                       schematize_nps_event, schematize_event_time, parse_event_cost, main
 from fixtures.nps_test_fixtures import get_park_events_expected, nama_events_json, \
                                        event_page_content, \
                                        schematize_nps_event_expected
@@ -83,9 +83,24 @@ class NPSTestCase(unittest.TestCase):
         expected = ''
         self.assertEqual(result, expected)
 
-    def test_schematize_time(self):
-        result = schematize_time('10:00 AM')
+    def test_schematize_event_time(self):
+        result = schematize_event_time('10:00 AM')
         expected = '10:00:00'
+        self.assertEqual(result, expected)
+
+    def test_schematize_event_time_pm(self):
+        result = schematize_event_time('10:00 PM')
+        expected = '22:00:00'
+        self.assertEqual(result, expected)
+
+    def test_parse_event_cost_even(self):
+        result = parse_event_cost("The event costs $12.50 per person.")
+        expected = '13'
+        self.assertEqual(result, expected)
+
+    def test_parse_event_cost_odd(self):
+        result = parse_event_cost("The event costs $11.50 per person.")
+        expected = '12'
         self.assertEqual(result, expected)
     
     def test_schematize_nps_event(self):

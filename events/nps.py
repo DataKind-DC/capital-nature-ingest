@@ -3,7 +3,7 @@ import os
 import re
 from bs4 import BeautifulSoup
 from datetime import datetime
-
+import json
 # For a local run, be sure to create an env variable with the NPS API key. 
 # For example:
 # $ export NPS_KEY=<NPS API Key>
@@ -12,7 +12,6 @@ try:
 except KeyError:
     #if it's not an env var, then we might be testing
     NPS_KEY = input("Enter your NPS API key:")
-
 
 def get_park_events(park_code, limit=1000):
     '''
@@ -43,7 +42,6 @@ def get_park_events(park_code, limit=1000):
 
     return park_events
 
-
 def get_nps_events(park_codes = ['afam','anac','anti','apco','appa','arho','asis','balt','bawa','bepa','blri',
                                  'bowa','cahi','cajo','came','cato','cawo','cbgn','cbpo','cebe','choh','clba',
                                  'coga','colo','cuga','cwdw','fodu','fofo','fomc','fomr','foth','fowa','frde',
@@ -71,7 +69,6 @@ def get_nps_events(park_codes = ['afam','anac','anti','apco','appa','arho','asis
             pass
 
     return nps_events
-
 
 def get_specific_event_location(event_id):
     '''
@@ -114,23 +111,36 @@ def get_specific_event_location(event_id):
 
     return specific_event_location
 
-def schematize_time(event_time):
+def schematize_event_time(event_time):
     '''
-    Converts a time string like '10:00 AM' to 24hr time like '10:00:00'
-
-    Parameters:
-        event_time (str): e.g. '10:00 AM'
-    
-    Returns:
-        formatted_event_time (str): e.g. '10:00:00'
+    Converts a time string like '1:30 pm' to 24hr time like '13:30:00'
     '''
     try:
-        datetime_obj = datetime.strptime(event_time, "%H:%M %p")
+        datetime_obj = datetime.strptime(event_time, "%I:%M %p")
+        schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
-        return ''
-    formatted_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
+        schematized_event_time = ''
     
-    return formatted_event_time
+    return schematized_event_time
+
+def parse_event_cost(event_cost):
+    '''
+    Extracts the highest event cost from a string of potentially many costs
+
+    Parameters:
+        event_cost (str): e.g. "The event costs $12.50 per person."
+
+    Returns:
+        event_cost (str): the event cost, e.g. "12"
+    '''
+    currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
+    event_costs = re.findall(currency_re, event_cost)
+    if event_costs:
+        max_event_cost = max([float(x.replace("$",'')) for x in event_costs])
+        event_cost = str(round(int(max_event_cost + 0.5)))
+        return event_cost
+    else:
+        return ''
 
 def schematize_nps_event(nps_event):
     '''
@@ -149,8 +159,8 @@ def schematize_nps_event(nps_event):
         for date in dates:
             times = nps_event['times']
             for time in times:
-                event_start_time = schematize_time(time['timeStart'])
-                event_end_time = schematize_time(time['timeEnd'])
+                event_start_time = schematize_event_time(time['timeStart'])
+                event_end_time = schematize_event_time(time['timeEnd'])
                 event_name = nps_event['title']
                 try:
                     event_description = BeautifulSoup(nps_event['description'], "html.parser").find("p").text
@@ -159,11 +169,14 @@ def schematize_nps_event(nps_event):
                 event_all_day = nps_event['isAllDay']
                 event_id = nps_event['id']
                 specific_event_location = get_specific_event_location(event_id)
-                venue_name = re.sub(' +', ' ', nps_event['parkFullName'] + ", " + specific_event_location)
-                event_organization = nps_event['organizationName']
-                event_organization = event_organization if len(event_organization) > 0 else nps_event['parkFullName']
-                event_organization = re.sub('  +', ' ', event_organization)
-                event_cost = '0' if nps_event['isFree'] else nps_event['feeInfo']
+                if specific_event_location:
+                    park_name_w_location = re.sub(' +', ' ', nps_event['parkFullName'] + ", " + specific_event_location)
+                else:
+                    park_name_w_location = re.sub(' +', ' ', nps_event['parkFullName'])
+                event_venue = nps_event['organizationName']
+                event_venue = event_venue if event_venue else nps_event['parkFullName']
+                event_venue = re.sub('  +', ' ', event_venue)
+                event_cost = '0' if nps_event['isFree'] else parse_event_cost(nps_event['feeInfo'])
                 _ = nps_event['category']
                 event_tags = ", ".join(nps_event['tags'])
                 regResURL = nps_event['regResURL']
@@ -187,6 +200,11 @@ def schematize_nps_event(nps_event):
                 if event_image:
                     if "nps.gov" not in event_image:
                         event_image = f"https://www.nps.gov{event_image}"
+                if "Rock Creek" in event_venue:
+                    event_organizer = "National Park Service, Rock Creek Park"
+                    event_venue = park_name_w_location
+                else:
+                    event_organizer = "National Park Service"
                 schematized_nps_event = {
                                             "Event Name":event_name,
                                             "Event Description":event_description,
@@ -195,8 +213,8 @@ def schematize_nps_event(nps_event):
                                             "Event End Date":date,
                                             "Event End Time":event_end_time,
                                             "All Day Event":event_all_day,
-                                            "Event Venue Name":event_organization,
-                                            "Event Organizers":"National Park Service",
+                                            "Event Venue Name":event_venue,
+                                            "Event Organizers":event_organizer,
                                             "Timezone":'America/New_York',
                                             "Event Cost":event_cost,
                                             "Event Currency Symbol":"$",
@@ -211,19 +229,19 @@ def schematize_nps_event(nps_event):
 
     return schematized_nps_events
 
-
 def main():
     '''
-    Returns NPS events for VA, DC and MD. Each is a dict conforming to the wordpress schema.
+    Returns NPS events for VA, DC and MD. Each event is a dict conforming to the wordpress schema.
     '''
     nps_events = get_nps_events()
     events = []
     for nps_event in nps_events:
         schematized_nps_events = schematize_nps_event(nps_event)
+        for e in schematized_nps_events:
+            print(json.dumps(e, indent = 2))
         events.extend(schematized_nps_events)
 
     return events
-
 
 if __name__ == '__main__':
     events = main()
