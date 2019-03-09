@@ -4,7 +4,6 @@ import json
 from datetime import datetime
 import unicodedata
 
-url="https://www.sierraclub.org/sc/proxy?url=https://act.sierraclub.org/events/services/apexrest/eventfeed/ent/6300,5051&_=1548294791086"
 
 def fetch_page(url):
     html_doc = requests.get(url).content
