@@ -3,7 +3,7 @@ import requests
 import json
 from datetime import datetime
 import unicodedata
-
+import pprint
 
 def fetch_page(url):
     html_doc = requests.get(url).content
@@ -73,6 +73,7 @@ def handle_ans_page(events):
         events_data['Event Currency Symbol'] = "$"
         events_data['Event Category'] = event.get('eventCategory','')
         events_data['Event Website'] = event.get('urlToShare','')
+        events_data['Event Venue Name'] = event.get('location','')
         # commenting event show map, latitude and longitude fields for now as The WordPress Event plugin doesn't
         # expect these fields, but we might eventually use their Map plugin, which would need those geo fields
         # events_data['latitude'] = event.get('lat','')
@@ -97,7 +98,9 @@ def main():
     page = fetch_page(url)
     page = json.loads(page)
     events = handle_ans_page(page['eventList'])
-    return events
+    pprint.pprint(events)
+
+    # return events
 
 
 if __name__ == '__main__':
