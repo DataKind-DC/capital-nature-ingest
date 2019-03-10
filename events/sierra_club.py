@@ -98,9 +98,8 @@ def main():
     page = fetch_page(url)
     page = json.loads(page)
     events = handle_ans_page(page['eventList'])
-    pprint.pprint(events)
 
-    # return events
+    return events
 
 
 if __name__ == '__main__':
