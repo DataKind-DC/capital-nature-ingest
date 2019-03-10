@@ -60,7 +60,7 @@ class SierraClubDCTestCase(unittest.TestCase):
         schema = {'Event Name','Event Description','Event Start Date','Event Start Time',
                   'Event End Date','Event End Time','Timezone','All Day Event',
                   'Event Organizers','Event Cost','Event Currency Symbol',
-                  'Event Category','Event Website'}
+                  'Event Category', 'Event Venue Name','Event Website'}
         result = schema.issubset(keys)
         self.assertTrue(result)
 
