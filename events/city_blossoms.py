@@ -56,7 +56,10 @@ def get_event_description(event_website):
         return ''
     soup = BeautifulSoup(r.content, 'html.parser')
     desc_div = soup.find('div',{'class':'sqs-block-content'})
-    event_description = desc_div.get_text()
+    try:
+        event_description = desc_div.get_text()
+    except AttributeError:
+        return ''
     event_description = event_description.encode('windows-1252', 
                                                  errors = 'ignore').decode("utf8", 
                                                                            errors='ignore')
