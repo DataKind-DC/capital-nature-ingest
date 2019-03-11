@@ -40,7 +40,7 @@ class SierraClubDCTestCase(unittest.TestCase):
         page = json.loads(content)
         result = handle_ans_page(page['eventList'])
         expected = self.events_list
-        self.assertCountEqual(result, expected)
+        self.assertEqual(result, expected)
 
 
     @httpretty.activate
