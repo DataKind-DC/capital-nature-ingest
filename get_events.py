@@ -32,7 +32,7 @@ def get_events():
         events (list): a list of dicts, with each dict representing a single event.
     '''
     event_sources = [montgomery, ans, arlington, casey_trees, fairfax, nps, vnps,
-                     city_blossoms]
+                     sierra_club, dug_network, city_blossoms]
     events = []
     for event_source in event_sources:
         try:
