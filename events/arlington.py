@@ -136,6 +136,7 @@ def schematize_events(event_items):
         event_venue = html_textraction(event_item['locationName'])
         if event_venue == 'Earth Products Yard' or 'Library' in event_venue or not event_venue:
             continue
+        event_venue = event_venue if event_venue else "See event website"
         event = {'Event Start Date':start_date,
                  'Event End Date': end_date,
                  'Event Start Time':start_time,

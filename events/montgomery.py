@@ -165,6 +165,7 @@ def parse_event_item(event_item, event_category):
         start_date, start_time, end_time = parse_event_date(event_date)
         event_name = event_item.find('span',{'class':'event-name'}).get_text().strip()
         event_venue = ", ".join([i.get_text() for i in event_item.find_all('span',{'class':'location'})])
+        event_venue = event_venue if event_venue else "See event website"
         event = {'Event Start Date': start_date,
                  'Event End Date': start_date, #assuing events are just one day
                  'Event Start Time': start_time,

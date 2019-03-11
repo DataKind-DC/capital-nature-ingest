@@ -73,7 +73,9 @@ def handle_ans_page(events):
         events_data['Event Currency Symbol'] = "$"
         events_data['Event Category'] = event.get('eventCategory','')
         events_data['Event Website'] = event.get('urlToShare','')
-        events_data['Event Venue Name'] = event.get('location','')
+        event_venue = event.get('location','')
+        event_venue = event_venue if event_venue else "See event website"
+        events_data['Event Venue Name'] = event_venue
         # commenting event show map, latitude and longitude fields for now as The WordPress Event plugin doesn't
         # expect these fields, but we might eventually use their Map plugin, which would need those geo fields
         # events_data['latitude'] = event.get('lat','')
