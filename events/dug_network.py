@@ -76,6 +76,7 @@ def main():
             event_venue = get_event_location(event['location'])
         else:
             event_venue = "See event website"
+        event_venue = event_venue if event_venue else "See event website"
         event_description = get_event_description(event['description'])
         event_category = event['@type']
         event_organizers = 'DUG Network'

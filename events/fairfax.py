@@ -225,6 +225,7 @@ def main():
         if not domain in event_website:
             event_website = domain + event_website
         event_cost, event_description, event_venue, start_date, end_date, start_time, end_time = parse_event_website(event_website)
+        event_venue = event_venue if event_venue else "See event website"
         if event_venue and start_date:
             start_date = schematize_event_date(start_date)
             end_date = schematize_event_date(end_date)

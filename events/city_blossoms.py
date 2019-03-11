@@ -112,6 +112,7 @@ def schematize_event(event):
             #as somewhere within Maryland. Because of this, we'll not capture events that don't have
             #and addressTitle
             return
+        event_venue = event_venue if event_venue else "See event website"
         event_cost = '' #this field isn't returned by the API or on the event's website
         event_description = get_event_description(event_website)
         event_categories = get_event_categories(event)

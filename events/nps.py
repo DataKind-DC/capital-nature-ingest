@@ -205,6 +205,7 @@ def schematize_nps_event(nps_event):
                     event_venue = park_name_w_location
                 else:
                     event_organizer = "National Park Service"
+                event_venue = event_venue if event_venue else "See event website"
                 schematized_nps_event = {
                                             "Event Name":event_name,
                                             "Event Description":event_description,

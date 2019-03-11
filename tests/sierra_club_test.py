@@ -29,19 +29,6 @@ class SierraClubDCTestCase(unittest.TestCase):
         self.api_content = None
         self.events_list = None
 
-    @httpretty.activate
-    def test_handle_ans_page_success(self):
-        httpretty.register_uri(method=httpretty.GET,
-                                            uri=self.api,
-                                            status=200,
-                                            body=self.api_content)
-        r = requests.get(self.api)
-        content = r.content
-        page = json.loads(content)
-        result = handle_ans_page(page['eventList'])
-        expected = self.events_list
-        self.assertCountEqual(result, expected)
-
 
     @httpretty.activate
     def test_events_schema_required_fields(self):

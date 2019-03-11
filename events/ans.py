@@ -82,6 +82,11 @@ def main():
         event_category = ''
         event_organizers = 'Audubon Naturalist Society'
         all_day_event = False
+        try:
+            event_venue = e.find('span', {'itemprop': 'name'}).get_text()
+        except AttributeError:
+            event_venue = "See event website"
+        event_venue = event_venue if event_venue else "See event website"
         #TODO: try to get the event cost
         event = {
                  'Event Name': event_name,
@@ -90,7 +95,7 @@ def main():
                  'Event Start Time': start_time,
                  'Event End Date': end_date,
                  'Event End Time': end_time,
-                 'Event Venue Name': e.find('span', {'itemprop': 'name'}).text,
+                 'Event Venue Name': event_venue,
                  'Timezone':'America/New_York',
                  'Event Cost': '',
                  'Event Description': event_description,
