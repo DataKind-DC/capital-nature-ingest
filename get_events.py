@@ -91,10 +91,82 @@ def events_to_csv(events, is_local = True, bucket = None):
                                    'capital-nature/{0}'.format(filename)
                                     )
 
+def get_past_venues():
+    '''
+    Returns a set of event venues from current venue csv in temp/ (if it exists) 
+    and then deletes that file (if it exists) as it will soon be replaced by a new,
+    more updated one.
+
+    Parameters:
+        None
+
+    Returns:
+        past_venues (set): a set of event venues, or an empty set if there are none
+    '''
+    tmp_path = os.path.join(os.getcwd(), 'tmp')
+    tmp_files = [f for f in os.listdir(tmp_path) if os.path.isfile(os.path.join(tmp_path,f))]
+    try:
+        venue_file = [f for f in tmp_files if 'venues_' in f][0]
+    except IndexError:
+        #IndexError because there's no past file
+        return set()
+    venue_file = os.path.join(tmp_path, venue_file)
+    venues = []
+    with open(venue_file, errors = 'ignore') as f:
+        reader = csv.reader(f)
+        for i in reader:
+            venue = i[0]
+            venues.append(venue)
+    past_venues = set(venues)
+    past_venues.remove('VENUE NAME')
+    #os.remove(venue_file)
+    
+    return past_venues
+
+def venues_to_csv(events, is_local = True, bucket = None):
+    '''
+    Void function that writes unique event venues to csv, either locally or to 
+    an S3 bucket.
+
+    Parameters:
+        events (list): a list of dicts, with each dict representing a single event.
+        is_local (bool): True if you want to write the csv locally. False if you want to
+                         write the csv to S3 (must supply a valid bucket name as well)
+        bucket (str or None): the name of the public S3 bucket. None by default.
+
+    Returns:
+        None
+    '''
+    venues = []
+    for event in events:
+        event_venue = event['Event Venue Name']
+        venues.append(event_venue)
+    past_venues = get_past_venues()
+    unique_venues = set(venues) | past_venues
+    now = datetime.now().strftime("%m-%d-%Y")
+    filename = f'cap-nature-venues-{now}.csv'
+    out_path = os.path.join(os.getcwd(), 'tmp', filename)
+    with open(out_path,
+              mode = 'w',
+              encoding = 'utf-8',
+              errors = 'ignore') as f:
+        writer = csv.writer(f)
+        _venues = ['VENUE NAME']
+        _venues.extend(list(unique_venues))
+        venues_to_write = _venues
+        for venue in venues_to_write:
+            writer.writerow([venue])
+    if not is_local and bucket:
+        s3 = boto3.resource('s3')
+        s3.meta.client.upload_file(out_path,
+                                   bucket,
+                                   'capital-nature/{0}'.format(filename)
+                                    )
+
 def get_past_organizers():
     '''
     Returns a set of event organizers from current organizer csv in temp/ (if it exists) 
-    and then deletes that file (if it exists) as it will soon be replace by a new,
+    and then deletes that file (if it exists) as it will soon be replaced by a new,
     more updated one.
 
     Parameters:
@@ -167,6 +239,7 @@ def main(is_local = True, bucket = None):
     events = get_events()
     events_to_csv(events, is_local, bucket)
     organizers_to_csv(events, is_local, bucket)
+    venues_to_csv(events, is_local, bucket)
     
     return events
 
