@@ -22,7 +22,7 @@ If you want to claim working on one of the event sources, update this doc by add
 |Melissa|Earth Conservation Corps|https://www.earthconservationcorps.org/events-1||No Upcoming Events||
 |Scott|Fairfax County|https://fairfaxcounty.gov/parks/park-events-calendar|Y||Y|
 |Sri, Kira|Friends of Kenilworth Aquatic Gardens|https://www.eventbrite.com/o/friends-of-kenilworth-aquatic-gardens-8632128868||They appear to use Evenbrite as their events page.|WIP|
-||Little Falls Watershed Alliance|https://www.earthconservationcorps.org/events-1|https://www.lfwa.org/events|||
+|Kate|Little Falls Watershed Alliance|https://www.earthconservationcorps.org/events-1|https://www.lfwa.org/events|||
 |Scott|Montgomery County|https://www.montgomeryparks.org/calendar/|Y||Y|
 |Scott|National Park Service|https://www.nps.gov/subjects/developer/api-documentation.htm#/|Y||Y|
 |Dominic|Rock Creek Conservancy|https://www.rockcreekconservancy.org/what-we-do/upcoming-events|||
