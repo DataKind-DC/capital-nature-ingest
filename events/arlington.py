@@ -3,7 +3,6 @@ import re
 import requests
 from bs4 import BeautifulSoup
 
-
 def get_arlington_events():
     '''
     Gets animal- and environment-related events for Arlington County (https://today.arlingtonva.us/)
@@ -134,7 +133,7 @@ def schematize_events(event_items):
         else:
             event_cost =  ''
         event_venue = html_textraction(event_item['locationName'])
-        if event_venue == 'Earth Products Yard' or 'Library' in event_venue or not event_venue:
+        if event_venue == 'Earth Products Yard' or 'Library' in event_venue or not event_venue or not event_website:
             continue
         event_venue = event_venue if event_venue else "See event website"
         event = {'Event Start Date':start_date,
@@ -159,7 +158,6 @@ def schematize_events(event_items):
 def main():
     event_items = get_arlington_events()
     events = schematize_events(event_items)
-
     return events
 
 if __name__ == '__main__':
