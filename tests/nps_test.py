@@ -7,7 +7,8 @@ import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
 from events.nps import get_park_events, get_nps_events, get_specific_event_location, \
-                       schematize_nps_event, schematize_event_time, parse_event_cost, main
+                       schematize_nps_event, schematize_event_time, \
+                       scrape_event_description, parse_event_cost, main
 from fixtures.nps_test_fixtures import get_park_events_expected, nama_events_json, \
                                        event_page_content, \
                                        schematize_nps_event_expected
@@ -35,7 +36,7 @@ class NPSTestCase(unittest.TestCase):
                                content_type = "application/json")
         result = get_park_events('nama')
         expected = get_park_events_expected
-        self.assertCountEqual(result, expected)
+        self.assertEqual(result, expected)
 
     @httpretty.activate
     def test_get_park_events_404(self):
@@ -46,7 +47,19 @@ class NPSTestCase(unittest.TestCase):
                                status=404)
         result = get_park_events('nama')
         expected = []
-        self.assertListEqual(result, expected)
+        self.assertEqual(result, expected)
+
+    @httpretty.activate
+    def test_scrape_event_description(self):
+        uri = 'https://www.nps.gov/planyourvisit/event-details.htm?id=691C8DCE-BFF3-B3A6-3D05AF87066F5FDD'
+        httpretty.register_uri(httpretty.GET,
+                               uri=uri,
+                               body=event_page_content,
+                               status=200,
+                               content_type = "text/html")
+        result = scrape_event_description(uri)
+        expected = 'Walk to the presidential memorials and learn how these legendary leaders met their demises. Hear the heroic, heartwarming, tragic and sometimes gruesome details of Presidential deaths.'
+        self.assertEqual(result, expected)
 
     @httpretty.activate
     def test_get_nps_events(self):
