@@ -23,11 +23,6 @@ def customized_url():
     return url
 
 def get_api_events():
-    
-    try: 
-        r = requests.get(customized_url())
-    except:
-        sys.exit(1)
         
     data = r.json() 
     hit=data['hits']['hit']
@@ -38,7 +33,9 @@ def main():
     
     events_dict = []
     
-    for i in range(len(get_api_events())):
+    hit=get_api_events()
+    
+    for i in range(len(hit)):
             event=hit[i]
             fields=event['fields']
 
