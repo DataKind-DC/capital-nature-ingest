@@ -80,22 +80,23 @@ def main():
         event_category = event['@type']
         event_organizers = 'DUG Network'
         all_day_event = False
-        event = {
-                 'Event Name': event_name,
-                 'Event Website': event_website,
-                 'Event Start Date': start_date,
-                 'Event Start Time': start_time,
-                 'Event End Date': end_date,
-                 'Event End Time': end_time,
-                 'Event Venue Name': event_venue,
-                 'Timezone': 'America/New_York',
-                 'Event Cost': '',
-                 'Event Description': event_description,
-                 'Event Category': event_category,
-                 'Event Organizers': event_organizers,
-                 'Event Currency Symbol':'$',
-                 'All Day Event': all_day_event}
-        events.append(event)
+        if start_time != '00:00:00':
+            event = {
+                     'Event Name': event_name,
+                     'Event Website': event_website,
+                     'Event Start Date': start_date,
+                     'Event Start Time': start_time,
+                     'Event End Date': end_date,
+                     'Event End Time': end_time,
+                     'Event Venue Name': event_venue,
+                     'Timezone': 'America/New_York',
+                     'Event Cost': '',
+                     'Event Description': event_description,
+                     'Event Category': event_category,
+                     'Event Organizers': event_organizers,
+                     'Event Currency Symbol':'$',
+                     'All Day Event': all_day_event}
+            events.append(event)
     return events
 
 
