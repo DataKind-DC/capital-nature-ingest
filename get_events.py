@@ -127,7 +127,7 @@ def events_to_csv(events, is_local = True, bucket = None):
         None
     '''
     now = datetime.now().strftime("%m-%d-%Y")
-    filename = f'cap-nature-events-{now}.csv'
+    filename = f'cap-nature-events-scraped-{now}.csv'
     fieldnames = {'Do Not Import','Event Name','Event Description','Event Excerpt',
                   'Event Start Date','Event Start Time','Event End Date',
                   'Event End Time','Timezone','All Day Event',
@@ -207,7 +207,7 @@ def venues_to_csv(events, is_local = True, bucket = None):
     past_venues = get_past_venues()
     unique_venues = set(venues) | past_venues
     now = datetime.now().strftime("%m-%d-%Y")
-    filename = f'cap-nature-venues-{now}.csv'
+    filename = f'cap-nature-venues-scraped-{now}.csv'
     out_path = os.path.join(os.getcwd(), 'tmp', filename)
     with open(out_path,
               mode = 'w',
@@ -279,7 +279,7 @@ def organizers_to_csv(events, is_local = True, bucket = None):
     past_organizers = get_past_organizers()
     unique_organizers = set(organizers) | past_organizers
     now = datetime.now().strftime("%m-%d-%Y")
-    filename = f'cap-nature-organizers-{now}.csv'
+    filename = f'cap-nature-organizers-scraped-{now}.csv'
     out_path = os.path.join(os.getcwd(), 'tmp', filename)
     with open(out_path,
               mode = 'w',
