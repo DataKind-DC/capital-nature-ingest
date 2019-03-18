@@ -80,7 +80,7 @@ def main():
         event_category = event['@type']
         event_organizers = 'DUG Network'
         all_day_event = False
-        if start_time != '00:00:00':
+        if start_time != '00:00:00' and all([start_time, end_time]):
             event = {
                      'Event Name': event_name,
                      'Event Website': event_website,
