@@ -3,15 +3,10 @@ import pprint
 import os
 import datetime
 
-#KGRGYNR5XQQDT7EFHUVW
-#VIAEC7FFI64RC6SRHGDG
-#os.environ['EVENTBRITE_TOKEN']
 
-EVENTBRITE_TOKEN = 'VIAEC7FFI64RC6SRHGDG'
-FONA_EVENTBRITE_ORG_ID = 8632128868
 # For a local run, be sure to create an env variable with the NPS API key.
 # For example:
-# $ export NPS_KEY=<NPS API Key>
+# $ export EVENTBRITE_TOKEN=<EVENTBRITE TOKEN Key>
 try:
     EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
 except KeyError:
