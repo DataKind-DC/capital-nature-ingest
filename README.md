@@ -40,7 +40,10 @@ Before getting the events, you'll need to have a National Park Service API key. 
 python get_events.py
 ```
 
-Running the above will scrape all of the events and output a csv into the root of the project.
+Running the above will scrape all of the events and output three csvs into the `tmp/` dir of the project:
+ - `cap-nature-events-<date>.csv` (all of the events)
+ - `cap-nature-organizers-<date>.csv` (a list of the event sources, which builds off the previous list each successive time you run this)
+ - `cap-nature-venues-<date>.csv` (a list of the event venues, which builds off the previous list each successive time you run this)
 
 ## Contributing
 Please read [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) for details on how to contribute.

@@ -1,5 +1,6 @@
 beautifulsoup4>=4.6.3
-boto3 == 1.9.85
+boto3==1.9.85
+geocoder==1.38.1
 httpretty==0.9.6
 responses==0.10.5
 requests==2.19.1

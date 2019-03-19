@@ -71,6 +71,7 @@ def handle_ans_page(soup):
         event_venue = con['location']['name']
         if event_venue == 'TBD':
             continue
+        event_venue = event_venue if event_venue else "See event website"
         # some html string is present in event name default adding this to format it
         events_name_data = bs4.BeautifulSoup(con.get('name',''), 'html.parser')
         events_data['Event Name'] = events_name_data.get_text()

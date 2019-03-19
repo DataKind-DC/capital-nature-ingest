@@ -142,6 +142,32 @@ def parse_event_cost(event_cost):
     else:
         return ''
 
+def scrape_event_description(event_website):
+    '''
+    Givent the event's website, scrape the event's description by finding the lost <p> tag text
+    
+    Parameters:
+        event_website (str): the url to an event page
+        
+    Returns:
+        event_description (str): description of the event
+    
+    '''
+    try:
+        r = requests.get(event_website)
+    except:
+        event_description = 'See event website'
+        return event_description
+    content = r.content
+    soup = BeautifulSoup(content, 'html.parser')
+    divs = soup.find_all('div', {'class':'Truncatable__Content'})
+    try:
+        event_description = max([d.text for d in divs], key = len).strip()
+    except:
+        return 'See event website'
+    
+    return event_description
+    
 def schematize_nps_event(nps_event):
     '''
     Extract data from the nps event so that it conforms to the wordpress schema.
@@ -205,6 +231,9 @@ def schematize_nps_event(nps_event):
                     event_venue = park_name_w_location
                 else:
                     event_organizer = "National Park Service"
+                event_venue = event_venue if event_venue else "See event website"
+                if not event_description:
+                    event_description = scrape_event_description(event_website)
                 schematized_nps_event = {
                                             "Event Name":event_name,
                                             "Event Description":event_description,

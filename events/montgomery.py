@@ -159,12 +159,18 @@ def parse_event_item(event_item, event_category):
         event_website = href
     event_description, event_cost = parse_event_website(event_website)
     if not event_description:
-        event = None
+        return
     else:
-        event_date = event_item.find('span',{'class':'time'}).get_text().strip().replace("to",'').replace("Ocber","October")
+        try:
+            event_date = event_item.find('span',{'class':'time'}).get_text().strip().replace("to",'').replace("Ocber","October")
+        except:
+            return
         start_date, start_time, end_time = parse_event_date(event_date)
+        if not all([start_date, start_time, end_time]):
+            return
         event_name = event_item.find('span',{'class':'event-name'}).get_text().strip()
         event_venue = ", ".join([i.get_text() for i in event_item.find_all('span',{'class':'location'})])
+        event_venue = event_venue if event_venue else "See event website"
         event = {'Event Start Date': start_date,
                  'Event End Date': start_date, #assuing events are just one day
                  'Event Start Time': start_time,

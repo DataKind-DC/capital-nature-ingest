@@ -76,11 +76,12 @@ def main():
             event_venue = get_event_location(event['location'])
         else:
             event_venue = "See event website"
+        event_venue = event_venue if event_venue else "See event website"
         event_description = get_event_description(event['description'])
         event_category = event['@type']
         event_organizers = 'DUG Network'
         all_day_event = False
-        if start_time != '00:00:00':
+        if start_time != '00:00:00' and all([start_time, end_time]):
             event = {
                      'Event Name': event_name,
                      'Event Website': event_website,
