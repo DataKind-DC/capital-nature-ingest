@@ -1,0 +1,334 @@
+import datetime
+import unittest
+from unittest.mock import patch, Mock
+import httpretty
+import sys
+from os import path
+sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
+from events.friends_of_kenilworth_gardens import main, EventbriteIngester
+from fixtures.friends_test_fixtures import api_content, events_list
+from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
+                  is_phonenumber_valid, exceptionCallback
+ 
+class FRIENDSTestCase(unittest.TestCase):
+    '''
+    Test cases for the FRIENDS events
+    '''
+
+    def setUp(self):
+        EVENTBRITE_TOKEN = 'VIAEC7FFI64RC6SRHGDG'
+        self.api = 'https://www.eventbriteapi.com/v3/events/search/?token='+EVENTBRITE_TOKEN+'&organizer.id=8632128868&'
+        self.api_content = api_content
+        self.events_list = events_list
+        # self.one_event = one_event
+        self.maxDiff = None
+
+    def tearDown(self):
+        self.api = None
+        self.api_content = None
+        self.events_list = None
+        self.one_event = None
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_main_success(self, mocked_EventbriteIngester):
+        events = main()
+        keys = set().union(*(d.keys() for d in events))
+        schema = {'Do Not Import', 'Event Name', 'Event Description', 'Event Excerpt',
+                  'Event Start Date', 'Event Start Time', 'Event End Date', 'Event End Time',
+                  'Timezone', 'All Day Event', 'Hide Event From Event Listings',
+                  'Event Sticky in Month View', 'Feature Event', 'Event Venue Name',
+                  'Event Organizers', 'Event Show Map Link',
+                  'Event Show Map', 'Event Cost', 'Event Currency Symbol',
+                  'Event Currency Position', 'Event Category', 'Event Tags',
+                  'Event Website', 'Event Featured Image', 'Allow Comments',
+                  'Event Allow Trackbacks and Pingbacks'}
+        result = keys.issubset(schema)
+        self.assertTrue(result)
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_events_schema(self, mocked_EventbriteIngester):
+        '''
+        Tests if all of the event fields conform in name to the schema.
+        '''
+        event_website_contents = events_list
+        for event_website_content in event_website_contents:
+            event_website = list(event_website_content.keys())[0]
+            content = event_website_content[event_website]
+            httpretty.register_uri(httpretty.GET,
+                                   uri=event_website,
+                                   body=content,
+                                   status=200)
+        events = main()
+        keys = set().union(*(d.keys() for d in events))
+        schema = {'Do Not Import', 'Event Name', 'Event Description', 'Event Excerpt',
+                  'Event Start Date', 'Event Start Time', 'Event End Date', 'Event End Time',
+                  'Timezone', 'All Day Event', 'Hide Event From Event Listings',
+                  'Event Sticky in Month View', 'Feature Event', 'Event Venue Name',
+                  'Event Organizers', 'Event Show Map Link',
+                  'Event Show Map', 'Event Cost', 'Event Currency Symbol',
+                  'Event Currency Position', 'Event Category', 'Event Tags',
+                  'Event Website', 'Event Featured Image', 'Allow Comments',
+                  'Event Allow Trackbacks and Pingbacks'}
+        result = keys.issubset(schema)
+        self.assertTrue(result)
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_events_schema_bool_type(self, mocked_EventbriteIngester):
+        '''
+        Tests if the boolean type event fields are bool
+        '''
+        event_website_contents = events_list
+        booleans = ['All Day Event','Hide from Event Listings','Sticky in Month View',
+                    'Event Show Map Link','Event Show Map','Allow Comments',
+                    'Allow Trackbacks and Pingbacks']
+        for event_website_content in event_website_contents:
+            event_website = list(event_website_content.keys())[0]
+            content = event_website_content[event_website]
+            httpretty.register_uri(httpretty.GET,
+                                   uri=event_website,
+                                   body=content,
+                                   status=200)
+        events = main()
+        vals = []
+        for event in events:
+            for k in event:
+                if k in booleans:
+                    val = event[k]
+                    vals.append(val)
+        result = all([isinstance(x, bool) for x in vals])
+        self.assertTrue(result)
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_events_schema_string_type(self, mocked_EventbriteIngester):
+        '''
+        Tests if the str and comma delim event field types are strings.
+        '''
+        event_website_contents = events_list
+        comma_delimited = ['Event Venue Name', 'Event Organizers', 'Event Category', 'Event Tags']
+        string = ['Event Description', 'Event Excerpt', 'Event Name']
+        for event_website_content in event_website_contents:
+            event_website = list(event_website_content.keys())[0]
+            content = event_website_content[event_website]
+            httpretty.register_uri(httpretty.GET,
+                                   uri=event_website,
+                                   body=content,
+                                   status=200)
+        events = main()
+        vals = []
+        for event in events:
+            for k in event:
+                if k in string or k in comma_delimited:
+                    val = event[k]
+                    vals.append(val)
+        result = all([isinstance(x, str) for x in vals])
+        self.assertTrue(result)
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_events_schema_currency_symbol_type(self, mocked_EventbriteIngester):
+        '''
+        Tests if the currency symbol is a dollar sign
+        '''
+        event_website_contents = events_list
+        for event_website_content in event_website_contents:
+            event_website = list(event_website_content.keys())[0]
+            content = event_website_content[event_website]
+            httpretty.register_uri(httpretty.GET,
+                                   uri=event_website,
+                                   body=content,
+                                   status=200)
+        events = main()
+        vals = []
+        for event in events:
+            for k in event:
+                if k == 'Event Currency Symbol':
+                    vals.append(event[k])
+        result = all([x == '$' for x in vals])
+        self.assertTrue(result)
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_events_schema_event_cost_type(self, mocked_EventbriteIngester):
+        '''
+        Tests if the event cost is a string of digits
+        '''
+        event_website_contents = events_list
+        for event_website_content in event_website_contents:
+            event_website = list(event_website_content.keys())[0]
+            content = event_website_content[event_website]
+            httpretty.register_uri(httpretty.GET,
+                                   uri=event_website,
+                                   body=content,
+                                   status=200)
+        events = main()
+        vals = []
+        for event in events:
+            for k in event:
+                if k == 'Event Cost':
+                    val = event[k]
+                    vals.append(val)
+        # empty strings are "falsy"
+        result = all(x.isdigit() or not x for x in vals)
+        self.assertTrue(result)
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_events_schema_timezone_type(self, mocked_EventbriteIngester):
+        '''
+        Tests if the timezone event field is 'America/New_York'
+        '''
+        event_website_contents = events_list
+        for event_website_content in event_website_contents:
+            event_website = list(event_website_content.keys())[0]
+            content = event_website_content[event_website]
+            httpretty.register_uri(httpretty.GET,
+                                   uri=event_website,
+                                   body=content,
+                                   status=200)
+        events = main()
+        vals = []
+        for event in events:
+            for k in event:
+                if k == 'Timezone':
+                    val = event[k]
+                    vals.append(val)
+        result = all(x == 'America/New_York' for x in vals)
+        self.assertTrue(result)
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_events_schema_date_type(self, mocked_EventbriteIngester):
+        '''
+        Tests if the event start/end date fields are "%Y-%m-%d"
+        Examples:  '1966-01-01' or '1965-12-31'
+        '''
+        event_website_contents = events_list
+        date = ['Event Start Date', 'Event End Date']
+        for event_website_content in event_website_contents:
+            event_website = list(event_website_content.keys())[0]
+            content = event_website_content[event_website]
+            httpretty.register_uri(httpretty.GET,
+                                   uri=event_website,
+                                   body=content,
+                                   status=200)
+        events = main()
+        vals = []
+        for event in events:
+            for k in event:
+                if k in date:
+                    val = event[k]
+                    vals.append(val)
+        try:
+            result = [datetime.strptime(x, "%Y-%m-%d") for x in vals]
+        except ValueError:
+            result = None
+            raise EventDateFormatError
+        self.assertIsNotNone(result)
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_events_schema_time_type(self, mocked_EventbriteIngester):
+        '''
+        Tests if the Event Start Time and Event End Time fields follow
+        the "%H:%M:%S" format. Examples: '21:30:00' or '00:50:00'
+        '''
+        event_website_contents = events_list
+        time = ['Event Start Time', 'Event End Time']
+        for event_website_content in event_website_contents:
+            event_website = list(event_website_content.keys())[0]
+            content = event_website_content[event_website]
+            httpretty.register_uri(httpretty.GET,
+                                   uri=event_website,
+                                   body=content,
+                                   status=200)
+        events = main()
+        vals = []
+        for event in events:
+            for k in event:
+                if k in time:
+                    val = event[k]
+                    vals.append(val)
+        try:
+            result = [datetime.strptime(x, "%H:%M:%S") for x in vals if x != '']
+        except ValueError:
+            result = None
+            raise EventTimeFormatError
+        self.assertIsNotNone(result)
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_events_schema_url_type(self, mocked_EventbriteIngester):
+        '''
+        Tests if the event website and event featured image fields contain strings
+        that pass Django's test as urls
+        '''
+        event_website_contents = events_list
+        url = ['Event Website', 'Event Featured Image']
+        for event_website_content in event_website_contents:
+            event_website = list(event_website_content.keys())[0]
+            content = event_website_content[event_website]
+            httpretty.register_uri(httpretty.GET,
+                                   uri=event_website,
+                                   body=content,
+                                   status=200)
+        events = main()
+        vals = []
+        for event in events:
+            for k in event:
+                if k in url:
+                    val = event[k]
+                    vals.append(val)
+        result = all([re.match(url_regex, x) for x in vals])
+        self.assertTrue(result)
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_events_schema_currency_position_type(self, mocked_EventbriteIngester):
+        '''
+        Tests if the Event Currency Position is 'prefix', 'suffix', or ''
+        '''
+        event_website_contents = events_list
+        for event_website_content in event_website_contents:
+            event_website = list(event_website_content.keys())[0]
+            content = event_website_content[event_website]
+            httpretty.register_uri(httpretty.GET,
+                                   uri=event_website,
+                                   body=content,
+                                   status=200)
+        events = main()
+        for event in events:
+            for k in event:
+                if k == 'Event Currency Position':
+                    val = event[k]
+                    expected_vals = ['prefix', 'suffix', '']
+                    result = val in expected_vals
+                    self.assertTrue(result)
+
+    @httpretty.activate
+    @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
+    def test_events_schema_phone_type(self, mocked_EventbriteIngester):
+        '''
+        Tests if the phone number string is formatted like:  "+1-326-437-9663"
+        '''
+        event_website_contents = events_list
+        for event_website_content in event_website_contents:
+            event_website = list(event_website_content.keys())[0]
+            content = event_website_content[event_website]
+            httpretty.register_uri(httpretty.GET,
+                                   uri=event_website,
+                                   body=content,
+                                   status=200)
+        events = main()
+        for event in events:
+            for k in event:
+                if k == 'Event Phone':
+                    val = event[k]
+                    result = is_phonenumber_valid(val)
+                    self.assertTrue(result)
+
+if __name__ == '__main__':
+    unittest.main()
