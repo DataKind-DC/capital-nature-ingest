@@ -1,5 +1,5 @@
 from events import montgomery, ans, arlington, casey_trees, fairfax, nps, vnps, \
-                   sierra_club, dug_network, city_blossoms
+                   sierra_club, dug_network, city_blossoms, tnc
 from datetime import datetime
 import csv
 import linecache
@@ -100,7 +100,7 @@ def get_events():
         events (list): a list of dicts, with each dict representing a single event.
     '''
     event_sources = [montgomery, ans, arlington, casey_trees, fairfax, nps, vnps,
-                     sierra_club, dug_network, city_blossoms]
+                     sierra_club, dug_network, city_blossoms, tnc]
     events = []
     for event_source in event_sources:
         try:
