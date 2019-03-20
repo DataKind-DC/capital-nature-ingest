@@ -30,6 +30,8 @@ def get_api_events():
 def main():
     events_dict = []
     events = get_api_events()
+    if not events:
+        return []
     for event in events:
             fields = event['fields']
             event_start_dates = fields['event_start_date']
@@ -56,7 +58,10 @@ def main():
                 link = fields['link']
                 event_website = f"https://www.nature.org{link}"
                 #scrape event venue from event website
-                html_doc = requests.get(event_website).content
+                try:
+                    html_doc = requests.get(event_website).content
+                except:
+                    continue
                 soup = BeautifulSoup(html_doc, 'html.parser')
                 venue = soup.find_all('p',{'class': 'txt-clr-g1'})[-1:]
                 event_venue = ', '.join(venue[0].get_text(strip=True).split('\r\n'))
