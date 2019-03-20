@@ -82,5 +82,5 @@ def main():
 
     return events_dict
 
-#if __name__ == '__main__':
-    #events_dict = main()
+if __name__ == '__main__':
+    events_dict = main()
