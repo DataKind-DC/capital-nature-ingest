@@ -32,7 +32,7 @@ If you want to claim working on one of the event sources, update this doc by add
 ||**U.S. National Arboretum**|https://usna.usda.gov/visit/events-calendar/|?|Offical USNA events calendar||
 |Scott|U.S. Botanic Gardens|https://learn.usbg.gov/calendar/event|Y||WIP|
 |Scott|Virginia Native Plant Society|https://vnps.org/events/|Y||Y|
-|Ayan|Virginia The Nature Conservancy|https://www.nature.org/en-us/get-involved/how-to-help/volunteer-and-attend-events/find-local-events-and-opportunities/?r=United%20States&s=Virginia|There's an API you can hit|WIP||
+|Ayan|Virginia The Nature Conservancy|https://www.nature.org/en-us/get-involved/how-to-help/volunteer-and-attend-events/find-local-events-and-opportunities/?r=United%20States&s=Virginia|There's an API you can hit||Y|
 
 
 
