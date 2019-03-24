@@ -178,6 +178,30 @@ def scrape_event_description(event_website):
     
     return event_description
     
+def get_sun_times(event_date):
+    '''
+    Given an event's data as a string, use the astral module to get the
+    times for sunrise and sunset.
+
+    Parameters:
+        event_date (str): the date of an vent in "%Y-%m-%d"
+
+    Returns:
+        sunrise (str): the time sunrise time
+        sunset (str): the sunset time
+    '''
+    event_date_dt = datetime.strptime(event_date, "%Y-%m-%d")
+    city_name = 'Washington DC'
+    a = Astral()
+    a.solar_depression = 'civil'
+    city = a[city_name]
+    sun = city.sun(date = event_date_dt, local = True)
+    sunrise = sun['sunrise'].time().strftime("%H:%M:%S")
+    sunset = sun['sunset'].time().strftime("%H:%M:%S")
+    
+    return sunrise, sunset
+
+
 def schematize_nps_event(nps_event):
     '''
     Extract data from the nps event so that it conforms to the wordpress schema.
