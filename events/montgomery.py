@@ -81,7 +81,6 @@ def get_event_cost(soup):
         fee_text = [x.get_text() for x in dls if 'Fee' in x.get_text()][0]
         event_cost = "".join(s for s in fee_text if s.isdigit())
     except IndexError:
-        logger.warning(f"Exception getting event cost {dls}", exc_info=True)
         event_cost = ''
 
     return event_cost

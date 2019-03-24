@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import json
 import logging
+from astral import Astral
 # For a local run, be sure to create an env variable with the NPS API key. 
 # For example:
 # $ export NPS_KEY=<NPS API Key>
@@ -121,6 +122,8 @@ def schematize_event_time(event_time):
     '''
     Converts a time string like '1:30 pm' to 24hr time like '13:30:00'
     '''
+    if not event_time:
+        return ''
     try:
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
@@ -192,8 +195,15 @@ def schematize_nps_event(nps_event):
         for date in dates:
             times = nps_event['times']
             for time in times:
-                event_start_time = schematize_event_time(time['timeStart'])
-                event_end_time = schematize_event_time(time['timeEnd'])
+                if not time['timeStart']:
+                    if time['sunsetEnd']:
+                        event_start_time, event_end_time = get_sun_times(date)
+                    else:
+                        print("!")
+                        continue
+                else:
+                    event_start_time = schematize_event_time(time['timeStart'])
+                    event_end_time = schematize_event_time(time['timeEnd'])
                 event_name = nps_event['title']
                 try:
                     event_description = BeautifulSoup(nps_event['description'], "html.parser").find("p").text
@@ -265,6 +275,9 @@ def schematize_nps_event(nps_event):
                                           }
                 schematized_nps_events.append(schematized_nps_event)
     else:
+        #TODO: when this occurs, it seems there's a discrepancy between the NPS API results
+        #and what's displayed on an event's website. This might be an issue
+        #to raise with the NPS API maintainers.
         logger.warning(f'This event did not have equal start and end dates: {nps_event}')
         schematized_nps_events = []
 
@@ -281,6 +294,7 @@ def main():
         events.extend(schematized_nps_events)
 
     return events
+
 
 if __name__ == '__main__':
     events = main()
