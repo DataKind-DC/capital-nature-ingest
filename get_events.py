@@ -8,6 +8,10 @@ import re
 import sys
 import os
 import geocoder
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 def print_exception():
     _, exc_obj, tb = sys.exc_info()
@@ -308,5 +312,7 @@ def main(is_local = True, bucket = None):
     return events
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s') 
     events = main()
-    print(f'Found {len(events)} events!')
+    logger.info(f'Found {len(events)} events!')

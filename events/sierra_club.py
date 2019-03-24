@@ -3,11 +3,19 @@ import requests
 import json
 from datetime import datetime
 import unicodedata
-import pprint
+import logging
+
+logger = logging.getLogger(__name__)
 
 def fetch_page(url):
-    html_doc = requests.get(url).content
-    return html_doc
+    try:
+        r = requests.get(url)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {url}: {e}", exc_info=True)
+        return
+    content = r.content
+    
+    return content
 
 def get_event_cost(event_cost_description):
     event_cost_description_lower = event_cost_description.lower()
@@ -29,6 +37,7 @@ def schematize_event_time(event_time):
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
+        logger.warning(f"Exception schematizing this event time: {event_time}", exc_info=True)
         schematized_event_time = ''
 
     return schematized_event_time
@@ -50,6 +59,7 @@ def schematize_event_date(event_date):
         datetime_obj = datetime.strptime(event_date, "%Y-%m-%d")
         schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
     except ValueError:
+        logger.warning(f"Exception schematizing this event date: {event_date}", exc_info=True)
         schematized_event_date = ''
 
     return schematized_event_date
@@ -88,16 +98,20 @@ def handle_ans_page(events):
 
 def handler(event, context):
     url = event['url']
-    source_name = event['source_name']
     page = fetch_page({'url': url})
+    if not page:
+        return []
     page = json.loads(page)
     events = handle_ans_page(page['eventList'])
+    
     return events
 
 
 def main():
     url = "https://www.sierraclub.org/sc/proxy?url=https://act.sierraclub.org/events/services/apexrest/eventfeed/ent/6300,5051&_=1548294791086"
     page = fetch_page(url)
+    if not page:
+        return []
     page = json.loads(page)
     events = handle_ans_page(page['eventList'])
 

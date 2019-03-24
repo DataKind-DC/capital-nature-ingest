@@ -2,6 +2,9 @@ from bs4 import BeautifulSoup
 import requests
 import re
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_event_cost(soup):
@@ -34,7 +37,9 @@ def get_event_date_times(soup, event_website):
     start_date = get_event_date_from_event_website(event_website)
     try:
         event_time_div_text = soup.find_all('h5')[-1].text
-    except:
+    except Exception as e:
+        logger.error(f'Exception getting event datetimes from {event_website}: {e}', 
+                    exc_info = True)
         return None, None, None, None
     if start_date:
         end_date = start_date
@@ -145,7 +150,9 @@ def get_event_times(event_time_div_text):
 def parse_event_website(event_website):
     try:
         r = requests.get(event_website)
-    except:
+    except Exception as e:
+        logger.critical(f'Exception makng GET to: {event_website}: {e}', 
+                        exc_info = True)
         event_cost = None
         event_description = None
         event_venue = None
@@ -190,6 +197,8 @@ def schematize_event_date(event_date):
                 datetime_obj = datetime.strptime(event_date, "%m%d%y")
                 schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
             except ValueError:
+                logger.warning(f'Exception schematzing this event date: {event_date}', 
+                               exc_info = True)
                 schematized_event_date = ''
     
     return schematized_event_date
@@ -203,13 +212,20 @@ def schematize_event_time(event_time):
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
+        logger.warning(f'Exception schematzing this event time: {event_time}', 
+                        exc_info = True)
         schematized_event_time = ''
     
     return schematized_event_time
 
 
 def main():
-    r = requests.get('https://www.fairfaxcounty.gov/parks/park-events-calendar')
+    cal = 'https://www.fairfaxcounty.gov/parks/park-events-calendar'
+    try:
+        r = requests.get(cal)
+    except Exception as e:
+        logger.critical(f'Exception making GET to {cal}: {e}', exc_info = True)
+        return []
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
     title_divs = soup.find_all('div', {'class':'calendar-title'})

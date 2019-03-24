@@ -3,12 +3,15 @@ import requests
 import unicodedata
 import sys
 from datetime import datetime
+import logging
 
+logger = logging.getLogger(__name__)
 
 def soupify_event_page(url = 'https://anshome.org/events-calendar/'):
     try:
         r = requests.get(url)
-    except:
+    except Exception as e:
+        logger.critical(f'Exception making GET to {url}: {e}', exc_info = True)
         return
     content = r.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
@@ -18,7 +21,8 @@ def soupify_event_page(url = 'https://anshome.org/events-calendar/'):
 def soupify_event_website(event_website):
     try:
         r = requests.get(event_website)
-    except:
+    except Exception as e:
+        logger.critical(f'Exception making GET to {event_website}: {e}', exc_info = True)
         return
     content = r.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
@@ -59,6 +63,7 @@ def schematize_event_time(event_time):
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
+        logger.warning(f'Exception schematizing this date: {event_time}', exc_info = True)
         schematized_event_time = ''
     
     return schematized_event_time

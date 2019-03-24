@@ -4,6 +4,7 @@ import re
 from bs4 import BeautifulSoup
 from datetime import datetime
 import json
+import logging
 # For a local run, be sure to create an env variable with the NPS API key. 
 # For example:
 # $ export NPS_KEY=<NPS API Key>
@@ -12,6 +13,8 @@ try:
 except KeyError:
     #if it's not an env var, then we might be testing
     NPS_KEY = input("Enter your NPS API key:")
+
+logger = logging.getLogger(__name__)
 
 def get_park_events(park_code, limit=1000):
     '''
@@ -31,14 +34,16 @@ def get_park_events(park_code, limit=1000):
     url = "https://developer.nps.gov/api/v1/events"+park_code_param+limit_param+key_param
     try:
         r = requests.get(url)
-        r_json = r.json()
-        data = r_json['data']
-        park_events = []
-        for d in data:
-            if d['siteType'] == 'park':
-                park_events.append(d)
-    except:
-        park_events = []
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {url}: {e}", exc_info=True)
+        return []
+    r_json = r.json()
+    data = r_json['data']
+    park_events = []
+    for d in data:
+        if d['siteType'] == 'park':
+            park_events.append(d)
+    
 
     return park_events
 
@@ -65,7 +70,9 @@ def get_nps_events(park_codes = ['afam','anac','anti','apco','appa','arho','asis
             if len(park_events) > 1:
                 for park_event in park_events:
                     nps_events.append(park_event)
-        except Exception:
+        except Exception as e:
+            logger.error(f"Exception getting NPS events for this park code: {park_code}: {e}", 
+                         exc_info=True)
             pass
 
     return nps_events
@@ -84,16 +91,15 @@ def get_specific_event_location(event_id):
     website = f"https://www.nps.gov/planyourvisit/event-details.htm?id={event_id}"
     try:
         r = requests.get(website)
-    except:
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {website}: {e}", exc_info=True)
         return ''
     content = r.content
     soup = BeautifulSoup(content, "html.parser")
     # kill all script and style elements
     for script in soup(["script", "style"]):
         script.extract()    # rip it out
-    # get text
     text = soup.get_text()
-    # break into lines and remove leading and trailing space on each
     lines = (line.strip() for line in text.splitlines())
     # break multi-headlines into a line each
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
@@ -119,6 +125,7 @@ def schematize_event_time(event_time):
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
+        logger.warning(f"Exception schematizing this event time: {event_time}", exc_info=True)
         schematized_event_time = ''
     
     return schematized_event_time
@@ -211,18 +218,23 @@ def schematize_nps_event(nps_event):
                 if len(regResURL) > 0:
                     event_website = regResURL
                 else:
-                    r = requests.get(f"https://www.nps.gov/planyourvisit/event-details.htm?id={event_id}")
+                    event_site = f"https://www.nps.gov/planyourvisit/event-details.htm?id={event_id}"
+                    try:
+                        r = requests.get(event_site)
+                    except Exception as e:
+                        logger.error(f"Exception making GET request to {event_site}: {e}", 
+                                        exc_info=True)
                     if r.status_code == 404:
                         if len(portalName) > 0:
                             event_website = portalName
                         else:
                             event_website = infoURL
                     else:
-                        event_website = f"https://www.nps.gov/planyourvisit/event-details.htm?id={event_id}"
+                        event_website = event_site
                 try:
                     event_image = nps_event['images'][0]['url']
                 except IndexError:
-                    event_image = None
+                    event_image = ''
                 if event_image:
                     if "nps.gov" not in event_image:
                         event_image = f"https://www.nps.gov{event_image}"
@@ -253,7 +265,7 @@ def schematize_nps_event(nps_event):
                                           }
                 schematized_nps_events.append(schematized_nps_event)
     else:
-        #TODO maybe log these occurrences, which I don't think really occur given the API's schema
+        logger.warning(f'This event did not have equal start and end dates: {nps_event}')
         schematized_nps_events = []
 
     return schematized_nps_events

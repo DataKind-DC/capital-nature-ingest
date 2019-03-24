@@ -3,6 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import json
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 def customized_url():
     today = datetime.now().strftime('%Y-%m-%d')
@@ -19,8 +22,8 @@ def get_api_events():
     url = customized_url()
     try:
         r = requests.get(url)
-    except:
-        #TODO: log this
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {url}: {e}", exc_info=True)
         return
     data = r.json() 
     events = data['hits']['hit']
@@ -44,8 +47,9 @@ def main():
                 try:
                     start_time_1 = datetime.strptime(time[:8],'%I:%M %p').time() 
                     end_time_1 = datetime.strptime(time[-8:],'%I:%M %p').time()
-                except:
-                    #TODO: log
+                except Exception as e:
+                    logger.error(f"Exception extracting event times from {time}: {e}", 
+                                 exc_info=True)
                     continue
                 #use .hour to enable datetime.time operations
                 diff = end_time_1.hour - start_time_1.hour 
@@ -60,7 +64,9 @@ def main():
                 #scrape event venue from event website
                 try:
                     html_doc = requests.get(event_website).content
-                except:
+                except Exception as e:
+                    logger.error(f"Exception getting site content from {event_website}: {e}", 
+                                 exc_info=True)
                     continue
                 soup = BeautifulSoup(html_doc, 'html.parser')
                 venue = soup.find_all('p',{'class': 'txt-clr-g1'})[-1:]

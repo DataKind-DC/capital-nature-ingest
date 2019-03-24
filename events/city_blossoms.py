@@ -3,6 +3,9 @@ import requests
 from datetime import datetime, timedelta
 import time
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 def filter_events(events_data):
     '''
@@ -52,7 +55,9 @@ def get_event_description(event_website):
     '''
     try:
         r = requests.get(event_website)
-    except:
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {event_website}: {e}", 
+                        exc_info=True)
         return ''
     soup = BeautifulSoup(r.content, 'html.parser')
     desc_div = soup.find('div',{'class':'sqs-block-content'})
@@ -116,10 +121,7 @@ def schematize_event(event):
         event_cost = '' #this field isn't returned by the API or on the event's website
         event_description = get_event_description(event_website)
         event_categories = get_event_categories(event)
-        try:
-            event_image = event['assetUrl']
-        except KeyError:
-            event_image = ''
+        event_image = event.get('assetUrl', '')
         schematized_event = {'Event Start Date': start_date,
                              'Event End Date': end_date, 
                              'Event Start Time': start_time,
@@ -166,12 +168,23 @@ def get_event_data():
     '''
     Returns the results of the city blossoms events API
     '''
-    r = requests.get('http://cityblossoms.org/calendar')
+    cal = 'http://cityblossoms.org/calendar'
+    try:
+        r = requests.get(cal)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {cal}: {e}", 
+                        exc_info=True)
+        return
     cookies = r.cookies
     crumb = cookies.get_dict()['crumb']
     month = datetime.now().strftime("%m-%Y")
     url = f'http://cityblossoms.org/api/open/GetItemsByMonth?month={month}&collectionId=55a52dfce4b09a8bb0485083&crumb={crumb}'
-    r = requests.get(url)
+    try:
+        r = requests.get(url)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {url}: {e}", 
+                        exc_info=True)
+        return
     events_data = r.json()
     
     return events_data
@@ -179,6 +192,8 @@ def get_event_data():
     
 def main():
     events_data = get_event_data()
+    if not events_data:
+        return []
     filtered_data = filter_events(events_data)
     events = []
     for event in filtered_data:
