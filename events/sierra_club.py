@@ -77,10 +77,14 @@ def handle_ans_page(event_list):
         event = {}
         event['Event Name'] = e.get('eventName','')
         event['Event Description'] = encode_event_description(e.get('description', ''))
-        event['Event Start Date'] = schematize_event_date(e.get('startDate',''))
+        start_date = schematize_event_date(e.get('startDate',''))
+        event['Event Start Date'] = start_date
         event['Event Start Time'] = schematize_event_time(e.get('startTime',''))
-        event['Event End Date'] = schematize_event_date(e.get('endDate',''))
-        event['Event End Time'] = schematize_event_time(e.get('endTime',''))
+        end_date = schematize_event_date(e.get('endDate',''))
+        end_date = end_date if end_date else start_date
+        event['Event End Date'] = end_date
+        end_time = schematize_event_time(e.get('endTime',''))
+        event['Event End Time'] = end_time
         event['All Day Event'] = False
         event['Timezone'] = "America/New_York"
         event['Event Organizers'] = "Sierra Club"
