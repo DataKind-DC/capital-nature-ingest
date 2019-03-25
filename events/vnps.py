@@ -129,7 +129,6 @@ def parse_description_and_location(description_and_location):
     try:
         event_venue = description_and_location.find('i').text
     except AttributeError:
-        logger.warning(f'Unable to extract event venue from {description_and_location}')
         event_venue = None
     event_website_soup = soupify_event_website(event_website)
     if not event_website_soup:
@@ -243,4 +242,6 @@ def main(categories=[]):
     return filtered_events
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
