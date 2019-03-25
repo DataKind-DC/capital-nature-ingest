@@ -123,9 +123,12 @@ def handle_ans_page(soup):
         if not soup:
             return result_all_event
         result_all_event.extend(handle_ans_page(soup))
+    except TypeError:
+        #means we've found the last page
+        pass
     except Exception as e:
         logger.error(f"Exception checking for additional pages: {e}", exc_info = True)
-        pass
+        return []
 
     return result_all_event
 
@@ -149,6 +152,8 @@ def main():
     return events
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
     
 
