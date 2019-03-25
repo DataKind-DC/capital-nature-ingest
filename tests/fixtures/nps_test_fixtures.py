@@ -728,4 +728,4 @@ schematize_nps_event_expected = [{
   'Event Currency Symbol': '$',
   'Event Category': 'Lincoln Memorial, Presidents',
   'Event Website': 'https://www.nps.gov/planyourvisit/event-details.htm?id=691C8DCE-BFF3-B3A6-3D05AF87066F5FDD',
-  'Event Featured Image': None}]
+  'Event Featured Image': ''}]

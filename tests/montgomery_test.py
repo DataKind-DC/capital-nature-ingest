@@ -87,7 +87,7 @@ class MontgomeryTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_parse_event_date(self):
-        start_date, start_time, end_time = parse_event_date(self.event_date)
+        start_date, start_time, end_time = parse_event_date(self.event_date, 'url')
         result = [start_date, start_time, end_time]
         expected = ['2019-01-18', '10:00:00', '11:00:00']
         self.assertListEqual(result, expected)

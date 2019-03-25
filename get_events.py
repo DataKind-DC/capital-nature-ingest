@@ -8,15 +8,9 @@ import re
 import sys
 import os
 import geocoder
+import logging
 
-def print_exception():
-    _, exc_obj, tb = sys.exc_info()
-    f = tb.tb_frame
-    lineno = tb.tb_lineno
-    filename = f.f_code.co_filename
-    linecache.checkcache(filename)
-    line = linecache.getline(filename, lineno, f.f_globals)
-    print(f'EXCEPTION IN ({filename}, LINE {lineno} "{line.strip()}"): {exc_obj}')
+logger = logging.getLogger(__name__)
 
 def unicoder(value):
     '''
@@ -105,8 +99,10 @@ def get_events():
     for event_source in event_sources:
         try:
             source_events = event_source.main()
-        except:
-            print_exception()
+        except Exception as e:
+            logger.critical(f'Exception getting events in {event_source.__name__}:  {e}',
+                           exc_info = True)
+            #TODO: schema test events and write failures to (separate) log
             continue
         unicoded_source_events = [{k: unicoder(v) for k,v in i.items()} for i in source_events]
         events.extend(unicoded_source_events)
@@ -138,7 +134,9 @@ def events_to_csv(events, is_local = True, bucket = None):
                   'Event Category','Event Tags','Event Website',
                   'Event Featured Image','Allow Comments',
                   'Event Allow Trackbacks and Pingbacks'}
-    out_path = os.path.join(os.getcwd(), 'tmp', filename)
+    out_path = os.path.join(os.getcwd(), 'data', filename)
+    if not os.path.exists(os.path.join(os.getcwd(), 'data')):
+        os.mkdir(os.path.join(os.getcwd(), 'data'))
     with open(out_path,
               mode = 'w', 
               encoding = 'utf-8',
@@ -152,7 +150,7 @@ def events_to_csv(events, is_local = True, bucket = None):
         s3.meta.client.upload_file(out_path,
                                    bucket,
                                    'capital-nature/{0}'.format(filename)
-                                    )
+                                   )
 
 def get_past_venues():
     '''
@@ -166,14 +164,17 @@ def get_past_venues():
     Returns:
         past_venues (set): a set of event venues, or an empty set if there are none
     '''
-    tmp_path = os.path.join(os.getcwd(), 'tmp')
-    tmp_files = [f for f in os.listdir(tmp_path) if os.path.isfile(os.path.join(tmp_path,f))]
+    data_path = os.path.join(os.getcwd(), 'data')
+    if not os.path.exists(data_path):
+        os.mkdir(data_path)
+    data_files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path,
+                                                                                  f))]
     try:
-        venue_file = [f for f in tmp_files if 'venues_' in f][0]
+        venue_file = [f for f in data_files if 'venues_' in f][0]
     except IndexError:
         #IndexError because there's no past file
         return set()
-    venue_file = os.path.join(tmp_path, venue_file)
+    venue_file = os.path.join(data_path, venue_file)
     venues = []
     with open(venue_file, errors = 'ignore') as f:
         reader = csv.reader(f)
@@ -182,7 +183,7 @@ def get_past_venues():
             venues.append(venue)
     past_venues = set(venues)
     past_venues.remove('VENUE NAME')
-    #os.remove(venue_file)
+    os.remove(venue_file)
     
     return past_venues
 
@@ -208,7 +209,9 @@ def venues_to_csv(events, is_local = True, bucket = None):
     unique_venues = set(venues) | past_venues
     now = datetime.now().strftime("%m-%d-%Y")
     filename = f'cap-nature-venues-scraped-{now}.csv'
-    out_path = os.path.join(os.getcwd(), 'tmp', filename)
+    out_path = os.path.join(os.getcwd(), 'data', filename)
+    if not os.path.exists(os.path.join(os.getcwd(), 'data')):
+        os.mkdir(os.path.join(os.getcwd(), 'data'))
     with open(out_path,
               mode = 'w',
               encoding = 'utf-8',
@@ -238,14 +241,16 @@ def get_past_organizers():
     Returns:
         past_organizers (set): a set of event organizers, or an empty set if there are none
     '''
-    tmp_path = os.path.join(os.getcwd(), 'tmp')
-    tmp_files = [f for f in os.listdir(tmp_path) if os.path.isfile(os.path.join(tmp_path,f))]
+    data_path = os.path.join(os.getcwd(), 'data')
+    if not os.path.exists(data_path):
+        os.mkdir(data_path)
+    data_files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path,f))]
     try:
-        organizer_file = [f for f in tmp_files if 'organizer' in f][0]
+        organizer_file = [f for f in data_files if 'organizer' in f][0]
     except IndexError:
         #IndexError because there's no past file
         return set() 
-    organizer_file = os.path.join(tmp_path, organizer_file)
+    organizer_file = os.path.join(data_path, organizer_file)
     organizers = []
     with open(organizer_file) as f:
         reader = csv.reader(f)
@@ -280,7 +285,9 @@ def organizers_to_csv(events, is_local = True, bucket = None):
     unique_organizers = set(organizers) | past_organizers
     now = datetime.now().strftime("%m-%d-%Y")
     filename = f'cap-nature-organizers-scraped-{now}.csv'
-    out_path = os.path.join(os.getcwd(), 'tmp', filename)
+    out_path = os.path.join(os.getcwd(), 'data', filename)
+    if not os.path.exists(os.path.join(os.getcwd(), 'data')):
+        os.mkdir(os.path.join(os.getcwd(), 'data'))
     with open(out_path,
               mode = 'w',
               encoding = 'utf-8',
@@ -308,5 +315,7 @@ def main(is_local = True, bucket = None):
     return events
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s') 
     events = main()
-    print(f'Found {len(events)} events!')
+    logger.info(f'Found {len(events)} events!')

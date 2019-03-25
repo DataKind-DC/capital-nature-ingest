@@ -2,6 +2,9 @@ from datetime import datetime
 import re
 import requests
 from bs4 import BeautifulSoup
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_arlington_events():
@@ -17,7 +20,11 @@ def get_arlington_events():
     startDate = datetime.now().strftime("%Y-%m-%d")
     from_param = 0
     uri = f'https://today-service.arlingtonva.us/api/event/elasticevent?&StartDate={startDate}T05:00:00.000Z&EndDate=null&TopicCode=ANIMALS&TopicCode=ENVIRONMENT&ParkingAvailable=false&NearBus=false&NearRail=false&NearBikeShare=false&From={from_param}&Size=5&OrderBy=featured&EndTime=86400000'
-    r = requests.get(uri)
+    try:
+        r = requests.get(uri)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {uri}: {e}", exc_info=True)
+        return             
     data = r.json()
     count = data['count']
     event_items = []
@@ -99,6 +106,7 @@ def schematize_date(event_date):
         datetime_obj = datetime.strptime(event_date, "%Y-%m-%dT%H:%M:%S")
         schematized_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
     except ValueError:
+        logger.warning(f"Exception schematizing this date: {event_date}", exc_info=True)
         return ''
     
     return schematized_date
@@ -163,4 +171,6 @@ def main():
     return events
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
