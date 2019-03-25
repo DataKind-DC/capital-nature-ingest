@@ -102,6 +102,7 @@ def get_events():
         except Exception as e:
             logger.critical(f'Exception getting events in {event_source.__name__}:  {e}',
                            exc_info = True)
+            #TODO: schema test events and write failures to (separate) log
             continue
         unicoded_source_events = [{k: unicoder(v) for k,v in i.items()} for i in source_events]
         events.extend(unicoded_source_events)
@@ -134,6 +135,8 @@ def events_to_csv(events, is_local = True, bucket = None):
                   'Event Featured Image','Allow Comments',
                   'Event Allow Trackbacks and Pingbacks'}
     out_path = os.path.join(os.getcwd(), 'data', filename)
+    if not os.path.exists(os.path.join(os.getcwd(), 'data')):
+        os.mkdir(os.path.join(os.getcwd(), 'data'))
     with open(out_path,
               mode = 'w', 
               encoding = 'utf-8',
@@ -162,6 +165,8 @@ def get_past_venues():
         past_venues (set): a set of event venues, or an empty set if there are none
     '''
     data_path = os.path.join(os.getcwd(), 'data')
+    if not os.path.exists(data_path):
+        os.mkdir(data_path)
     data_files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path,
                                                                                   f))]
     try:
@@ -205,6 +210,8 @@ def venues_to_csv(events, is_local = True, bucket = None):
     now = datetime.now().strftime("%m-%d-%Y")
     filename = f'cap-nature-venues-scraped-{now}.csv'
     out_path = os.path.join(os.getcwd(), 'data', filename)
+    if not os.path.exists(os.path.join(os.getcwd(), 'data')):
+        os.mkdir(os.path.join(os.getcwd(), 'data'))
     with open(out_path,
               mode = 'w',
               encoding = 'utf-8',
@@ -235,6 +242,8 @@ def get_past_organizers():
         past_organizers (set): a set of event organizers, or an empty set if there are none
     '''
     data_path = os.path.join(os.getcwd(), 'data')
+    if not os.path.exists(data_path):
+        os.mkdir(data_path)
     data_files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path,f))]
     try:
         organizer_file = [f for f in data_files if 'organizer' in f][0]
@@ -277,6 +286,8 @@ def organizers_to_csv(events, is_local = True, bucket = None):
     now = datetime.now().strftime("%m-%d-%Y")
     filename = f'cap-nature-organizers-scraped-{now}.csv'
     out_path = os.path.join(os.getcwd(), 'data', filename)
+    if not os.path.exists(os.path.join(os.getcwd(), 'data')):
+        os.mkdir(os.path.join(os.getcwd(), 'data'))
     with open(out_path,
               mode = 'w',
               encoding = 'utf-8',
