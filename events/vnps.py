@@ -1,6 +1,9 @@
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def parse_date_and_time(date_and_time):
@@ -59,7 +62,9 @@ def soupify_event_website(event_website):
     '''
     try:
         r = requests.get(event_website)
-    except:
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {event_website}: {e}", 
+                        exc_info=True)
         return
     content = r.content
     event_website_soup = BeautifulSoup(content, 'html.parser')
@@ -126,6 +131,8 @@ def parse_description_and_location(description_and_location):
     except AttributeError:
         event_venue = None
     event_website_soup = soupify_event_website(event_website)
+    if not event_website_soup:
+        return None, None, None, None, None
     scraped_event_venue, event_categories = get_event_venue_and_categories(event_website_soup)
     event_venue = event_venue if event_venue else scraped_event_venue
     if not event_venue:
@@ -192,10 +199,11 @@ def main(categories=[]):
     Returns:
         events (list): a list of dicts, with each representing a vnps event
     '''
+    event_url = 'https://vnps.org/events/'
     try:
-        r = requests.get('https://vnps.org/events/')
-    except:
-        #TODO: log something like this
+        r = requests.get(event_url)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {event_url}: {e}", exc_info=True)
         return []
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
@@ -234,4 +242,6 @@ def main(categories=[]):
     return filtered_events
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
