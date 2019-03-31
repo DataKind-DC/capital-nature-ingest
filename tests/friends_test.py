@@ -1,7 +1,6 @@
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 import httpretty
-import mock
 import re
 import sys
 from datetime import datetime
@@ -34,8 +33,7 @@ class FRIENDSTestCase(unittest.TestCase):
     @httpretty.activate
     @patch('events.friends_of_kenilworth_gardens.EventbriteIngester')
     def test_main_success(self, mocked_EventbriteIngester):
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         events = events_list
         keys = set().union(*(d.keys() for d in events))
         schema = {'Do Not Import', 'Event Name', 'Event Description', 'Event Excerpt',
@@ -56,8 +54,7 @@ class FRIENDSTestCase(unittest.TestCase):
         '''
         Tests if all of the event fields conform in name to the schema.
         '''
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         event_website_contents = events_list
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
@@ -86,8 +83,7 @@ class FRIENDSTestCase(unittest.TestCase):
         '''
         Tests if the boolean type event fields are bool
         '''
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         event_website_contents = events_list
         booleans = ['All Day Event','Hide from Event Listings','Sticky in Month View',
                     'Event Show Map Link','Event Show Map','Allow Comments',
@@ -115,8 +111,7 @@ class FRIENDSTestCase(unittest.TestCase):
         '''
         Tests if the str and comma delim event field types are strings.
         '''
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         event_website_contents = events_list
         comma_delimited = ['Event Venue Name', 'Event Organizers', 'Event Category', 'Event Tags']
         string = ['Event Description', 'Event Excerpt', 'Event Name']
@@ -143,8 +138,7 @@ class FRIENDSTestCase(unittest.TestCase):
         '''
         Tests if the currency symbol is a dollar sign
         '''
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         event_website_contents = events_list
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
@@ -168,8 +162,7 @@ class FRIENDSTestCase(unittest.TestCase):
         '''
         Tests if the event cost is a string of digits
         '''
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         event_website_contents = events_list
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
@@ -195,8 +188,7 @@ class FRIENDSTestCase(unittest.TestCase):
         '''
         Tests if the timezone event field is 'America/New_York'
         '''
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         event_website_contents = events_list
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
@@ -222,8 +214,7 @@ class FRIENDSTestCase(unittest.TestCase):
         Tests if the event start/end date fields are "%Y-%m-%d"
         Examples:  '1966-01-01' or '1965-12-31'
         '''
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         event_website_contents = events_list
         date = ['Event Start Date', 'Event End Date']
         for event_website_content in event_website_contents:
@@ -254,8 +245,7 @@ class FRIENDSTestCase(unittest.TestCase):
         Tests if the Event Start Time and Event End Time fields follow
         the "%H:%M:%S" format. Examples: '21:30:00' or '00:50:00'
         '''
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         event_website_contents = events_list
         time = ['Event Start Time', 'Event End Time']
         for event_website_content in event_website_contents:
@@ -286,8 +276,7 @@ class FRIENDSTestCase(unittest.TestCase):
         Tests if the event website and event featured image fields contain strings
         that pass Django's test as urls
         '''
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         event_website_contents = events_list
         url = ['Event Website', 'Event Featured Image']
         for event_website_content in event_website_contents:
@@ -313,8 +302,7 @@ class FRIENDSTestCase(unittest.TestCase):
         '''
         Tests if the Event Currency Position is 'prefix', 'suffix', or ''
         '''
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         event_website_contents = events_list
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
@@ -338,8 +326,7 @@ class FRIENDSTestCase(unittest.TestCase):
         '''
         Tests if the phone number string is formatted like:  "+1-326-437-9663"
         '''
-        with mock.patch('events.friends_of_kenilworth_gardens.EventbriteIngester') as mock_get:
-            mock_get.return_value = events_list
+        mocked_EventbriteIngester.return_value = events_list
         event_website_contents = events_list
         for event_website_content in event_website_contents:
             event_website = list(event_website_content.keys())[0]
