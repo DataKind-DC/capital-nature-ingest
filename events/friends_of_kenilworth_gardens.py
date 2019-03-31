@@ -3,7 +3,6 @@ import pprint
 import os
 import datetime
 
-# EVENTBRITE_TOKEN = 'VIAEC7FFI64RC6SRHGDG'
 FONA_EVENTBRITE_ORG_ID = 8632128868
 # For a local run, be sure to create an env variable with the NPS API key.
 # For example:
