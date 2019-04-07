@@ -6,7 +6,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 def get_arlington_events():
     '''
     Gets animal- and environment-related events for Arlington County (https://today.arlingtonva.us/)
@@ -43,6 +42,21 @@ def get_arlington_events():
         from_param += 5
 
     return event_items
+
+def get_event_website(event_name, start_date, end_date):
+    params = {
+        "SearchTerm": event_name
+    }
+    uri = f'https://today-service.arlingtonva.us/api/event/elasticevent'
+    r = requests.get(uri, params=params)
+    data = r.json()
+    items = data['items']
+    for item in items:
+        item_start_date = schematize_date(item['eventStartDate'])
+        item_end_date = schematize_date(item['eventEndDate'])
+        if(start_date == item_start_date and end_date == item_end_date):
+            return item['eventUrlText']
+    return None
 
 def html_textraction(html):
     '''
@@ -144,6 +158,8 @@ def schematize_events(event_items):
         event_venue = html_textraction(event_item['locationName'])
         if event_venue == 'Earth Products Yard' or 'Library' in event_venue or not event_venue:
             continue
+        if not event_website:
+            event_website = get_event_website(event_name, start_date, end_date)
         event_venue = event_venue if event_venue else "See event website"
         event = {'Event Start Date':start_date,
                  'Event End Date': end_date,
@@ -167,7 +183,6 @@ def schematize_events(event_items):
 def main():
     event_items = get_arlington_events()
     events = schematize_events(event_items)
-
     return events
 
 if __name__ == '__main__':
