@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import time
 import re
 import logging
+from dateutil import tz
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +37,17 @@ def get_datetime(event_date):
         event_date (str): the date component of the timestamp (e.g. '2019-02-23')
         event_time (str): the time component of the timestamps (e.g. '14:00:00')
     '''
-    if not isinstance(event_date, int):
-        event_date = int(event_date)
-    event_time = time.strftime("%Y-%m-%d,%H:%M:%S", time.gmtime(event_date / 1000.0))
-    event_date, event_time = event_time.split(",")
+    
+    event_date = int(event_date)
+    #dates are in milliseconds
+    event_date /= 1000
+    from_zone = tz.gettz('UTC')
+    to_zone = tz.gettz('America/New_York')
+    utc_time = datetime.utcfromtimestamp(event_date)
+    utc_time = utc_time.replace(tzinfo=from_zone)
+    est_time = utc_time.astimezone(to_zone)
+    est_event_time = est_time.strftime('%Y-%m-%d,%H:%M:%S')
+    event_date, event_time = est_event_time.split(",")
     
     return event_date, event_time
 
