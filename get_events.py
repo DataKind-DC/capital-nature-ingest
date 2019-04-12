@@ -1,5 +1,5 @@
 from events import montgomery, ans, arlington, casey_trees, fairfax, nps, vnps, \
-                   sierra_club, dug_network, city_blossoms, tnc
+                   sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens
 from datetime import datetime
 import csv
 import linecache
@@ -94,7 +94,7 @@ def get_events():
         events (list): a list of dicts, with each dict representing a single event.
     '''
     event_sources = [montgomery, ans, arlington, casey_trees, fairfax, nps, vnps,
-                     sierra_club, dug_network, city_blossoms, tnc]
+                     sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens]
     events = []
     for event_source in event_sources:
         try:
@@ -167,10 +167,9 @@ def get_past_venues():
     data_path = os.path.join(os.getcwd(), 'data')
     if not os.path.exists(data_path):
         os.mkdir(data_path)
-    data_files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path,
-                                                                                  f))]
+    data_files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, f))]
     try:
-        venue_file = [f for f in data_files if 'venues_' in f][0]
+        venue_file = [f for f in data_files if 'venues-' in f][0]
     except IndexError:
         #IndexError because there's no past file
         return set()
@@ -246,7 +245,7 @@ def get_past_organizers():
         os.mkdir(data_path)
     data_files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path,f))]
     try:
-        organizer_file = [f for f in data_files if 'organizer' in f][0]
+        organizer_file = [f for f in data_files if 'organizers-' in f][0]
     except IndexError:
         #IndexError because there's no past file
         return set() 
@@ -315,7 +314,7 @@ def main(is_local = True, bucket = None):
     return events
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,
+    logging.basicConfig(level=logging.ERROR,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s') 
     events = main()
     logger.info(f'Found {len(events)} events!')
