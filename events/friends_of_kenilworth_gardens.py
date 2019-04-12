@@ -1,14 +1,13 @@
 import requests
-import pprint
 import os
 import datetime
 
 FONA_EVENTBRITE_ORG_ID = 8632128868
-# For a local run, be sure to create an env variable with the NPS API key.
+# For a local run, be sure to create an env variable with your Eventbrite token
 # For example:
 # $ export EVENTBRITE_TOKEN=<EVENTBRITE TOKEN Key>
 try:
-    EVENTBRITE_TOKEN = 'VIAEC7FFI64RC6SRHGDG'
+    EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
 except KeyError:
     #if it's not an env var, then we might be testing
     EVENTBRITE_TOKEN = input("Enter your Eventbrite Token Key:")
@@ -140,9 +139,9 @@ def main():
             'Event Name': data['name'],
             'Event Description': data['description'],
             'Event Start Date': start.strftime('%Y-%m-%d'),
-            'Event Start Time': start.strftime('%I:%M %p'),
+            'Event Start Time': start.strftime("%H:%M:%S"),
             'Event End Date': end.strftime('%Y-%m-%d'),
-            'Event End Time': end.strftime('%I:%M %p'),
+            'Event End Time': end.strftime("%H:%M:%S"),
             'All Day Event': False,
             'Timezone': 'America/New_York',
             'Event Venue Name': data['location']['name'],
@@ -154,8 +153,8 @@ def main():
             'Event Featured Image': data['image']
         }
         event_output.append(event_data)
+    
     return event_output
 
 if __name__ == '__main__':
     events = main()
-    print(events)
