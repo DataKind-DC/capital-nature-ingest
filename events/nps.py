@@ -26,7 +26,7 @@ def get_park_events(park_code, limit=1000):
         limit (int): number of results to return per request. Default is 1000
 
     Returns:
-        park_events (list): A list of dicts representing each event with 'park' as the siteType.
+        park_events (list): A list of dicts representing each event with 'park' as the sitetype.
                             The dict structures follow that of the NPS Events API.
     '''
     park_code_param = f'?parkCode={park_code}'
@@ -42,7 +42,11 @@ def get_park_events(park_code, limit=1000):
     data = r_json['data']
     park_events = []
     for d in data:
-        if d['siteType'] == 'park':
+        try:
+            site_type = d['sitetype']
+        except KeyError:
+            site_type = d['siteType']
+        if site_type == 'park':
             park_events.append(d)
     
 
@@ -211,44 +215,44 @@ def schematize_nps_event(nps_event):
     Returns:
         schematized_nps_events (list): a list of dicts, with each dict representing an event
     '''
-    date_end = nps_event['dateStart']
-    date_start = nps_event['dateEnd']
+    date_end = nps_event['datestart']
+    date_start = nps_event['dateend']
     if date_start == date_end:
         schematized_nps_events = []
         dates = nps_event['dates']
         for date in dates:
             times = nps_event['times']
             for time in times:
-                if not time['timeStart']:
-                    if time['sunsetEnd']:
+                if not time['timestart']:
+                    if time['sunsetend']:
                         event_start_time, event_end_time = get_sun_times(date)
                     else:
                         print("!")
                         continue
                 else:
-                    event_start_time = schematize_event_time(time['timeStart'])
-                    event_end_time = schematize_event_time(time['timeEnd'])
+                    event_start_time = schematize_event_time(time['timestart'])
+                    event_end_time = schematize_event_time(time['timeend'])
                 event_name = nps_event['title']
                 try:
                     event_description = BeautifulSoup(nps_event['description'], "html.parser").find("p").text
                 except AttributeError:
                     event_description = ''
-                event_all_day = nps_event['isAllDay']
+                event_all_day = nps_event['isallday']
                 event_id = nps_event['id']
                 specific_event_location = get_specific_event_location(event_id)
                 if specific_event_location:
-                    park_name_w_location = re.sub(' +', ' ', nps_event['parkFullName'] + ", " + specific_event_location)
+                    park_name_w_location = re.sub(' +', ' ', nps_event['parkfullname'] + ", " + specific_event_location)
                 else:
-                    park_name_w_location = re.sub(' +', ' ', nps_event['parkFullName'])
-                event_venue = nps_event['organizationName']
-                event_venue = event_venue if event_venue else nps_event['parkFullName']
+                    park_name_w_location = re.sub(' +', ' ', nps_event['parkfullname'])
+                event_venue = nps_event['organizationname']
+                event_venue = event_venue if event_venue else nps_event['parkfullname']
                 event_venue = re.sub('  +', ' ', event_venue)
-                event_cost = '0' if nps_event['isFree'] else parse_event_cost(nps_event['feeInfo'])
+                event_cost = '0' if nps_event['isfree'] else parse_event_cost(nps_event['feeinfo'])
                 _ = nps_event['category']
                 event_tags = ", ".join(nps_event['tags'])
-                regResURL = nps_event['regResURL']
-                infoURL = nps_event['infoURL']
-                portalName = nps_event['portalName']
+                regResURL = nps_event['regresurl']
+                infoURL = nps_event['infourl']
+                portalName = nps_event['portalname']
                 if len(regResURL) > 0:
                     event_website = regResURL
                 else:
@@ -281,21 +285,21 @@ def schematize_nps_event(nps_event):
                 if not event_description:
                     event_description = scrape_event_description(event_website)
                 schematized_nps_event = {
-                                            "Event Name":event_name,
-                                            "Event Description":event_description,
-                                            "Event Start Date":date,
-                                            "Event Start Time":event_start_time,
-                                            "Event End Date":date,
-                                            "Event End Time":event_end_time,
-                                            "All Day Event":event_all_day,
-                                            "Event Venue Name":event_venue,
-                                            "Event Organizers":event_organizer,
-                                            "Timezone":'America/New_York',
-                                            "Event Cost":event_cost,
-                                            "Event Currency Symbol":"$",
-                                            "Event Category":event_tags,
-                                            "Event Website":event_website,
-                                            "Event Featured Image":event_image
+                                         "Event Name":event_name,
+                                         "Event Description":event_description,
+                                         "Event Start Date":date,
+                                         "Event Start Time":event_start_time,
+                                         "Event End Date":date,
+                                         "Event End Time":event_end_time,
+                                         "All Day Event":event_all_day,
+                                         "Event Venue Name":event_venue,
+                                         "Event Organizers":event_organizer,
+                                         "Timezone":'America/New_York',
+                                         "Event Cost":event_cost,
+                                         "Event Currency Symbol":"$",
+                                         "Event Category":event_tags,
+                                         "Event Website":event_website,
+                                         "Event Featured Image":event_image
                                           }
                 schematized_nps_events.append(schematized_nps_event)
     else:
