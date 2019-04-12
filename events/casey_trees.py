@@ -96,7 +96,10 @@ def handle_ans_page(soup):
         event_desc = get_event_description(events_data['Event Website'])
         event_desc = event_desc if event_desc else ''
         events_data['Event Description'] = unicodedata.normalize('NFKD', event_desc)
-        events_data['Event Cost'] = parse_event_cost(con['offers']['price'])
+        try:
+            events_data['Event Cost'] = parse_event_cost(con['offers']['price'])
+        except KeyError:
+            events_data['Event Cost'] = '0'
         events_data['Event Currency Symbol'] = "$"
         events_data['All Day Event'] = False
         events_data['Event Organizers'] = 'Casey Trees'
