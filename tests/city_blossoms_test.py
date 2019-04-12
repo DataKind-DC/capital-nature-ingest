@@ -48,13 +48,13 @@ class CityBlossomsTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_get_datetime(self):
-        result = city_blossoms.get_datetime(1550930400562)
-        expected = ('2019-02-23', '14:00:00')
+        result = city_blossoms.get_datetime(1556654400590)
+        expected = ('2019-04-30', '16:00:00')
         self.assertEqual(result, expected)
 
     def test_get_datetime_str(self):
-        result = city_blossoms.get_datetime('1550930400562')
-        expected = ('2019-02-23', '14:00:00')
+        result = city_blossoms.get_datetime('1556654400590')
+        expected = ('2019-04-30', '16:00:00')
         self.assertEqual(result, expected)
 
     @requests_mock.Mocker()

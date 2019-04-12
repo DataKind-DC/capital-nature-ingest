@@ -52,6 +52,7 @@ def get_event_website(event_name, start_date, end_date):
     data = r.json()
     items = data['items']
     for item in items:
+        item = item['vwEventWithLocation']
         item_start_date = schematize_date(item['eventStartDate'])
         item_end_date = schematize_date(item['eventEndDate'])
         if(start_date == item_start_date and end_date == item_end_date):
@@ -189,3 +190,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
+    print(len(events))
