@@ -314,7 +314,7 @@ def main(is_local = True, bucket = None):
     return events
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.ERROR,
+    logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s') 
     events = main()
     logger.info(f'Found {len(events)} events!')
