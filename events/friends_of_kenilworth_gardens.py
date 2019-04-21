@@ -1,6 +1,9 @@
-import requests
-import os
 import datetime
+import logging
+import os
+import requests
+
+logger = logging.getLogger(__name__)
 
 FONA_EVENTBRITE_ORG_ID = 8632128868
 # For a local run, be sure to create an env variable with your Eventbrite token
@@ -8,7 +11,8 @@ FONA_EVENTBRITE_ORG_ID = 8632128868
 # $ export EVENTBRITE_TOKEN=<EVENTBRITE TOKEN Key>
 try:
     EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
-except KeyError:
+except Exception as e:
+    logger.error(f"User is being prompted to enter Eventbrite token key")
     #if it's not an env var, then we might be testing
     EVENTBRITE_TOKEN = input("Enter your Eventbrite Token Key:")
 
@@ -60,6 +64,7 @@ class EventbriteIngester:
         elif len(keys) == 2:
             return event[keys[0]][keys[1]]
         else:
+            logger.error(f"Exception as its more than 2 levels : {e}", exc_info=True)
             raise Exception("Can't handle more than 2 levels...")
 
     def handle_date(self, event, keys):
@@ -157,4 +162,6 @@ def main():
     return event_output
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
