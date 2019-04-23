@@ -115,14 +115,10 @@ class EventbriteIngester:
         events_url = self.get_eventbrite_url(
             '/events/search/',
             get_params = {'token': EVENTBRITE_TOKEN, 'organizer.id': self.org_id})
-        page = requests.get(events_url).json()
+        page = requests.get(events_url)
+        page = page.json()
         self.all_events = page['events']
         self.parse_events()
-
-def fetch_page(options):
-    url = options['url']
-    html_doc = requests.get(url).content
-    return html_doc
 
 
 def parse_venue_name(name):
@@ -133,7 +129,8 @@ def parse_venue_name(name):
     else:
         return name
 
-# Create an EventbriteParser object, parse API, and convert to
+
+# Create an EventbriteParser object, parse API, and convert to dict
 def handle_fona_eventbrite_api():
     fona_ingester = EventbriteIngester(FONA_EVENTBRITE_ORG_ID)
     fona_ingester.scrape()
@@ -150,7 +147,7 @@ def handle_fona_eventbrite_api():
         event_data = {
             'Event Name': data['name'],
             'Event Description': data['description'].strip('\r'),
-        # TODO: replace newlines with double for WP formatting
+            # TODO: replace newlines with double for WP formatting
             'Event Start Date': start.strftime('%Y-%m-%d'),
             'Event Start Time': start.strftime('%H:%M:%S'),
             'Event End Date': end.strftime('%Y-%m-%d'),
@@ -171,7 +168,6 @@ def handle_fona_eventbrite_api():
 def handler(event, context):
     url = event['url']
     source_name = event['source_name']
-    page = fetch_page({'url': url})
     event_output = handle_fona_eventbrite_api()
     filename = '{0}-results.csv'.format(source_name)
     if not is_local:
