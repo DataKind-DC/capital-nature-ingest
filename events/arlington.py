@@ -1,12 +1,10 @@
 from datetime import datetime
 import re
 import requests
-import csv
 from bs4 import BeautifulSoup
-import boto3
+import logging
 
-bucket = 'aimeeb-datasets-public'
-is_local = False
+logger = logging.getLogger(__name__)
 
 def get_arlington_events():
     '''
@@ -21,7 +19,11 @@ def get_arlington_events():
     startDate = datetime.now().strftime("%Y-%m-%d")
     from_param = 0
     uri = f'https://today-service.arlingtonva.us/api/event/elasticevent?&StartDate={startDate}T05:00:00.000Z&EndDate=null&TopicCode=ANIMALS&TopicCode=ENVIRONMENT&ParkingAvailable=false&NearBus=false&NearRail=false&NearBikeShare=false&From={from_param}&Size=5&OrderBy=featured&EndTime=86400000'
-    r = requests.get(uri)
+    try:
+        r = requests.get(uri)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {uri}: {e}", exc_info=True)
+        return             
     data = r.json()
     count = data['count']
     event_items = []
@@ -40,6 +42,22 @@ def get_arlington_events():
         from_param += 5
 
     return event_items
+
+def get_event_website(event_name, start_date, end_date):
+    params = {
+        "SearchTerm": event_name
+    }
+    uri = f'https://today-service.arlingtonva.us/api/event/elasticevent'
+    r = requests.get(uri, params=params)
+    data = r.json()
+    items = data['items']
+    for item in items:
+        item = item['vwEventWithLocation']
+        item_start_date = schematize_date(item['eventStartDate'])
+        item_end_date = schematize_date(item['eventEndDate'])
+        if(start_date == item_start_date and end_date == item_end_date):
+            return item['eventUrlText']
+    return None
 
 def html_textraction(html):
     '''
@@ -103,6 +121,7 @@ def schematize_date(event_date):
         datetime_obj = datetime.strptime(event_date, "%Y-%m-%dT%H:%M:%S")
         schematized_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
     except ValueError:
+        logger.warning(f"Exception schematizing this date: {event_date}", exc_info=True)
         return ''
     
     return schematized_date
@@ -138,8 +157,11 @@ def schematize_events(event_items):
         else:
             event_cost =  ''
         event_venue = html_textraction(event_item['locationName'])
-        if event_venue == 'Earth Products Yard' or 'Library' in event_venue:
+        if event_venue == 'Earth Products Yard' or 'Library' in event_venue or not event_venue:
             continue
+        if not event_website:
+            event_website = get_event_website(event_name, start_date, end_date)
+        event_venue = event_venue if event_venue else "See event website"
         event = {'Event Start Date':start_date,
                  'Event End Date': end_date,
                  'Event Start Time':start_time,
@@ -150,7 +172,7 @@ def schematize_events(event_items):
                  'Event Cost':event_cost,
                  'Event Description':event_description,
                  'Timezone':'America/New_York',
-                 'Event Organizers':event_venue,
+                 'Event Organizers':"Arlington Parks",
                  'Event Currency Symbol':'$',
                  'All Day Event':False,
                  'Event Category':''}
@@ -158,38 +180,14 @@ def schematize_events(event_items):
 
     return events
 
-def arlington_handler(event, context):
-    '''
-    AWS lambda function for Arlington County events.
-    '''
-    _ = event['url']
-    source_name = event['source_name']
+
+def main():
     event_items = get_arlington_events()
     events = schematize_events(event_items)
-    filename = '{0}-results.csv'.format(source_name)
-    fieldnames = list(events[0].keys())
-    if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for arlington_event in events:
-                writer.writerow(arlington_event)
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
-                                    bucket,
-                                    'capital-nature/{0}'.format(filename)
-                                    )
-    else:
-        with open(filename, mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for arlington_event in events:
-                writer.writerow(arlington_event)
+    return events
 
-#For local testing (it'll write the csv as arlington-results.csv into your working dir
-#event = {
-#'url': 'https://today.arlingtonva.us/',
-#'source_name': 'arlington'
-#}
-#is_local = True
-#arlington_handler(event, None)
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    events = main()
+    print(len(events))

@@ -1,11 +1,10 @@
 from bs4 import BeautifulSoup
 import requests
-import csv
-import boto3
 from datetime import datetime
+import logging
 
-bucket = 'aimeeb-datasets-public'
-is_local = False
+logger = logging.getLogger(__name__)
+
 
 def parse_date_and_time(date_and_time):
     '''
@@ -51,7 +50,39 @@ def parse_date_and_time(date_and_time):
     return all_day, start_time, end_time, start_date, end_date
 
 
-def get_event_venue_and_categories(event_website):
+def soupify_event_website(event_website):
+    '''
+    Given an event website, use bs4 to soupify it.
+    
+    Parameters:
+        event_website(str): the url for the website
+        
+    Returns:
+        event_website_soup: a bs4 soup object
+    '''
+    try:
+        r = requests.get(event_website)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {event_website}: {e}", 
+                        exc_info=True)
+        return
+    content = r.content
+    event_website_soup = BeautifulSoup(content, 'html.parser')
+    
+    return event_website_soup
+
+
+def get_event_description(event_website_soup):
+    '''
+    Given the soup to an event's page, return the longest <p> element as the event's description.
+    '''
+    paras = event_website_soup.find_all('p')
+    description = max([p.text for p in paras], key = len)
+    
+    return description
+
+
+def get_event_venue_and_categories(event_website_soup):
     '''
     Gets the event's venue and tags from the event's wesbite
 
@@ -62,13 +93,7 @@ def get_event_venue_and_categories(event_website):
         event_venue (str): the event's venue
         event_categories (str): a comma-delimited list of event categories
     '''
-    try:
-        r = requests.get(event_website)
-    except:
-        return None, None
-    content = r.content
-    soup = BeautifulSoup(content, 'html.parser')
-    paras = soup.find_all('p')
+    paras = event_website_soup.find_all('p')
     event_venue = ''
     event_categories = ''
     for p in paras:
@@ -81,7 +106,7 @@ def get_event_venue_and_categories(event_website):
                 a_tags = p.find_all('a')
                 if a_tags:
                     event_categories += ", ".join([x.get_text() for x in a_tags])
-
+    
     return event_venue, event_categories
 
 
@@ -96,6 +121,7 @@ def parse_description_and_location(description_and_location):
         event_website (str): event's website
         event_name (str): event's name
         event_venue (str): event's venue
+        event_description (str): event's description
     '''
     a = description_and_location.find('a',href=True)
     event_website = a['href']
@@ -104,10 +130,18 @@ def parse_description_and_location(description_and_location):
         event_venue = description_and_location.find('i').text
     except AttributeError:
         event_venue = None
-    scraped_event_venue, event_categories = get_event_venue_and_categories(event_website)
+    event_website_soup = soupify_event_website(event_website)
+    if not event_website_soup:
+        return None, None, None, None, None
+    scraped_event_venue, event_categories = get_event_venue_and_categories(event_website_soup)
     event_venue = event_venue if event_venue else scraped_event_venue
-
-    return event_website, event_name, event_venue, event_categories
+    if not event_venue:
+        event_description = ''
+        return event_website, event_name, event_venue, event_categories, event_description
+    else:
+        event_description = get_event_description(event_website_soup)
+    
+    return event_website, event_name, event_venue, event_categories, event_description
 
 
 def filter_events(events, categories = []):
@@ -155,21 +189,21 @@ def filter_events(events, categories = []):
     return filtered_events
 
 
-def get_vnps_events(categories=[]):
+def main(categories=[]):
     '''
-    Gets the event data in oour wordpess schema
+    Gets the event data in our wordpess schema
 
     Parameters:
         categories (list): a list of categories to filter out. See filter_events docstring for
                            possible values.
-
     Returns:
         events (list): a list of dicts, with each representing a vnps event
     '''
+    event_url = 'https://vnps.org/events/'
     try:
-        r = requests.get('https://vnps.org/events/')
-    except:
-        #TODO: log something like this
+        r = requests.get(event_url)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {event_url}: {e}", exc_info=True)
         return []
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
@@ -184,60 +218,30 @@ def get_vnps_events(categories=[]):
         for row in rows:
             date_and_time, description_and_location = row.find_all('td')
             all_day, start_time, end_time, start_date, end_date = parse_date_and_time(date_and_time)
-            event_website, event_name, event_venue, event_categories = parse_description_and_location(description_and_location)
-            event_venue = event_venue if event_venue else ''
+            event_website, event_name, event_venue, event_categories, event_description = parse_description_and_location(description_and_location)
+            event_venue = event_venue if event_venue else "See event website"
             event_categories = event_categories if event_categories else ''
+            event_description = event_description if event_description else "See event website"
             event = {'Event Start Date': start_date,
                      'Event End Date': end_date,
                      'Event Start Time': start_time,
                      'Event End Time': end_time,
                      'Event Website': event_website,
                      'Event Name': event_name,
-                     'Event Description':'',
+                     'Event Description': event_description,
                      'Event Venue Name': event_venue,
                      'All Day Event': all_day,
-                     'Event Category':event_categories,
+                     'Event Category': event_categories,
                      'Event Cost':'',
                      'Event Currency Symbol':'$',
                      'Timezone':'America/New_York',
-                     'Event Organizers': event_venue}
+                     'Event Organizers': 'Virginia Native Plant Society'}
             events.append(event)
     filtered_events = filter_events(events, categories)
 
     return filtered_events
 
-
-def vnps_handler(event, context):
-    '''
-    AWS lambda function for VNPS events.
-    '''
-    _ = event['url']
-    source_name = event['source_name']
-    events = get_vnps_events()
-    filename = '{0}-results.csv'.format(source_name)
-    fieldnames = list(events[0].keys())
-    if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for vnps_event in events:
-                writer.writerow(vnps_event)
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
-                                    bucket,
-                                    'capital-nature/{0}'.format(filename)
-                                    )
-    else:
-        with open(filename, mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for vnps_event in events:
-                writer.writerow(vnps_event)
-
-# For local testing (it'll write the csv as vnps-results.csv into your working dir)
-#event = {
-#'url': 'https://vnps.org',
-#'source_name': 'vnps'
-#}
-#is_local = True
-#vnps_handler(event, None)
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    events = main()

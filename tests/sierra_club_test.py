@@ -1,104 +1,70 @@
 import unittest
-from unittest.mock import patch, Mock
+import bs4
 import httpretty
 import requests
+import json
 import re
 from datetime import datetime
 import sys
 from os import path
-sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from events.arlington import get_arlington_events, html_textraction, \
-                             parse_event_name, \
-                             schematize_events, schematize_date
-from fixtures.arlington_test_fixtures import page_one_uri_json, page_two_uri_json, \
-                          page_one_uri_event_items, \
-                          page_two_uri_event_items, schematized_page_two_event_items
+sys.path.append( path.dirname( path.dirname( path.abspath(__file__))))
+from events.sierra_club import handle_ans_page
+from fixtures.sierra_club_test_fixtures import api_content, events_list
 from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
-                  is_phonenumber_valid, exceptionCallback
+                  is_phonenumber_valid
 
-class ArlingtonTestCase(unittest.TestCase):
-    '''
-    Test cases for the Arlington events
-    '''
+
+
+
+class SierraClubDCTestCase(unittest.TestCase):
 
     def setUp(self):
+        self.api = 'https://www.sierraclub.org/sc/proxy?url=https://act.sierraclub.org/events/services/apexrest/eventfeed/ent/6300,5051&_=1548294791086'
+        self.api_content = api_content
+        self.events_list = events_list
         self.maxDiff = None
 
     def tearDown(self):
-        pass
+        self.api = None
+        self.api_content = None
+        self.events_list = None
+
 
     @httpretty.activate
-    def test_get_arlington_events(self):
-        page_one_uri = 'https://today-service.arlingtonva.us/api/event/elasticevent?&StartDate=2019-01-25T05:00:00.000Z&EndDate=null&TopicCode=ANIMALS&TopicCode=ENVIRONMENT&ParkingAvailable=false&NearBus=false&NearRail=false&NearBikeShare=false&From=0&Size=5&OrderBy=featured&EndTime=86400000'
-        page_two_uri = 'https://today-service.arlingtonva.us/api/event/elasticevent?&StartDate=2019-01-25T05:00:00.000Z&EndDate=null&TopicCode=ANIMALS&TopicCode=ENVIRONMENT&ParkingAvailable=false&NearBus=false&NearRail=false&NearBikeShare=false&From=5&Size=5&OrderBy=featured&EndTime=86400000'
-        httpretty.register_uri(httpretty.GET,
-                               uri=page_one_uri,
-                               body=page_one_uri_json,
-                               status=200,
-                               content_type = "application/json")
-
-        httpretty.register_uri(httpretty.GET,
-                               uri=page_two_uri,
-                               body=page_two_uri_json,
-                               status=200,
-                               content_type = "application/json")
-        result = get_arlington_events()
-        expected = page_one_uri_event_items + page_two_uri_event_items
-        self.assertCountEqual(result, expected)
-
-    def test_html_textraction(self):
-        text = '<p>Families age 3 and up. Register children and adults; children must be accompanied by a registered adult. We&#8217;ll use all sorts of cookies, marshmallows and toppings for the most decadent campfire s&#8217;mores ever! For information: 703-228-6535. Meet at Long Branch Nature Center. Registration Required: Resident registration begins at 8:00am on 11/13/2018. Non-resident registration begins at 8:00am on 11/14/2018.</p>\n<p>Activity #:\xa0622959 &#8211; O</p>\n'
-        result = html_textraction(text)
-        expected = 'Families age 3 and up. Register children and adults; children must be accompanied by a registered adult. We’ll use all sorts of cookies, marshmallows and toppings for the most decadent campfire s’mores ever! For information: 703-228-6535. Meet at Long Branch Nature Center. Registration Required: Resident registration begins at 8:00am on 11/13/2018. Non-resident registration begins at 8:00am on 11/14/2018.'
-        self.assertEqual(result, expected)
-
-    def test_parse_event_name_rip_case_one(self):
-        event_name = 'RiP – Tuckahoe Park Invasive Plant Removal'
-        result = parse_event_name(event_name)
-        expected = 'Tuckahoe Park Invasive Plant Removal'
-        self.assertEqual(result, expected)
-
-    def test_parse_event_name_rip_case_two(self):
-        event_name = 'RiP – Tuckahoe Park'
-        result = parse_event_name(event_name)
-        expected = 'Tuckahoe Park Invasive Plant Removal'
-        self.assertEqual(result, expected)
-
-    def test_parse_event_name(self):
-        event_name = 'Annual Four Mile  Run Stream Cleanup'
-        result = parse_event_name(event_name)
-        expected = 'Annual Four Mile Run Stream Cleanup'
-        self.assertEqual(result, expected)
-
-    def test_schematize_date(self):
-        result = schematize_date('2019-01-25T00:00:00')
-        expected = '2019-01-25'
-        self.assertEqual(result, expected)
-    
-    def test_schematize_events(self):
-        result = schematize_events(page_two_uri_event_items)
-        expected = schematized_page_two_event_items
-        self.assertEqual(result, expected)
-
     def test_events_schema_required_fields(self):
         '''
         Tests if the required events fields are present.
         '''
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         keys = set().union(*(d.keys() for d in events))
         schema = {'Event Name','Event Description','Event Start Date','Event Start Time',
                   'Event End Date','Event End Time','Timezone','All Day Event',
-                  'Event Venue Name','Event Organizers',
-                  'Event Cost','Event Currency Symbol',
-                  'Event Category','Event Website'}
+                  'Event Organizers','Event Cost','Event Currency Symbol',
+                  'Event Category', 'Event Venue Name','Event Website'}
         result = schema.issubset(keys)
         self.assertTrue(result)
-    
+
+
+    @httpretty.activate
     def test_events_schema(self):
         '''
         Tests if all of the event fields conform in name to the schema.
         '''
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         keys = set().union(*(d.keys() for d in events))
         schema = {'Do Not Import','Event Name','Event Description','Event Excerpt',
                   'Event Start Date','Event Start Time','Event End Date','Event End Time',
@@ -112,6 +78,8 @@ class ArlingtonTestCase(unittest.TestCase):
         result = keys.issubset(schema)
         self.assertTrue(result)
 
+
+    @httpretty.activate
     def test_events_schema_bool_type(self):
         '''
         Tests if the boolean type event fields are bool
@@ -119,7 +87,14 @@ class ArlingtonTestCase(unittest.TestCase):
         booleans = ['All Day Event','Hide from Event Listings','Sticky in Month View',
                     'Event Show Map Link','Event Show Map','Allow Comments',
                     'Allow Trackbacks and Pingbacks']
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         vals = []
         for event in events:
             for k in event:
@@ -129,13 +104,22 @@ class ArlingtonTestCase(unittest.TestCase):
         result = all([isinstance(x, bool) for x in vals])
         self.assertTrue(result)
 
+
+    @httpretty.activate
     def test_events_schema_string_type(self):
         '''
         Tests if the str and comma delim event field types are strings.
         '''
         comma_delimited = ['Event Venue Name','Event Organizers','Event Category','Event Tags']
         string = ['Event Description','Event Excerpt','Event Name']
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         vals = []
         for event in events:
             for k in event:
@@ -144,25 +128,43 @@ class ArlingtonTestCase(unittest.TestCase):
                     vals.append(val)
         result = all([isinstance(x, str) for x in vals])
         self.assertTrue(result)
-    
+
+
+    @httpretty.activate
     def test_events_schema_currency_symbol_type(self):
         '''
         Tests if the currency symbol is a dollar sign
         '''
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         vals = []
         for event in events:
             for k in event:
                 if k == 'Event Currency Symbol':
                     vals.append(event[k])
-        result = all([x=='$' for x in vals])           
+        result = all([x=='$' for x in vals])
         self.assertTrue(result)
-    
+
+
+    @httpretty.activate
     def test_events_schema_event_cost_type(self):
         '''
         Tests if the event cost is a string of digits
         '''
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         vals = []
         for event in events:
             for k in event:
@@ -173,11 +175,20 @@ class ArlingtonTestCase(unittest.TestCase):
         result = all(x.isdigit() or not x for x in vals)
         self.assertTrue(result)
 
+
+    @httpretty.activate
     def test_events_schema_timezone_type(self):
         '''
         Tests if the timezone event field is 'America/New_York'
         '''
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         vals = []
         for event in events:
             for k in event:
@@ -187,13 +198,22 @@ class ArlingtonTestCase(unittest.TestCase):
         result = all(x == 'America/New_York' for x in vals)
         self.assertTrue(result)
 
+
+    @httpretty.activate
     def test_events_schema_date_type(self):
         '''
-        Tests if the event start/end date fields are "%Y-%m-%d" 
+        Tests if the event start/end date fields are "%Y-%m-%d"
         Examples:  '1966-01-01' or '1965-12-31'
         '''
         date = ['Event Start Date', 'Event End Date']
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         vals = []
         for event in events:
             for k in event:
@@ -201,22 +221,31 @@ class ArlingtonTestCase(unittest.TestCase):
                     val = event[k]
                     vals.append(val)
         try:
-            result = [datetime.strptime(x, "%Y-%m-%d") for x in vals]
+            result = [datetime.strptime(x, "%Y-%m-%d") for x in vals if x != '']
         except ValueError:
             result = None
             raise EventDateFormatError
         self.assertIsNotNone(result)
 
+
+    @httpretty.activate
     def test_events_schema_time_type(self):
         '''
         Tests if the Event Start Time and Event End Time fields follow
         the "%H:%M:%S" format. Examples: '21:30:00' or '00:50:00'
         '''
         time = ['Event Start Time','Event End Time']
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         vals = []
         for event in events:
-            for k in event: 
+            for k in event:
                 if k in time:
                     val = event[k]
                     vals.append(val)
@@ -226,47 +255,75 @@ class ArlingtonTestCase(unittest.TestCase):
             result = None
             raise EventTimeFormatError
         self.assertIsNotNone(result)
-            
+
+
+    @httpretty.activate
     def test_events_schema_url_type(self):
         '''
         Tests if the event website and event featured image fields contain strings
         that pass Django's test as urls
         '''
         url = ['Event Website','Event Featured Image']
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         vals = []
         for event in events:
-            for k in event: 
+            for k in event:
                 if k in url:
                     val = event[k]
                     vals.append(val)
         result = all([re.match(url_regex, x) for x in vals])
         self.assertTrue(result)
 
+
+    @httpretty.activate
     def test_events_schema_currency_position_type(self):
         '''
         Tests if the Event Currency Position is 'prefix', 'suffix', or ''
         '''
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         for event in events:
-            for k in event: 
+            for k in event:
                 if k == 'Event Currency Position':
                     val = event[k]
                     expected_vals = ['prefix','suffix','']
                     result = val in expected_vals
                     self.assertTrue(result)
 
+
+    @httpretty.activate
     def test_events_schema_phone_type(self):
         '''
         Tests if the phone number string is formatted like:  "+1-326-437-9663"
         '''
-        events = schematize_events(page_two_uri_event_items)
+        httpretty.register_uri(method=httpretty.GET,
+                                            uri=self.api,
+                                            status=200,
+                                            body=self.api_content)
+        r = requests.get(self.api)
+        content = r.content
+        page = json.loads(content)
+        events = handle_ans_page(page['eventList'])
         for event in events:
-            for k in event: 
+            for k in event:
                 if k == 'Event Phone':
                     val = event[k]
                     result = is_phonenumber_valid(val)
                     self.assertTrue(result)
-        
+
+
 if __name__ == '__main__':
     unittest.main()

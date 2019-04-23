@@ -8,14 +8,20 @@ from os import path
 import re
 from datetime import datetime 
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from lambdas.montgomery.lambda_function import get_category_id_map, parse_event_date, get_event_description, \
-                            get_event_cost, schematize_event_time, schematize_event_date, \
-                            canceled_test, parse_event_website, parse_event_item, no_events_test, \
-                            next_page_test, get_category_events, dedupe_events, get_montgomery_events
+from events.montgomery import get_category_id_map, parse_event_date, get_event_description, \
+                              get_event_cost, schematize_event_time, schematize_event_date, \
+                              canceled_test, parse_event_website, parse_event_item, \
+                              no_events_test, next_page_test, get_category_events, \
+                              dedupe_events, main
 from fixtures.montgomery_test_fixtures import calendar_page_content, event_page_content, \
-                          category_id_map_expected, event_page_content_canceled, parse_event_item_expected, \
-                          event_item, calendar_page_no_events_content, calendar_page_next_page_content, \
-                          open_house_event, single_event_calendar_page_content, open_house_page_content
+                                              category_id_map_expected, \
+                                              event_page_content_canceled, \
+                                              parse_event_item_expected, \
+                                              event_item, calendar_page_no_events_content, \
+                                              calendar_page_next_page_content, \
+                                              open_house_event, \
+                                              single_event_calendar_page_content, \
+                                              open_house_page_content
 from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
                   is_phonenumber_valid, exceptionCallback
                   
@@ -40,6 +46,7 @@ class MontgomeryTestCase(unittest.TestCase):
         self.open_house_event = open_house_event
         self.single_event_calendar_page_content = single_event_calendar_page_content
         self.open_house_page_content = open_house_page_content
+        self.maxDiff = None
         
 
     def tearDown(self):
@@ -80,7 +87,7 @@ class MontgomeryTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_parse_event_date(self):
-        start_date, start_time, end_time = parse_event_date(self.event_date)
+        start_date, start_time, end_time = parse_event_date(self.event_date, 'url')
         result = [start_date, start_time, end_time]
         expected = ['2019-01-18', '10:00:00', '11:00:00']
         self.assertListEqual(result, expected)
@@ -107,9 +114,9 @@ class MontgomeryTestCase(unittest.TestCase):
     #When patching multiple functions, the decorator closest to the function being decorated 
     # is called first, so it will create the first positional argument
     @httpretty.activate
-    @patch('lambdas.montgomery.lambda_function.get_event_cost')
-    @patch('lambdas.montgomery.lambda_function.get_event_description')
-    @patch('lambdas.montgomery.lambda_function.canceled_test')
+    @patch('events.montgomery.get_event_cost')
+    @patch('events.montgomery.get_event_description')
+    @patch('events.montgomery.canceled_test')
     def test_parse_event_website(self, mock_canceled_test, mock_get_event_description, mock_get_event_cost):
         mock_canceled_test.return_value = False
         mock_get_event_description.return_value = "February is Maple Sugaring Month at Brookside Nature Center. Every Saturday and Sunday you’ll have an opportunity to experience an American tradition: maple sugaring! Watch the whole maple sugaring process from start to finish. See sap drip from trees and taste it. Watch us boil it down into sweet maple syrup, then sample a tasty treat. Join in the fun and activities and learn something new at this family-friendly program! Space is limited so pre-registration is encouraged."
@@ -123,9 +130,9 @@ class MontgomeryTestCase(unittest.TestCase):
         self.assertListEqual(result, expected)
 
     @httpretty.activate
-    @patch('lambdas.montgomery.lambda_function.get_event_cost')
-    @patch('lambdas.montgomery.lambda_function.get_event_description')
-    @patch('lambdas.montgomery.lambda_function.canceled_test')
+    @patch('events.montgomery.get_event_cost')
+    @patch('events.montgomery.get_event_description')
+    @patch('events.montgomery.canceled_test')
     def test_parse_event_website_canceled(self, mock_canceled_test, mock_get_event_description, mock_get_event_cost):
         mock_canceled_test.return_value = False
         mock_get_event_description.return_value = None
@@ -143,7 +150,7 @@ class MontgomeryTestCase(unittest.TestCase):
         event_item = soup.find('li')
         result = parse_event_item(event_item, 'category')
         expected = self.parse_event_item_expected
-        self.assertDictEqual(result, expected)
+        self.assertEqual(result, expected)
 
     def test_no_events_test(self):
         soup = BeautifulSoup(self.calendar_page_no_events_content,'html.parser')
@@ -204,7 +211,9 @@ class MontgomeryTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
     
     @httpretty.activate
-    def test_get_montgomery_events(self):
+    @patch('events.montgomery.get_category_id_map')
+    def test_main(self, mocked_get_category_id_map):
+        mocked_get_category_id_map.return_value = {'open house': '2901'}
         httpretty.register_uri(method=httpretty.GET,
                                uri='https://www.montgomeryparks.org/calendar/?cat=2901&v=0',
                                status=200,
@@ -213,8 +222,7 @@ class MontgomeryTestCase(unittest.TestCase):
                                uri='https://www.montgomeryparks.org/events/volunteer-fair-for-montgomery-parks-historic-sites/',
                                status=200,
                                body=self.open_house_page_content)
-        result = get_montgomery_events({'open house': '2901'}, 
-                                        event_categories = ['open house'])
+        result = main(event_categories = ['open house'])
         expected = self.open_house_event
         self.assertListEqual(result, expected)
 

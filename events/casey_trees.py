@@ -1,23 +1,23 @@
 import ast
-import boto3
 import bs4
-import csv
 from datetime import datetime
 import re
 import requests
-import json
 import unicodedata
+import logging
 
-bucket = 'aimeeb-datasets-public'
-is_local = False
-current_date = datetime.today()
-url="https://caseytrees.org/events/"+current_date.strftime("%Y-%m")+"/"
+logger = logging.getLogger(__name__)
 
-
-def fetch_page(options):
-    url = options['url']
-    html_doc = requests.get(url).content
-    return html_doc
+def fetch_page_soup(url):
+    try:
+        r = requests.get(url)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {url}: {e}", exc_info=True)
+        return
+    content = r.content
+    soup = bs4.BeautifulSoup(content, 'html.parser')
+    
+    return soup
 
 def parse_event_cost(event_cost):
     if event_cost == "Donation":
@@ -75,8 +75,12 @@ def handle_ans_page(soup):
     result_all_event = []
     for con in events_complete_data:
         events_data = {}
+        event_venue = con['location']['name']
+        if event_venue == 'TBD':
+            continue
+        event_venue = event_venue if event_venue else "See event website"
         # some html string is present in event name default adding this to format it
-        events_name_data = bs4.BeautifulSoup(con.get('name',''))
+        events_name_data = bs4.BeautifulSoup(con.get('name',''), 'html.parser')
         events_data['Event Name'] = events_name_data.get_text()
         events_data['Event Website'] = con.get('url','')
         events_data['Event Category'] = categoryclasses.get(events_data['Event Website'],'')
@@ -87,17 +91,18 @@ def handle_ans_page(soup):
         events_data['Event Start Time'] = start.strftime('%H:%M:%S')
         events_data['Event End Time'] = end.strftime('%H:%M:%S')
         events_data['Timezone'] = "America/New_York"
-        events_data['Event Venue Name'] = con['location']['name']
+        events_data['Event Venue Name'] = event_venue
         events_data['Event Featured Image'] = con.get('image','')
-        events_data['Event Description'] = unicodedata.normalize('NFKD', get_event_description(events_data['Event Website']))
-        events_data['Event Cost'] = parse_event_cost(con['offers']['price'])
+        event_desc = get_event_description(events_data['Event Website'])
+        event_desc = event_desc if event_desc else ''
+        events_data['Event Description'] = unicodedata.normalize('NFKD', event_desc)
+        try:
+            events_data['Event Cost'] = parse_event_cost(con['offers']['price'])
+        except KeyError:
+            events_data['Event Cost'] = '0'
         events_data['Event Currency Symbol'] = "$"
         events_data['All Day Event'] = False
-        organizer = con.get('organizer', False)
-        if(organizer):
-            events_data['Event Organizers'] = organizer.get('name',"")
-        else:
-            events_data['Event Organizers'] = ""
+        events_data['Event Organizers'] = 'Casey Trees'
         # commenting addresss, latitude and longitude fields for now as The WordPress Event plugin doesn't
         # expect these fields, but we might eventually use their Map plugin, which would need those geo fields 
         # events_data['address'] = ' '.join(str(x) for x in con['location']['address'].values())
@@ -116,50 +121,42 @@ def handle_ans_page(soup):
         result_all_event.append(events_data)
     try:
         #checks if next month calender is present and passes the url to handle_ans_page function
-        next = soup.find('li', {'class': 'tribe-events-nav-next'}).a['href']
-        page = fetch_page({'url': next})
-        soup = bs4.BeautifulSoup(page, 'html.parser')
+        next_url = soup.find('li', {'class': 'tribe-events-nav-next'}).a['href']
+        soup = fetch_page_soup(next_url)
+        if not soup:
+            return result_all_event
         result_all_event.extend(handle_ans_page(soup))
-    except:
+    except TypeError:
+        #means we've found the last page
         pass
+    except Exception as e:
+        logger.error(f"Exception checking for additional pages: {e}", exc_info = True)
+        return []
 
     return result_all_event
 
 
-
 def get_event_description(url):
-    page = fetch_page({'url': url})
-    soup = bs4.BeautifulSoup(page, 'html.parser')
+    soup = fetch_page_soup(url)
+    if not soup:
+        return
     events_url = soup.find('meta', {'property': 'og:description'})['content']
+    
     return events_url
 
+def main():
+    current_date = datetime.today()
+    url="https://caseytrees.org/events/"+current_date.strftime("%Y-%m")+"/"
+    soup = fetch_page_soup(url)
+    if not soup:
+        return []
+    events = handle_ans_page(soup)
+    
+    return events
 
-def handler(event, context):
-    url = event['url']
-    source_name = event['source_name']
-    page = fetch_page({'url': url})
-    soup = bs4.BeautifulSoup(page, 'html.parser')
-    event_output = handle_ans_page(soup)
-    filename = '{0}-results.csv'.format(source_name)
-    if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = event_output[0].keys())
-            writer.writeheader()
-            [writer.writerow(event) for event in event_output]
-    s3 = boto3.resource('s3')
-    s3.meta.client.upload_file(
-      '/tmp/{0}'.format(filename),
-      bucket,
-      'capital-nature/{0}'.format(filename)
-    )
-    return json.dumps(event_output, indent=2)
-
-
-# For local testing
-event = {
-  'url': url,
-  'source_name': 'casey_trees'
-}
-# is_local = False
-# print(handler(event, {}))
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    events = main()
+    
 

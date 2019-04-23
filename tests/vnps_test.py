@@ -1,19 +1,20 @@
 import unittest
-from unittest.mock import patch, Mock
 import httpretty
 import requests
 from datetime import datetime
+from bs4 import BeautifulSoup
 import re
 import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from lambdas.vnps.lambda_function import parse_date_and_time, get_event_venue_and_categories,\
-                                         parse_description_and_location, filter_events, \
-                                         get_vnps_events
+from events.vnps import parse_date_and_time, get_event_venue_and_categories,\
+                        parse_description_and_location, filter_events, \
+                        main
 from fixtures.vnps_test_fixtures import date_and_time_tag, date_and_time_tag_all_day, \
                                         event_website_content, description_and_location_tag, \
                                         description_and_location_tag_no_venue, events, \
-                                        filtered_events, events_page_content
+                                        filtered_events, events_page_content, \
+                                        text_event_content
 from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
                   is_phonenumber_valid, exceptionCallback
 
@@ -33,6 +34,7 @@ class VNPSTestCase(unittest.TestCase):
         self.filtered_events = filtered_events
         self.events_page = 'https://vnps.org/events/'
         self.events_page_content = events_page_content
+        self.text_event_content = text_event_content
 
     def tearDown(self):
         self.date_and_time_tag = None
@@ -45,51 +47,51 @@ class VNPSTestCase(unittest.TestCase):
         self.filtered_events = None
         self.events_page = None
         self.events_page_content = None
+        self.text_event_content = None
 
     def test_parse_date_and_time(self):
         result = parse_date_and_time(self.date_and_time_tag)
         expected = (False,'19:30:00','21:00:00','2019-02-14','2019-02-14')
-        self.assertTupleEqual(result, expected)
+        self.assertEqual(result, expected)
 
     def test_parse_date_and_time_all_day(self):
         result = parse_date_and_time(self.date_and_time_tag_all_day)
         expected = (True, None, None, '2019-03-09', '2019-03-09')
-        self.assertTupleEqual(result, expected)
-    
-    @httpretty.activate
-    def test_get_event_venue_and_categories_conn_error(self):
-        httpretty.register_uri(method=httpretty.GET,
-                               uri=self.event_website,
-                               status=200,
-                               body=exceptionCallback)
-        result = get_event_venue_and_categories(self.event_website)
-        expected = (None, None)
-        self.assertTupleEqual(result, expected)
+        self.assertEqual(result, expected)
 
     @httpretty.activate
     def test_get_event_venue_and_categories(self):
+        event_website_soup = BeautifulSoup(self.event_website_content, 'html.parser')
+        result = get_event_venue_and_categories(event_website_soup)
+        expected = ('Blandy Experimental Farm', 'Field Trips, Piedmont')
+        self.assertEqual(result, expected)
+
+    @httpretty.activate
+    def test_parse_description_and_location(self):
         httpretty.register_uri(method=httpretty.GET,
                                uri=self.event_website,
                                status=200,
                                body=self.event_website_content)
-        result = get_event_venue_and_categories(self.event_website)
-        expected = ('Blandy Experimental Farm', 'Field Trips, Piedmont')
-        self.assertTupleEqual(result, expected)
-
-    def test_parse_description_and_location(self):
         result = parse_description_and_location(self.description_and_location_tag)
-        expected = ('https://vnps.org/piedmont/events/identifying-plants-in-winter-at-the-virginia-state-arboretum/',
+        expected = (self.event_website,
                     'Identifying Plants in Winter at the Virginia State Arboretum',
-                    'Blandy Experimental Farm, Boyce Virginia','Field Trips, Piedmont')
-        self.assertTupleEqual(result, expected)
+                    'Blandy Experimental Farm, Boyce Virginia','Field Trips, Piedmont',
+                    'Join Piedmont Chapter Board Member Dr. Emily Southgate who will guide us through the Virginia State Arboretum at Blandy in Clarke County for a special pre-Valentines Day walk on winter plant identification with a stop for hot cocoa.')
+        self.assertEqual(result, expected)
 
+    @httpretty.activate
     def test_parse_description_and_location_no_venue(self):
+        httpretty.register_uri(method=httpretty.GET,
+                               uri='https://vnps.org/events/texas-hill-country-field-trip/',
+                               status=200,
+                               body=self.text_event_content)
         result = parse_description_and_location(self.description_and_location_tag_no_venue)
         expected = ('https://vnps.org/events/texas-hill-country-field-trip/',
                     'Texas Hill Country Field Trip',
                     '',
-                    'Extended Field Trip, Field Trips, State Events')
-        self.assertTupleEqual(result, expected)
+                    'Extended Field Trip, Field Trips, State Events',
+                    '')
+        self.assertEqual(result, expected)
 
     def test_filter_events(self):
         result = filter_events(self.events, categories = ['Piedmont'])
@@ -102,7 +104,7 @@ class VNPSTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @httpretty.activate
-    def test_get_vnps_events(self):
+    def test_main(self):
         httpretty.register_uri(method=httpretty.GET,
                                uri=self.event_website,
                                status=200,
@@ -111,7 +113,7 @@ class VNPSTestCase(unittest.TestCase):
                                uri=self.events_page,
                                status=200,
                                body=self.events_page_content)
-        result = get_vnps_events()
+        result = main()
         expected = [{'Event Start Date': '2019-02-09',
                      'Event End Date': '2019-02-09',
                      'Event Start Time': '13:00:00',
@@ -120,16 +122,16 @@ class VNPSTestCase(unittest.TestCase):
                      'Event Name': 'Identifying Plants in Winter at the Virginia State Arboretum',
                      'Event Venue Name': 'Blandy Experimental Farm, Boyce Virginia',
                      'All Day Event': False,
-                     'Event Description':'',
+                     'Event Description':'Join Piedmont Chapter Board Member Dr. Emily Southgate who will guide us through the Virginia State Arboretum at Blandy in Clarke County for a special pre-Valentines Day walk on winter plant identification with a stop for hot cocoa.',
                      'Event Cost':'',
                      'Event Category': 'Field Trips, Piedmont',
                      'Event Currency Symbol':'$',
                      'Timezone':'America/New_York',
-                     'Event Organizers':'Blandy Experimental Farm, Boyce Virginia'}]
+                     'Event Organizers':'Virginia Native Plant Society'}]
         self.assertListEqual(result, expected)
 
     @httpretty.activate
-    def test_get_vnps_events_bad_conn(self):
+    def test_main_bad_conn(self):
         httpretty.register_uri(method=httpretty.GET,
                                uri=self.event_website,
                                status=200,
@@ -138,7 +140,7 @@ class VNPSTestCase(unittest.TestCase):
                                uri=self.events_page,
                                status=200,
                                body=exceptionCallback)
-        result = get_vnps_events()
+        result = main()
         expected = []
         self.assertListEqual(result, expected)
 
@@ -155,7 +157,7 @@ class VNPSTestCase(unittest.TestCase):
                                uri=self.events_page,
                                status=200,
                                body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         keys = set().union(*(d.keys() for d in events))
         schema = {'Event Name','Event Description','Event Start Date','Event Start Time',
                   'Event End Date','Event End Time','Timezone','All Day Event',
@@ -179,7 +181,7 @@ class VNPSTestCase(unittest.TestCase):
                                uri=self.events_page,
                                status=200,
                                body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         keys = set().union(*(d.keys() for d in events))
         schema = {'Do Not Import','Event Name','Event Description','Event Excerpt',
                   'Event Start Date','Event Start Time','Event End Date','Event End Time',
@@ -209,7 +211,7 @@ class VNPSTestCase(unittest.TestCase):
                                uri=self.events_page,
                                status=200,
                                body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -234,7 +236,7 @@ class VNPSTestCase(unittest.TestCase):
                             uri=self.events_page,
                             status=200,
                             body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -257,7 +259,7 @@ class VNPSTestCase(unittest.TestCase):
                             uri=self.events_page,
                             status=200,
                             body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         for event in events:
             for k in event:
                 if k == 'Event Currency Symbol':
@@ -278,7 +280,7 @@ class VNPSTestCase(unittest.TestCase):
                             uri=self.events_page,
                             status=200,
                             body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         for event in events:
             for k in event:
                 if k == 'Event Cost':
@@ -300,7 +302,7 @@ class VNPSTestCase(unittest.TestCase):
                             uri=self.events_page,
                             status=200,
                             body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         for event in events:
             for k in event:
                 if k == 'Timezone':
@@ -323,7 +325,7 @@ class VNPSTestCase(unittest.TestCase):
                             uri=self.events_page,
                             status=200,
                             body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         vals = []
         for event in events:
             for k in event:
@@ -352,7 +354,7 @@ class VNPSTestCase(unittest.TestCase):
                                uri=self.events_page,
                                status=200,
                                body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         vals = []
         for event in events:
             for k in event: 
@@ -381,7 +383,7 @@ class VNPSTestCase(unittest.TestCase):
                             uri=self.events_page,
                             status=200,
                             body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         vals = []
         for event in events:
             for k in event: 
@@ -404,7 +406,7 @@ class VNPSTestCase(unittest.TestCase):
                             uri=self.events_page,
                             status=200,
                             body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         for event in events:
             for k in event: 
                 if k == 'Event Currency Position':
@@ -426,7 +428,7 @@ class VNPSTestCase(unittest.TestCase):
                             uri=self.events_page,
                             status=200,
                             body=self.events_page_content)
-        events = get_vnps_events()
+        events = main()
         for event in events:
             for k in event: 
                 if k == 'Event Phone':

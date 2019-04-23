@@ -3,6 +3,7 @@ chromedriver*
 lambdas/**/*.zip
 .terraform
 *.tfstate*
+.vscode/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -140,3 +141,6 @@ $RECYCLE.BIN/
 .Trashes
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
+
+# Data
+*.csv

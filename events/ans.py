@@ -1,19 +1,17 @@
 import bs4
 import requests
-import json
-import csv
 import unicodedata
 import sys
 from datetime import datetime
-import boto3
+import logging
 
-bucket = 'aimeeb-datasets-public'
-is_local = False
+logger = logging.getLogger(__name__)
 
-def soupify_event_page(url):
+def soupify_event_page(url = 'https://anshome.org/events-calendar/'):
     try:
         r = requests.get(url)
-    except:
+    except Exception as e:
+        logger.critical(f'Exception making GET to {url}: {e}', exc_info = True)
         return
     content = r.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
@@ -23,7 +21,8 @@ def soupify_event_page(url):
 def soupify_event_website(event_website):
     try:
         r = requests.get(event_website)
-    except:
+    except Exception as e:
+        logger.critical(f'Exception making GET to {event_website}: {e}', exc_info = True)
         return
     content = r.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
@@ -64,11 +63,15 @@ def schematize_event_time(event_time):
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
+        logger.warning(f'Exception schematizing this date: {event_time}', exc_info = True)
         schematized_event_time = ''
     
     return schematized_event_time
 
-def handle_ans_page(soup):
+def main():
+    soup = soupify_event_page()
+    if not soup:
+        sys.exit(1)
     events_divs = soup.find_all('div', {'class': 'event'})
     events = []
     for e in events_divs:
@@ -84,6 +87,11 @@ def handle_ans_page(soup):
         event_category = ''
         event_organizers = 'Audubon Naturalist Society'
         all_day_event = False
+        try:
+            event_venue = e.find('span', {'itemprop': 'name'}).get_text()
+        except AttributeError:
+            event_venue = "See event website"
+        event_venue = event_venue if event_venue else "See event website"
         #TODO: try to get the event cost
         event = {
                  'Event Name': event_name,
@@ -92,7 +100,7 @@ def handle_ans_page(soup):
                  'Event Start Time': start_time,
                  'Event End Date': end_date,
                  'Event End Time': end_time,
-                 'Event Venue Name': e.find('span', {'itemprop': 'name'}).text,
+                 'Event Venue Name': event_venue,
                  'Timezone':'America/New_York',
                  'Event Cost': '',
                  'Event Description': event_description,
@@ -104,39 +112,8 @@ def handle_ans_page(soup):
     
     return events
 
-def handler(event, context):
-    url = event['url']
-    source_name = event['source_name']
-    soup = soupify_event_page(url)
-    if not soup:
-        sys.exit(1)
-    events = handle_ans_page(soup)
-    filename = '{0}-results.csv'.format(source_name)
-    fieldnames = list(events[0].keys())
-    if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for ans_event in events:
-                writer.writerow(ans_event)
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file('/tmp/{0}'.format(filename),
-                                    bucket,
-                                    'capital-nature/{0}'.format(filename)
-                                    )
-    else:
-        with open(filename, mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = fieldnames)
-            writer.writeheader()
-            for ans_event in events:
-                writer.writerow(ans_event)
 
-    return json.dumps(events, indent=2)
-
-# For local testing
-# event = {
-#   'url': 'https://anshome.org/events-calendar/',
-#   'source_name': 'ans'
-# }
-# is_local = True
-# print(handler(event, None))
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    events = main()

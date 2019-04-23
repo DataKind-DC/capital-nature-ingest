@@ -8,7 +8,7 @@ from os import path
 import re
 from datetime import datetime
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from lambdas.casey_trees.lambda_function import handle_ans_page, get_event_description, parse_event_cost
+from events.casey_trees import handle_ans_page, get_event_description, parse_event_cost
 from fixtures.casey_test_fixtures import event_website_content_feb, \
                                          event_website_content_mar, \
                                          event_website_content_trees, \
@@ -52,7 +52,7 @@ class CaseyTreesTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
     
     @httpretty.activate
-    @patch('lambdas.casey_trees.lambda_function.get_event_description')
+    @patch('events.casey_trees.get_event_description')
     def test_handle_ans_page_success(self, mock_get_event_description):
         mock_get_event_description.return_value = 'different function'
         httpretty.register_uri(method=httpretty.GET,

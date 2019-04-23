@@ -11,7 +11,7 @@ There's a table of event sources that we need to scrape events data from [here](
 
 Each row contains an events source. If there isn't an `owner` in the first column, then we could use your help scraping events from that source! Just be sure to claim that source by adding your name to that column in the sheet.
 
-To learn about how to structure your code and where to add it in the project directory, go [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/lambdas/README.md).
+To learn about how to structure your code and where to add it in the project directory, go [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/events/README.md).
 
 To learn about how to use git to make your contributions, read on!
 

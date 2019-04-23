@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import patch, Mock
 import httpretty
 import re
 from datetime import datetime
@@ -7,9 +6,9 @@ import requests
 import sys
 from os import path
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from lambdas.nps.lambda_function import get_park_events, get_nps_events, \
-                                        get_specific_event_location, \
-                                        schematize_nps_event, schematize_time, main
+from events.nps import get_park_events, get_nps_events, get_specific_event_location, \
+                       schematize_nps_event, schematize_event_time, \
+                       scrape_event_description, parse_event_cost, main
 from fixtures.nps_test_fixtures import get_park_events_expected, nama_events_json, \
                                        event_page_content, \
                                        schematize_nps_event_expected
@@ -22,7 +21,7 @@ class NPSTestCase(unittest.TestCase):
     '''
 
     def setUp(self):
-        pass
+        self.maxDiff = None
 
     def tearDown(self):
         pass
@@ -37,7 +36,7 @@ class NPSTestCase(unittest.TestCase):
                                content_type = "application/json")
         result = get_park_events('nama')
         expected = get_park_events_expected
-        self.assertCountEqual(result, expected)
+        self.assertEqual(result, expected)
 
     @httpretty.activate
     def test_get_park_events_404(self):
@@ -48,7 +47,19 @@ class NPSTestCase(unittest.TestCase):
                                status=404)
         result = get_park_events('nama')
         expected = []
-        self.assertListEqual(result, expected)
+        self.assertEqual(result, expected)
+
+    @httpretty.activate
+    def test_scrape_event_description(self):
+        uri = 'https://www.nps.gov/planyourvisit/event-details.htm?id=691C8DCE-BFF3-B3A6-3D05AF87066F5FDD'
+        httpretty.register_uri(httpretty.GET,
+                               uri=uri,
+                               body=event_page_content,
+                               status=200,
+                               content_type = "text/html")
+        result = scrape_event_description(uri)
+        expected = 'Walk to the presidential memorials and learn how these legendary leaders met their demises. Hear the heroic, heartwarming, tragic and sometimes gruesome details of Presidential deaths.'
+        self.assertEqual(result, expected)
 
     @httpretty.activate
     def test_get_nps_events(self):
@@ -85,15 +96,30 @@ class NPSTestCase(unittest.TestCase):
         expected = ''
         self.assertEqual(result, expected)
 
-    def test_schematize_time(self):
-        result = schematize_time('10:00 AM')
+    def test_schematize_event_time(self):
+        result = schematize_event_time('10:00 AM')
         expected = '10:00:00'
+        self.assertEqual(result, expected)
+
+    def test_schematize_event_time_pm(self):
+        result = schematize_event_time('10:00 PM')
+        expected = '22:00:00'
+        self.assertEqual(result, expected)
+
+    def test_parse_event_cost_even(self):
+        result = parse_event_cost("The event costs $12.50 per person.")
+        expected = '13'
+        self.assertEqual(result, expected)
+
+    def test_parse_event_cost_odd(self):
+        result = parse_event_cost("The event costs $11.50 per person.")
+        expected = '12'
         self.assertEqual(result, expected)
     
     def test_schematize_nps_event(self):
         result = schematize_nps_event(get_park_events_expected[0])
         expected = schematize_nps_event_expected
-        self.assertListEqual(result, expected)
+        self.assertEqual(result, expected)
 
     def test_events_schema_required_fields(self):
         '''
@@ -103,7 +129,7 @@ class NPSTestCase(unittest.TestCase):
         keys = set().union(*(d.keys() for d in event))
         schema = {'Event Name','Event Description','Event Start Date','Event Start Time',
                   'Event End Date','Event End Time','Timezone','All Day Event',
-                  'Event Venue Name','Event Organizer Name(s) or ID(s)',
+                  'Event Venue Name','Event Organizers',
                   'Event Cost','Event Currency Symbol',
                   'Event Category','Event Website'}
         result = schema.issubset(keys)
@@ -119,7 +145,7 @@ class NPSTestCase(unittest.TestCase):
                   'Event Start Date','Event Start Time','Event End Date','Event End Time',
                   'Timezone','All Day Event','Hide Event From Event Listings',
                   'Event Sticky in Month View','Feature Event','Event Venue Name',
-                  'Event Organizer Name(s) or ID(s)','Event Show Map Link',
+                  'Event Organizers','Event Show Map Link',
                   'Event Show Map','Event Cost','Event Currency Symbol',
                   'Event Currency Position','Event Category','Event Tags',
                   'Event Website','Event Featured Image','Allow Comments',

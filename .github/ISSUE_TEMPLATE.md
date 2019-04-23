@@ -7,7 +7,7 @@
  - BLD: Updates to the build process/scripts
  - PERF: Performance improvement
  - CLN: Code cleanup
- - FIX: Fixng small things like typos (similar to CLN)
+ - FIX: Fixing small things like typos (similar to CLN)
 
 -->
 
