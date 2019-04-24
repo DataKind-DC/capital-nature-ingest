@@ -92,9 +92,9 @@ class EventbriteIngester:
             api_url = self.get_eventbrite_url('/organizers/{id}/', endpoint_params={'id': keys[0]})
             org_json = requests.get(api_url).json()
             self.org_data = {
-                'name': org_json['name'],
-                'url': org_json['website'],
-                'description': org_json['description']['text']
+                'name': org_json['name'] if 'name' in org_json else '',
+                'url': org_json['website'] if 'website' in org_json else '',
+                'description': org_json['description']['text'] if 'description' in org_json else ''
             }
         return self.org_data
 
