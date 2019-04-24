@@ -1,6 +1,5 @@
 import unittest
-from lambdas.fona.lambda_function import EventbriteIngester, EVENTBRITE_TOKEN, FONA_EVENTBRITE_ORG_ID, \
-    handle_fona_eventbrite_api
+from events.fona import EventbriteIngester, EVENTBRITE_TOKEN, FONA_EVENTBRITE_ORG_ID, handle_fona_eventbrite_api
 from tests.fixtures.fona_test_fixtures import events_json, venues_json, organizer_json
 import sys
 from os import path
