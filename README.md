@@ -34,7 +34,7 @@ deactivate
 ```
 
 4. Get the events:
-Before getting the events, you'll need to have a National Park Service API key. Get one [here](https://www.nps.gov/subjects/developer/index.htm). Then, add it as an environment variable called `NPS_KEY` or simply input it when prompted by the following script:
+Before getting the events, you'll need to have a National Park Service (NPS) API key and an Eventbrite API key. Get one for NPS [here](https://www.nps.gov/subjects/developer/index.htm) and for Eventbrite [here](https://www.eventbrite.com/platform/api). Then, add them as environment variables called `NPS_KEY` and `EVENTBRITE_TOKEN`, respectively. Or simply start the script and input them when prompted.
 
 ```bash
 python get_events.py
