@@ -65,7 +65,7 @@ class DugNetworkTestCase(unittest.TestCase):
         self.assertEqual(result, expected)
 
     @httpretty.activate
-    @patch('events.ans.soupify_event_page')
+    @patch('events.dug_network.soupify_event_page')
     def test_events_schema(self, mocked_soupify_event_page):
         '''
         Tests if all of the event fields conform in name to the schema.
