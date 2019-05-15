@@ -66,7 +66,12 @@ def main():
     if not soup:
         return []
     events_divs = soup.findAll('script',{'type':'application/ld+json'})
-    events_content = json.loads(events_divs[0].string.strip())
+    try:
+        events_content = json.loads(events_divs[0].string.strip())
+    except IndexError:
+        #means the site has 0 events on their calendar
+        return []
+
     events = []
     for event in events_content:
         event_name = event['name']

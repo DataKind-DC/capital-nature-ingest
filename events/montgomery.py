@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 from datetime import datetime
+from itertools import takewhile
 import logging
 
 logger = logging.getLogger(__name__)
@@ -91,9 +92,16 @@ def get_event_cost(soup):
     dls = soup.find_all('dl')
     try:
         fee_text = [x.get_text() for x in dls if 'Fee' in x.get_text()][0]
-        event_cost = "".join(s for s in fee_text if s.isdigit())
+        try:
+            first_digit_index = fee_text.index(next(s for s in fee_text if s.isdigit()))
+            fee_text = fee_text[first_digit_index:]
+            event_cost = "".join(takewhile(lambda x: x.isdigit(), fee_text))
+        except StopIteration:
+            event_cost = ''
     except IndexError:
         event_cost = ''
+
+
 
     return event_cost
 

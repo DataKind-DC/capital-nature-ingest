@@ -21,7 +21,7 @@ from fixtures.montgomery_test_fixtures import calendar_page_content, event_page_
                                               calendar_page_next_page_content, \
                                               open_house_event, \
                                               single_event_calendar_page_content, \
-                                              open_house_page_content
+                                              open_house_page_content, event_cost_sidebar
 from utils import EventDateFormatError, EventTimeFormatError, url_regex, \
                   is_phonenumber_valid, exceptionCallback
                   
@@ -46,6 +46,7 @@ class MontgomeryTestCase(unittest.TestCase):
         self.open_house_event = open_house_event
         self.single_event_calendar_page_content = single_event_calendar_page_content
         self.open_house_page_content = open_house_page_content
+        self.event_cost_sidebar = event_cost_sidebar
         self.maxDiff = None
         
 
@@ -65,6 +66,7 @@ class MontgomeryTestCase(unittest.TestCase):
         self.open_house_event = None
         self.single_event_calendar_page_content = None
         self.open_house_page_content = None
+        self.event_cost_sidebar = None
 
     @httpretty.activate
     def test_get_category_id_map(self):
@@ -102,6 +104,12 @@ class MontgomeryTestCase(unittest.TestCase):
         soup = BeautifulSoup(self.event_page_content, 'html.parser')
         result = get_event_cost(soup)
         expected = '7'
+        self.assertEqual(result, expected)
+
+    def test_get_event_cost_decimal(self):
+        soup = BeautifulSoup(self.event_cost_sidebar, 'html.parser')
+        result = get_event_cost(soup)
+        expected = '15'
         self.assertEqual(result, expected)
 
     def test_canceled_test(self):
