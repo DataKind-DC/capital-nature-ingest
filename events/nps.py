@@ -227,7 +227,7 @@ def schematize_nps_event(nps_event):
                     if time['sunsetend']:
                         event_start_time, event_end_time = get_sun_times(date)
                     else:
-                        print("!")
+                        logger.warning(f"Unable to get start and end times for event_id: {nps_event.get('id')}")
                         continue
                 else:
                     event_start_time = schematize_event_time(time['timestart'])

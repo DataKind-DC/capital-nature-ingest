@@ -65,7 +65,6 @@ class CityBlossomsTestCase(unittest.TestCase):
                                   text = self.get_event_desc_content,
                                   status_code = 200)
         result = city_blossoms.get_event_description(event_website)
-        print(result)
         expected = 'Our Youth Entrepreneurship Cooperative program team and participants will be heading to Boston to attend this exciting event. They will work directly with Food Project’s staff and participants to learn about their unique models.Learn more here: http://thefoodproject.org/institute'
         self.assertEqual(result, expected)
 
