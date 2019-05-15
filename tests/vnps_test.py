@@ -1,6 +1,8 @@
 import unittest
 import httpretty
 import requests
+import responses
+import requests_mock
 from datetime import datetime
 from bs4 import BeautifulSoup
 import re
@@ -26,7 +28,7 @@ class VNPSTestCase(unittest.TestCase):
     def setUp(self):
         self.date_and_time_tag = date_and_time_tag()
         self.date_and_time_tag_all_day = date_and_time_tag_all_day()
-        self.event_website = 'https://vnps.org/piedmont/events/identifying-plants-in-winter-at-the-virginia-state-arboretum/'
+        self.event_website = 'https://vnps.org/johnclayton/events/may-meeting-managing-invasive-plants/'
         self.event_website_content = event_website_content
         self.description_and_location_tag = description_and_location_tag()
         self.description_and_location_tag_no_venue = description_and_location_tag_no_venue()
@@ -63,7 +65,7 @@ class VNPSTestCase(unittest.TestCase):
     def test_get_event_venue_and_categories(self):
         event_website_soup = BeautifulSoup(self.event_website_content, 'html.parser')
         result = get_event_venue_and_categories(event_website_soup)
-        expected = ('Blandy Experimental Farm', 'Field Trips, Piedmont')
+        expected = ('Coleman Nursery', 'John Clayton')
         self.assertEqual(result, expected)
 
     @httpretty.activate
@@ -73,10 +75,12 @@ class VNPSTestCase(unittest.TestCase):
                                status=200,
                                body=self.event_website_content)
         result = parse_description_and_location(self.description_and_location_tag)
-        expected = (self.event_website,
-                    'Identifying Plants in Winter at the Virginia State Arboretum',
-                    'Blandy Experimental Farm, Boyce Virginia','Field Trips, Piedmont',
-                    'Join Piedmont Chapter Board Member Dr. Emily Southgate who will guide us through the Virginia State Arboretum at Blandy in Clarke County for a special pre-Valentines Day walk on winter plant identification with a stop for hot cocoa.')
+        expected = ('https://vnps.org/johnclayton/events/may-meeting-managing-invasive-plants/', 
+                    'May Meeting:  Managing Invasive Plants', 
+                    'Coleman Nursery', 
+                    'John Clayton', 
+                    'Please join the John Clayton Chapter of the Virginia Native Plant Society at Coleman Nursery* for their meeting on Thursday, May 16th at 7PM.  The featured speaker will be Ashton Stinson a 2011 graduate of Virginia Commonwealth University who  has spent the last eight years working in the nonprofit sector. Early in her career, she spent six months in rural Kenya implementing a sustainable nutrition program with HIV positive community members. Since then, she has devoted her career to having an impact in the both the environmental and humanitarian sectors. Her experiences include working for Ashoka, a social enterprise incubator, working as Director of Communications for an international nonprofit focused on basic needs for children, and specializing in invasive plant management for a conservation corps in the Southwestern United States.')
+                    
         self.assertEqual(result, expected)
 
     @httpretty.activate
@@ -114,21 +118,21 @@ class VNPSTestCase(unittest.TestCase):
                                status=200,
                                body=self.events_page_content)
         result = main()
-        expected = [{'Event Start Date': '2019-02-09',
-                     'Event End Date': '2019-02-09',
-                     'Event Start Time': '13:00:00',
-                     'Event End Time': '15:00:00',
-                     'Event Website': 'https://vnps.org/piedmont/events/identifying-plants-in-winter-at-the-virginia-state-arboretum/',
-                     'Event Name': 'Identifying Plants in Winter at the Virginia State Arboretum',
-                     'Event Venue Name': 'Blandy Experimental Farm, Boyce Virginia',
+        expected = [{'Event Start Date': '2019-05-16',
+                     'Event End Date': '2019-05-16',
+                     'Event Start Time': '19:00:00',
+                     'Event End Time': '20:30:00',
+                     'Event Website': 'https://vnps.org/johnclayton/events/may-meeting-managing-invasive-plants/',
+                     'Event Name': 'May Meeting:  Managing Invasive Plants',
+                     'Event Venue Name': 'Coleman Nursery',
                      'All Day Event': False,
-                     'Event Description':'Join Piedmont Chapter Board Member Dr. Emily Southgate who will guide us through the Virginia State Arboretum at Blandy in Clarke County for a special pre-Valentines Day walk on winter plant identification with a stop for hot cocoa.',
-                     'Event Cost':'',
-                     'Event Category': 'Field Trips, Piedmont',
-                     'Event Currency Symbol':'$',
-                     'Timezone':'America/New_York',
-                     'Event Organizers':'Virginia Native Plant Society'}]
-        self.assertListEqual(result, expected)
+                     'Event Description': 'Please join the John Clayton Chapter of the Virginia Native Plant Society at Coleman Nursery* for their meeting on Thursday, May 16th at 7PM.  The featured speaker will be Ashton Stinson a 2011 graduate of Virginia Commonwealth University who  has spent the last eight years working in the nonprofit sector. Early in her career, she spent six months in rural Kenya implementing a sustainable nutrition program with HIV positive community members. Since then, she has devoted her career to having an impact in the both the environmental and humanitarian sectors. Her experiences include working for Ashoka, a social enterprise incubator, working as Director of Communications for an international nonprofit focused on basic needs for children, and specializing in invasive plant management for a conservation corps in the Southwestern United States.',
+                     'Event Cost': '',
+                     'Event Category': 'John Clayton',
+                     'Event Currency Symbol': '$',
+                     'Timezone': 'America/New_York',
+                     'Event Organizers': 'Virginia Native Plant Society'}]
+        self.assertEqual(result, expected)
 
     @httpretty.activate
     def test_main_bad_conn(self):
@@ -144,19 +148,19 @@ class VNPSTestCase(unittest.TestCase):
         expected = []
         self.assertListEqual(result, expected)
 
-    @httpretty.activate
-    def test_events_schema_required_fields(self):
+    @requests_mock.Mocker()
+    def test_events_schema_required_fields(self, mock_request):
         '''
         Tests if the required events fields are present.
         '''
-        httpretty.register_uri(method=httpretty.GET,
-                               uri=self.event_website,
-                               status=200,
-                               body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                               uri=self.events_page,
-                               status=200,
-                               body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         keys = set().union(*(d.keys() for d in events))
         schema = {'Event Name','Event Description','Event Start Date','Event Start Time',
@@ -168,19 +172,19 @@ class VNPSTestCase(unittest.TestCase):
         self.assertTrue(result)
     
     
-    @httpretty.activate
-    def test_events_schema(self):
+    @requests_mock.Mocker()
+    def test_events_schema(self, mock_request):
         '''
         Tests if all of the event fields conform in name to the schema.
         '''
-        httpretty.register_uri(method=httpretty.GET,
-                               uri=self.event_website,
-                               status=200,
-                               body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                               uri=self.events_page,
-                               status=200,
-                               body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         keys = set().union(*(d.keys() for d in events))
         schema = {'Do Not Import','Event Name','Event Description','Event Excerpt',
@@ -195,22 +199,22 @@ class VNPSTestCase(unittest.TestCase):
         result = keys.issubset(schema)
         self.assertTrue(result)
 
-    @httpretty.activate
-    def test_events_schema_bool_type(self):
+    @requests_mock.Mocker()
+    def test_events_schema_bool_type(self, mock_request):
         '''
         Tests if the boolean type event fields are bool
         '''
         booleans = ['All Day Event','Hide from Event Listings','Sticky in Month View',
                     'Event Show Map Link','Event Show Map','Allow Comments',
                     'Allow Trackbacks and Pingbacks']
-        httpretty.register_uri(method=httpretty.GET,
-                               uri=self.event_website,
-                               status=200,
-                               body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                               uri=self.events_page,
-                               status=200,
-                               body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         vals = []
         for event in events:
@@ -221,21 +225,21 @@ class VNPSTestCase(unittest.TestCase):
         result = all([isinstance(x, bool) for x in vals])
         self.assertTrue(result)
 
-    @httpretty.activate
-    def test_events_schema_string_type(self):
+    @requests_mock.Mocker()
+    def test_events_schema_string_type(self, mock_request):
         '''
         Tests if the str and comma delim event field types are strings.
         '''
         comma_delimited = ['Event Venue Name','Event Organizers','Event Category','Event Tags']
         string = ['Event Description','Event Excerpt','Event Name']
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.event_website,
-                            status=200,
-                            body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.events_page,
-                            status=200,
-                            body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         vals = []
         for event in events:
@@ -246,19 +250,19 @@ class VNPSTestCase(unittest.TestCase):
         result = all([isinstance(x, str) for x in vals])
         self.assertTrue(result)
     
-    @httpretty.activate
-    def test_events_schema_currency_symbol_type(self):
+    @requests_mock.Mocker()
+    def test_events_schema_currency_symbol_type(self, mock_request):
         '''
         Tests if the currency symbol is a dollar sign
         '''
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.event_website,
-                            status=200,
-                            body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.events_page,
-                            status=200,
-                            body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         for event in events:
             for k in event:
@@ -267,19 +271,19 @@ class VNPSTestCase(unittest.TestCase):
                     expected = "$"
                     self.assertEqual(result, expected)
     
-    @httpretty.activate
-    def test_events_schema_event_cost_type(self):
+    @requests_mock.Mocker()
+    def test_events_schema_event_cost_type(self, mock_request):
         '''
         Tests if the event cost is a string of digits
         '''
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.event_website,
-                            status=200,
-                            body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.events_page,
-                            status=200,
-                            body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         for event in events:
             for k in event:
@@ -289,19 +293,19 @@ class VNPSTestCase(unittest.TestCase):
                     result = val.isdigit() or not val
                     self.assertTrue(result)
 
-    @httpretty.activate
-    def test_events_schema_timezone_type(self):
+    @requests_mock.Mocker()
+    def test_events_schema_timezone_type(self, mock_request):
         '''
         Tests if the timezone event field is 'America/New_York'
         '''
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.event_website,
-                            status=200,
-                            body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.events_page,
-                            status=200,
-                            body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         for event in events:
             for k in event:
@@ -310,21 +314,21 @@ class VNPSTestCase(unittest.TestCase):
                     expected = 'America/New_York'
                     self.assertEqual(result, expected)
 
-    @httpretty.activate
-    def test_events_schema_date_type(self):
+    @requests_mock.Mocker()
+    def test_events_schema_date_type(self, mock_request):
         '''
         Tests if the event start/end date fields are "%Y-%m-%d" 
         Examples:  '1966-01-01' or '1965-12-31'
         '''
         date = ['Event Start Date', 'Event End Date']
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.event_website,
-                            status=200,
-                            body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.events_page,
-                            status=200,
-                            body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         vals = []
         for event in events:
@@ -339,21 +343,21 @@ class VNPSTestCase(unittest.TestCase):
             raise EventDateFormatError
         self.assertIsNotNone(result)
 
-    @httpretty.activate
-    def test_events_schema_time_type(self):
+    @requests_mock.Mocker()
+    def test_events_schema_time_type(self, mock_request):
         '''
         Tests if the Event Start Time and Event End Time fields follow
         the "%H:%M:%S" format. Examples: '21:30:00' or '00:50:00'
         '''
         time = ['Event Start Time','Event End Time']
-        httpretty.register_uri(method=httpretty.GET,
-                               uri=self.event_website,
-                               status=200,
-                               body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                               uri=self.events_page,
-                               status=200,
-                               body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         vals = []
         for event in events:
@@ -368,21 +372,21 @@ class VNPSTestCase(unittest.TestCase):
             raise EventTimeFormatError
         self.assertIsNotNone(result)
             
-    @httpretty.activate
-    def test_events_schema_url_type(self):
+    @requests_mock.Mocker()
+    def test_events_schema_url_type(self, mock_request):
         '''
         Tests if the event website and event featured image fields contain strings
         that pass Django's test as urls
         '''
         url = ['Event Website','Event Featured Image']
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.event_website,
-                            status=200,
-                            body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.events_page,
-                            status=200,
-                            body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         vals = []
         for event in events:
@@ -393,19 +397,19 @@ class VNPSTestCase(unittest.TestCase):
         result = all([re.match(url_regex, x) for x in vals])
         self.assertTrue(result)
 
-    @httpretty.activate
-    def test_events_schema_currency_position_type(self):
+    @requests_mock.Mocker()
+    def test_events_schema_currency_position_type(self, mock_request):
         '''
         Tests if the Event Currency Position is 'prefix', 'suffix', or ''
         '''
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.event_website,
-                            status=200,
-                            body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.events_page,
-                            status=200,
-                            body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         for event in events:
             for k in event: 
@@ -415,19 +419,19 @@ class VNPSTestCase(unittest.TestCase):
                     result = val in expected_vals
                     self.assertTrue(result)
 
-    @httpretty.activate
-    def test_events_schema_phone_type(self):
+    @requests_mock.Mocker()
+    def test_events_schema_phone_type(self, mock_request):
         '''
         Tests if the phone number string is formatted like:  "+1-326-437-9663"
         '''
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.event_website,
-                            status=200,
-                            body=self.event_website_content)
-        httpretty.register_uri(method=httpretty.GET,
-                            uri=self.events_page,
-                            status=200,
-                            body=self.events_page_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.event_website,
+                                  status_code=200,
+                                  text=self.event_website_content)
+        mock_request.register_uri(method=httpretty.GET,
+                                  url=self.events_page,
+                                  status_code=200,
+                                  text=self.events_page_content)
         events = main()
         for event in events:
             for k in event: 
