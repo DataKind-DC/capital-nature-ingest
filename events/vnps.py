@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
+from unicodedata import normalize
 import logging
 
 logger = logging.getLogger(__name__)
@@ -125,22 +126,21 @@ def parse_description_and_location(description_and_location):
     '''
     a = description_and_location.find('a',href=True)
     event_website = a['href']
-    event_name = a['title']
     try:
-        event_venue = description_and_location.find('i').text
-    except AttributeError:
-        event_venue = None
+        event_name = a['title']
+    except KeyError:
+        event_name = a.get_text().strip()
     event_website_soup = soupify_event_website(event_website)
     if not event_website_soup:
         return None, None, None, None, None
-    scraped_event_venue, event_categories = get_event_venue_and_categories(event_website_soup)
-    event_venue = event_venue if event_venue else scraped_event_venue
+    event_venue, event_categories = get_event_venue_and_categories(event_website_soup)
     if not event_venue:
         event_description = ''
         return event_website, event_name, event_venue, event_categories, event_description
     else:
         event_description = get_event_description(event_website_soup)
-    
+    event_description = normalize("NFKD", event_description)
+
     return event_website, event_name, event_venue, event_categories, event_description
 
 
@@ -216,7 +216,13 @@ def main(categories=[]):
         except AttributeError:
             continue
         for row in rows:
-            date_and_time, description_and_location = row.find_all('td')
+            tds = row.find_all('td')
+            try:
+                date_and_time = tds[0]
+                description_and_location = tds[2]
+            except IndexError:
+                logger.warning(f"No table elements (td tags) found in {row}")
+                continue
             all_day, start_time, end_time, start_date, end_date = parse_date_and_time(date_and_time)
             event_website, event_name, event_venue, event_categories, event_description = parse_description_and_location(description_and_location)
             event_venue = event_venue if event_venue else "See event website"
