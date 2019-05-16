@@ -33,9 +33,15 @@ def get_event_description(event_website_soup):
     '''
     Scrape the event description from the event website.
     '''
-    eventon_full_description = event_website_soup.find('div', {'class':'eventon_desc_in'})
-    p_tags = eventon_full_description.find_all('p')
-    event_description = "".join(unicodedata.normalize('NFKD',f'{p.get_text()} ') for p in p_tags).strip()
+    try:
+        eventon_full_description = event_website_soup.find('div', {'class':'eventon_desc_in'})
+        p_tags = eventon_full_description.find_all('p')
+        event_description = "".join(unicodedata.normalize('NFKD',f'{p.get_text()} ') for p in p_tags).strip()
+    except AttributeError:
+        #AttributeError because no divs found
+        p_tags = event_website_soup.find_all('p')
+        event_description = max([p.get_text() for p in p_tags], key = len)
+        event_description = unicodedata.normalize('NFKD', event_description).strip()
     if not event_description:
         event_desc = event_website_soup.find('div', {'id':'event_desc'})
         if event_desc:
