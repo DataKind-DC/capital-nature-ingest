@@ -11,10 +11,12 @@ FONA_EVENTBRITE_ORG_ID = 8632128868
 # $ export EVENTBRITE_TOKEN=<EVENTBRITE TOKEN Key>
 try:
     EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
-except Exception as e:
+except KeyError:
     logger.error(f"User is being prompted to enter Eventbrite token key")
     #if it's not an env var, then we might be testing
     EVENTBRITE_TOKEN = input("Enter your Eventbrite Token Key:")
+except Exception as e:
+    logger.critical(f"Error {e} getting API token", exc_info=True)
 
 class EventbriteIngester:
     '''
