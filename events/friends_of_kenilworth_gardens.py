@@ -66,8 +66,7 @@ class EventbriteIngester:
         elif len(keys) == 2:
             return event[keys[0]][keys[1]]
         else:
-            logger.error(f"Exception as its more than 2 levels : {e}", exc_info=True)
-            raise Exception("Can't handle more than 2 levels...")
+            logger.error(f"Exception as its more than 2 levels in event list : {e}", exc_info=True)
 
     def handle_date(self, event, keys):
         return event[keys[0]]['utc']
@@ -126,6 +125,10 @@ class EventbriteIngester:
 
 def fetch_page(options):
     url = options['url']
+    try:
+        r = requests.get(url)
+    except Exception as e:
+        logger.error(f"Exception occurred making GET request to {url}: {e}", exc_info=True)
     html_doc = requests.get(url).content
     return html_doc
 
