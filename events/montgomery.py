@@ -79,7 +79,8 @@ def get_event_description(soup):
     p_tags = soup.find_all('p')
     p_texts = [p.get_text() for p in p_tags]
     cookie_notice_index = [i for i, s in enumerate(p_texts) if 'website uses cookies' in s]
-    del p_texts[cookie_notice_index.pop()]
+    if cookie_notice_index:
+        del p_texts[cookie_notice_index.pop()]
     event_description = max(p_texts, key=len).strip()
 
     return event_description

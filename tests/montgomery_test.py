@@ -2,6 +2,8 @@ import unittest
 from unittest.mock import patch, Mock
 import httpretty
 import requests
+import responses
+import requests_mock
 from bs4 import BeautifulSoup
 import sys
 from os import path
@@ -153,11 +155,24 @@ class MontgomeryTestCase(unittest.TestCase):
         expected = [None, None]
         self.assertListEqual(result, expected)
 
-    def test_parse_event_item(self):
+    @requests_mock.Mocker()
+    def test_parse_event_item(self, mock_request):
+        url = 'https://www.montgomeryparks.org/events/nature-rx-forest-therapy-walks-1-hour-/'
+        content = b'''<p>
+						Experience the healing and wellness promoting effects of Shinrin-Yoku, the practice of bathing the senses in the atmosphere of the forest. Take a slow and mindful walk with a Forest Therapy guide on a trail at Brookside Nature Center to awaken your senses and reconnect with nature.
+						</p>
+                       <dl>Fee: 6</dl> '''
+        mock_request.register_uri('GET',
+                                  url = url,
+                                  status_code=200,
+                                  content = content)
         soup = BeautifulSoup(self.event_item, 'html.parser')
         event_item = soup.find('li')
         result = parse_event_item(event_item, 'category')
         expected = self.parse_event_item_expected
+        print(result)
+        print("*"*80)
+        print(expected)
         self.assertEqual(result, expected)
 
     def test_no_events_test(self):
