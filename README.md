@@ -34,7 +34,9 @@ deactivate
 ```
 
 4. Get the events:
-Before getting the events, you'll need to have a National Park Service (NPS) API key and an Eventbrite API key. Get one for NPS [here](https://www.nps.gov/subjects/developer/index.htm) and for Eventbrite [here](https://www.eventbrite.com/platform/api). Then, add them as environment variables called `NPS_KEY` and `EVENTBRITE_TOKEN`, respectively. Or simply start the script and input them when prompted.
+Before getting the events, you'll need to have a National Park Service (NPS) API key and an Eventbrite API key. Get one for NPS [here](https://www.nps.gov/subjects/developer/index.htm) and for Eventbrite [here](https://www.eventbrite.com/platform/api). For the Eventbrite token, we've found it helpful to follow the instructions in [this blog post](https://www.appypie.com/faqs/how-can-i-get-my-eventbrite-personal-oauth-token-key) when navigating their site. Once you've got the tokens, add them as environment variables called `NPS_KEY` and `EVENTBRITE_TOKEN`, respectively. Or simply start the script and input them when prompted.
+
+To run the script:
 
 ```bash
 python get_events.py
