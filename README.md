@@ -5,7 +5,7 @@ Webscraping nature-related events from a variety of sources to populate an event
 Capital Nature is a 501c3 nonprofit organization dedicated to bringing nature into the lives of Washington Metro area residents and visitors. They want to highlight on an [events calendar](http://capitalnature.org/events/month/) all the great nature events and experiences happening in the area.
 
 ### How do we update the event calendar?
- - For each of the [event sources](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_sources.md), we use Python (3.6.6) to scrape the events' data and transform it to fit our [schema](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_schema.md).
+ - For each of the event sources, we use Python (3.6.6) to scrape the events' data and transform it to fit our [schema](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_schema.md).
  - To periodically deploy these Python scripts, we plan to use AWS Lambda.
  - To store our data, we plan to use AWS S3.
  - To track bugs, request new features, or just submit interesting ideas, we use GitHub [issues](https://github.com/DataKind-DC/capital-nature-ingest/issues).
@@ -28,10 +28,8 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
->You can deactivate the virtual environment with:
-```bash
-deactivate
-```
+You can deactivate the virtual environment with `deactivate`.
+
 
 4. Get the events:
 Before getting the events, you'll need to have a National Park Service (NPS) API key and an Eventbrite API key. Get one for NPS [here](https://www.nps.gov/subjects/developer/index.htm) and for Eventbrite [here](https://www.eventbrite.com/platform/api). For the Eventbrite token, we've found it helpful to follow the instructions in [this blog post](https://www.appypie.com/faqs/how-can-i-get-my-eventbrite-personal-oauth-token-key) when navigating their site. Once you've got the tokens, add them as environment variables called `NPS_KEY` and `EVENTBRITE_TOKEN`, respectively. Or simply start the script and input them when prompted.
@@ -48,7 +46,9 @@ Running the above will scrape all of the events and output three csvs into the `
  - `cap-nature-venues-<date>.csv` (a list of the event venues, which builds off the previous list each successive time you run this)
 
 ## Contributing
-Please read [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) for details on how to contribute.
+If you'd like to lend a hand, hop on over to our [Issues](https://github.com/DataKind-DC/capital-nature-ingest/issues) to see what event sources still need scraping. If you see one that you'd like to tackle, assign yourself to that issue and/or leave a comment saying so. This will let others know that you're working on that event source and that they shouldn't duplicate your efforts.
+
+Once you've found something you want to work on, please read [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) for details on how to contribute using git and GitHub. 
 
 ## License
 [Here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/LICENSE)

@@ -7,13 +7,9 @@ We'd love your help! We want to make contributing to this project as easy and tr
 - Proposing/add new features (like support for a new events source!)
 
 ## What to Contribute?!
-There's a table of event sources that we need to scrape events data from [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_sources.md).
+Our project backlog can be found on our [Issues Page](https://github.com/DataKind-DC/capital-nature-ingest/issues). If you find something that you'd like to work on in there, leave a comment to let us know!
 
-Each row contains an events source. If there isn't an `owner` in the first column, then we could use your help scraping events from that source! Just be sure to claim that source by adding your name to that column in the sheet.
-
-To learn about how to structure your code and where to add it in the project directory, go [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/events/README.md).
-
-To learn about how to use git to make your contributions, read on!
+>Most issues are requests for new event sources to be scraped. If you want to work on a new event source, note how each current event source has its own `.py` file within the `events/` directory. Your code should also be placed within a single file within the `events/` directory. Additionally, be sure that your entire script can be run through the use of a single function named `main()`.
 
 ## We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), So All Code Changes Happen Through Pull Requests
 Pull requests are the best way to propose changes to the codebase. We use a **Fork and Pull Model**.
@@ -31,7 +27,7 @@ As you implement changes, commit them to your local branch, ideally following ou
 
 Go to the project's [homepage](https://github.com/DataKind-DC/capital-nature-ingest) and hit the `Fork` button. This creates a copy of the repository in your GitHub account.
 
-2. `clone` the repository
+2. `clone` your forked repository
 
 Now you want to clone the forked repo to your machine.
 
@@ -41,11 +37,11 @@ cd capital-nature-ingest-yourname
 git remote add upstream https://github.com/DataKind-DC/capital-nature-ingest
 ```
 
-This creates the directory *capital-nature-ingest-yourname* and connects your repository to the upstream (main project) repository.
+This creates the directory *capital-nature-ingest-yourname* and connects your repository to the upstream (i.e. this) repository.
 
-3. `checkout` a branch for your feature before doing anything
+3. `checkout` a branch for your feature before writing any code
 
-You want your master branch to reflect only production-ready code, so create a feature branch for making your changes. For example:
+You want your master branch to reflect only production-ready code, so create a feature branch for making your changes. See our [Style Guide](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md) for naming your branch. To make the branch:
 
 ```bash
 git checkout -b shiny-new-feature
@@ -53,12 +49,13 @@ git checkout -b shiny-new-feature
 
 This changes your working directory to the shiny-new-feature branch. Keep any changes in this branch specific to one bug/feature so it is clear what the branch brings to capital-nature-ingest.
 
-When creating this branch, make sure your master branch is up to date with the latest upstream master version. To update your local master branch, you can do:
+Before creating this branch, make sure your master branch is up to date with the latest upstream master version. To update your local master branch, you can do:
 
 ```bash
 git checkout master
 git pull upstream master --ff-only
 ```
+
 
 4. Do some work, see the changes, and stage files you've edited
 
@@ -113,10 +110,10 @@ upstream        git://github.com/capital-nature-ingest.git (fetch)
 upstream        git://github.com/capital-nature-ingest.git (push)
 ```
 
-Once you've pushed your code, your code is on GitHub, but it is not yet a part of the main project. For that to happen, a pull request needs to be submitted on GitHub.
+Once you've pushed your code, your code is on your GitHub rep and is not yet a part of the main project. For that to happen, a **Pull Request (PR)** needs to be submitted on GitHub.
  
 #### Reviewing your Code and Submitting a Pull Request
-When you’re ready to ask for a code review, file a pull request.
+When you’re ready to ask for a code review, file a Pull Request.
 
 A pull request is how code from a local repository becomes available to the GitHub community and can be looked at and eventually merged into the master version. 
 
@@ -185,4 +182,4 @@ We use GitHub issues to track bugs and make feature requests. [Open a new issue]
 People *love* thorough bug reports. I'm not even kidding.
 
 ## License
-TBD
+[here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/LICENSE)
