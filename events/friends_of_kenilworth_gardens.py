@@ -114,7 +114,7 @@ class EventbriteIngester:
             '/events/search/',
             get_params = {'token': EVENTBRITE_TOKEN, 'organizer.id': self.org_id})
         page = requests.get(events_url).json()
-        self.all_events = page['events']
+        self.all_events = page.get('events')
         self.parse_events()
 
 def fetch_page(options):
