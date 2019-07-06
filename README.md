@@ -32,7 +32,7 @@ You can deactivate the virtual environment with `deactivate`.
 
 
 4. Get the events:
-Before getting the events, you'll need to have a National Park Service (NPS) API key and an Eventbrite API key. Get one for NPS [here](https://www.nps.gov/subjects/developer/index.htm) and for Eventbrite [here](https://www.eventbrite.com/platform/api). For the Eventbrite token, we've found it helpful to follow the instructions in [this blog post](https://www.appypie.com/faqs/how-can-i-get-my-eventbrite-personal-oauth-token-key) when navigating their site. Once you've got the tokens, add them as environment variables called `NPS_KEY` and `EVENTBRITE_TOKEN`, respectively. Or simply start the script and input them when prompted.
+Before getting the events, you'll need to have a National Park Service (NPS) API key and an Eventbrite API key. Get one for NPS [here](https://www.nps.gov/subjects/developer/index.htm) and for Eventbrite [here](https://www.eventbrite.com/platform/api). For the Eventbrite token, we've found it helpful to follow the instructions in [this blog post](https://www.appypie.com/faqs/how-can-i-get-my-eventbrite-personal-oauth-token-key). Once you've got the tokens, add them as environment variables called `NPS_KEY` and `EVENTBRITE_TOKEN`, respectively. Or simply run the script and input them when prompted.
 
 To run the script:
 
@@ -40,7 +40,7 @@ To run the script:
 python get_events.py
 ```
 
-Running the above will scrape all of the events and output three csvs into the `tmp/` dir of the project:
+Running the above will scrape all of the events and output three csv files into a new `data/` dir of the project:
  - `cap-nature-events-<date>.csv` (all of the events)
  - `cap-nature-organizers-<date>.csv` (a list of the event sources, which builds off the previous list each successive time you run this)
  - `cap-nature-venues-<date>.csv` (a list of the event venues, which builds off the previous list each successive time you run this)
@@ -48,7 +48,7 @@ Running the above will scrape all of the events and output three csvs into the `
 ## Contributing
 If you'd like to lend a hand, hop on over to our [Issues](https://github.com/DataKind-DC/capital-nature-ingest/issues) to see what event sources still need scraping. If you see one that you'd like to tackle, assign yourself to that issue and/or leave a comment saying so. This will let others know that you're working on that event source and that they shouldn't duplicate your efforts.
 
-Once you've found something you want to work on, please read [CONTRIBUTING](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) for details on how to contribute using git and GitHub. 
+Once you've found something you want to work on, please read our [contributing guideline](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/CONTRIBUTING.md) for details on how to contribute using git and GitHub. 
 
 ## License
 [Here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/LICENSE)

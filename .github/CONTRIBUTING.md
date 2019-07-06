@@ -1,27 +1,30 @@
 # Contributing
+
 We'd love your help! We want to make contributing to this project as easy and transparent as possible, whether it's:
 
 - Reporting a bug
 - Discussing the current state of the code
 - Submitting a fix
-- Proposing/add new features (like support for a new events source!)
+- Proposing/add new features (like support for a new event source!)
 
 ## What to Contribute?!
-Our project backlog can be found on our [Issues Page](https://github.com/DataKind-DC/capital-nature-ingest/issues). If you find something that you'd like to work on in there, leave a comment to let us know!
 
->Most issues are requests for new event sources to be scraped. If you want to work on a new event source, note how each current event source has its own `.py` file within the `events/` directory. Your code should also be placed within a single file within the `events/` directory. Additionally, be sure that your entire script can be run through the use of a single function named `main()`.
+Our project backlog can be found on our [Issues Page](https://github.com/DataKind-DC/capital-nature-ingest/issues). If you find something that you'd like to work on, leave a comment to let us know! If you're a part of the DataKind GitHub org, you can even assign yourself an issue.
 
-## We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), So All Code Changes Happen Through Pull Requests
-Pull requests are the best way to propose changes to the codebase. We use a **Fork and Pull Model**.
+>Most issues are requests for new event sources to be scraped. If you want to work on a new event source, take note of how each current event source has its own `.py` file within the `events/` directory. Your code should also be placed within a single file within the `events/` directory. Additionally, be sure that your entire script can be run through the use of a single function named `main()`.
 
-## The Fork and Pull Model
-### Short Version
+## How to Contribute
+
+We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), so all code changes happen through pull requests. We use a **Fork and Pull Model**.
+
+### The Fork and Pull Model
+#### Short Version
 Before you start to work on something, fork this repo, clone the repository, and then make a new branch for your feature.
 
 As you implement changes, commit them to your local branch, ideally following our [style guide](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md). When you're ready, push that branch to GitHub and then make a pull request. Then await review and, if necessary, push some more changes.
 
-### Long Version
-#### Writing your Code
+#### Long Version
+##### Writing your Code
 
 1. Fork the repository
 
@@ -56,7 +59,6 @@ git checkout master
 git pull upstream master --ff-only
 ```
 
-
 4. Do some work, see the changes, and stage files you've edited
 
 Once you’ve made changes, you can see them by typing:
@@ -87,6 +89,8 @@ Once you've added files, you're ready to commit your changes to your local repos
 git commit -m "ENH: add scraper for awesome new source (#123)"
 ```
 
+>Note how the commit message includes an informative prefix as well as the relevant issue number
+
 6. When you want your changes to appear publicly on your GitHub page, push your forked feature-branch’s commits
 
 ```bash
@@ -110,10 +114,43 @@ upstream        git://github.com/capital-nature-ingest.git (fetch)
 upstream        git://github.com/capital-nature-ingest.git (push)
 ```
 
-Once you've pushed your code, your code is on your GitHub rep and is not yet a part of the main project. For that to happen, a **Pull Request (PR)** needs to be submitted on GitHub.
- 
+Once you've pushed your code, your code is on your GitHub repo and is not yet a part of the main project. For that to happen, a **Pull Request (PR)** needs to be submitted on GitHub.
+
+#### Testing your Code
+
+Before you initiate a pull request, you need to add a test suite that ensures you're code properly schematizes each scraped event's data fields based on our [event schema](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_schema.md).
+
+We've tried to make this as easy as a copy-paste, so here's what to do.
+
+1. Navigate to the `tests/` directory within this repo and make a new file that is the name of your event scraper file plus a `_test.py` suffix:
+
+bash
+```
+cd tests/
+touch <name_of_your_scraper>_test.py
+```
+
+2. Open this file and copy-paste the contents of any other test file within this `tests/` directory into your new file.
+
+3. Change the import statement on line 5 to reference you're event scraper file
+
+```python
+...
+from events.ans import main # change this line to import events.<your_file>
+...
+```
+
+4. To verify that your scraper can pass the tests, run the following:
+
+```bash
+python3 -W ignore -m unittest <name_of_your_scraper>_test.py
+```
+
+5. If your tests pass, you'll see `OK` logged to your terminal. If not, inspect the errors that were raised and update your code accordingly. If you've got questions on how to interpret the test output, feel free to [create an issue](https://github.com/DataKind-DC/capital-nature-ingest/issues) or contact us on Slack.
+
 #### Reviewing your Code and Submitting a Pull Request
-When you’re ready to ask for a code review, file a Pull Request.
+
+So you've written some code, added your tests, and passed your tests. Now you'r ready to ask for a code review! Let's initiate a Pull Request.
 
 A pull request is how code from a local repository becomes available to the GitHub community and can be looked at and eventually merged into the master version. 
 
@@ -150,6 +187,7 @@ git push origin shiny-new-feature
 ```
 
 #### Deleting your Branch (optional)
+
 Once your pull request is accepted, you’ll probably want to get rid of the feature branch. You can do that to the remote master right within the pull request page. To delete the branch locally, you need to first pull the remote master down into your local master. Then git will know it's safe to delete your branch.
 
 ```bash
@@ -167,6 +205,7 @@ git branch -d shiny-new-feature
 > Make sure you use a lower-case -d, or else git won’t warn you if your feature branch has not actually been merged.
 
 ## Reporting bugs or making feature requests
+
 We use GitHub issues to track bugs and make feature requests. [Open a new issue](https://github.com/DataKind-DC/capital-nature-ingest/issues) if you've got an idea. An issue template will autopopulate. Feel free to use only those sections of the issue template that you think are relevant.
 
 **Great Bug Reports** tend to have:
@@ -182,4 +221,5 @@ We use GitHub issues to track bugs and make feature requests. [Open a new issue]
 People *love* thorough bug reports. I'm not even kidding.
 
 ## License
+
 [here](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/LICENSE)
