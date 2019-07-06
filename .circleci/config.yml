@@ -4,6 +4,8 @@ jobs:
     docker:
       - image: circleci/python:3.6.6
 
+    parallelism: 4
+
     working_directory: ~/repo
 
     steps:
@@ -32,7 +34,8 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            python -W ignore -m unittest discover tests -p '*_test.py'
+            TESTFILES=$(circleci tests glob “tests/**_test.py”)
+            python -W ignore -m unittest ${TESTFILES}
 
       - store_artifacts:
           path: test-reports
