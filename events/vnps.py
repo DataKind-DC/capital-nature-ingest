@@ -1,8 +1,9 @@
+from datetime import datetime
+import logging
+from unicodedata import normalize
+
 from bs4 import BeautifulSoup
 import requests
-from datetime import datetime
-from unicodedata import normalize
-import logging
 
 logger = logging.getLogger(__name__)
 

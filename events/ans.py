@@ -1,9 +1,10 @@
-import bs4
-import requests
-import unicodedata
-import sys
 from datetime import datetime
 import logging
+import sys
+import unicodedata
+
+import bs4
+import requests
 
 logger = logging.getLogger(__name__)
 

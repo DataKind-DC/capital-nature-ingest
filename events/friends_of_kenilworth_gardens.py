@@ -1,6 +1,8 @@
-import requests
-import os
 import datetime
+import logging
+import os
+
+import requests
 
 FONA_EVENTBRITE_ORG_ID = 8632128868
 # For a local run, be sure to create an env variable with your Eventbrite token
@@ -103,6 +105,8 @@ class EventbriteIngester:
             self.venues[venue_id] = venue_json
 
     def parse_events(self):
+        if not self.all_events:
+            self.all_events = []
         for event in self.all_events:
             event_data = {}
             for field in self.field_handlers:
@@ -114,7 +118,7 @@ class EventbriteIngester:
             '/events/search/',
             get_params = {'token': EVENTBRITE_TOKEN, 'organizer.id': self.org_id})
         page = requests.get(events_url).json()
-        self.all_events = page['events']
+        self.all_events = page.get('events')
         self.parse_events()
 
 def fetch_page(options):
@@ -146,6 +150,7 @@ def main():
             'Timezone': 'America/New_York',
             'Event Venue Name': data['location']['name'],
             'Event Organizers': 'Friends of Kenilworth Gardens',
+            'Event Category': '',
             'Event Cost': '',
             'Event Currency Symbol': '$',
             'Event Currency Position': 'prefix',
@@ -157,4 +162,6 @@ def main():
     return event_output
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()

@@ -1,10 +1,11 @@
-import bs4
 import html
 import json
-import re
-import requests
-import unicodedata
 import logging
+import re
+import unicodedata
+
+import bs4
+import requests
 
 logger = logging.getLogger(__name__)
 

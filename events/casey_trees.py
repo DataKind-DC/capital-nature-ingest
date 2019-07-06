@@ -1,10 +1,11 @@
 import ast
-import bs4
 from datetime import datetime
+import logging
+import unicodedata
+
+import bs4
 import re
 import requests
-import unicodedata
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -159,4 +160,3 @@ if __name__ == '__main__':
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
     
-

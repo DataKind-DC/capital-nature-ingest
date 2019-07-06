@@ -1,8 +1,9 @@
 from datetime import datetime
+import logging
+
+from bs4 import BeautifulSoup
 import re
 import requests
-from bs4 import BeautifulSoup
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -190,4 +191,3 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
-    print(len(events))

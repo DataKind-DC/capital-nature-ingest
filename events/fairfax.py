@@ -1,11 +1,11 @@
-from bs4 import BeautifulSoup
-import requests
-import re
 from datetime import datetime
 import logging
+import re
+
+from bs4 import BeautifulSoup
+import requests
 
 logger = logging.getLogger(__name__)
-
 
 def get_event_cost(soup):
     currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')

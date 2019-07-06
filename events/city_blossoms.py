@@ -1,10 +1,11 @@
+from datetime import datetime, timedelta
+from dateutil import tz
+import logging
+import re
+import time
+
 from bs4 import BeautifulSoup
 import requests
-from datetime import datetime, timedelta
-import time
-import re
-import logging
-from dateutil import tz
 
 logger = logging.getLogger(__name__)
 

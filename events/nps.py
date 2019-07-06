@@ -1,11 +1,14 @@
-import requests
-import os
-import re
-from bs4 import BeautifulSoup
 from datetime import datetime
 import json
 import logging
+import os
+import re
+
 from astral import Astral
+from bs4 import BeautifulSoup
+import requests
+
+
 # For a local run, be sure to create an env variable with the NPS API key. 
 # For example:
 # $ export NPS_KEY=<NPS API Key>
@@ -237,7 +240,7 @@ def schematize_nps_event(nps_event):
                     event_description = BeautifulSoup(nps_event['description'], "html.parser").find("p").text
                 except AttributeError:
                     event_description = ''
-                event_all_day = nps_event['isallday']
+                event_all_day = True if nps_event['isallday'].title() == 'True' else False
                 event_id = nps_event['id']
                 specific_event_location = get_specific_event_location(event_id)
                 if specific_event_location:
