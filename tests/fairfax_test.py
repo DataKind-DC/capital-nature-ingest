@@ -3,7 +3,7 @@ import sys
 import unittest
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from events.fairfax import main
-from utils import schema_test_required, schema_test_all, schema_test_types
+from .utils import schema_test_required, schema_test_all, schema_test_types
 
 class FairfaxTestCase(unittest.TestCase):
     '''

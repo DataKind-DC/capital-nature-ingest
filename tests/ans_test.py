@@ -1,9 +1,10 @@
 from os import path
 import sys
 import unittest
+print(path.dirname(path.dirname(path.abspath(__file__))))
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from events.ans import main
-from utils import schema_test_required, schema_test_all, schema_test_types
+from .utils import schema_test_required, schema_test_all, schema_test_types
 
 class DUGTestCase(unittest.TestCase):
     '''
