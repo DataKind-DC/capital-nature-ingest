@@ -1,11 +1,14 @@
-import requests
-import os
-import re
-from bs4 import BeautifulSoup
 from datetime import datetime
 import json
 import logging
+import os
+import re
+
 from astral import Astral
+from bs4 import BeautifulSoup
+import requests
+
+
 # For a local run, be sure to create an env variable with the NPS API key. 
 # For example:
 # $ export NPS_KEY=<NPS API Key>

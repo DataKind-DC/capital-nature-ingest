@@ -1,6 +1,8 @@
-import requests
-import os
 import datetime
+import logging
+import os
+
+import requests
 
 FONA_EVENTBRITE_ORG_ID = 8632128868
 # For a local run, be sure to create an env variable with your Eventbrite token
@@ -160,4 +162,6 @@ def main():
     return event_output
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()

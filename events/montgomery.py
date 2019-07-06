@@ -1,9 +1,10 @@
-from bs4 import BeautifulSoup
-import requests
-import re
 from datetime import datetime
 from itertools import takewhile
 import logging
+import re
+
+from bs4 import BeautifulSoup
+import requests
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,10 @@
-import re
-import requests
-import json
 from datetime import datetime
-import unicodedata
+import json
 import logging
+import re
+import unicodedata
+
+import requests
 
 logger = logging.getLogger(__name__)
 
