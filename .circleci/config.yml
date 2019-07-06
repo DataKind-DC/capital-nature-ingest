@@ -35,6 +35,7 @@ jobs:
           command: |
             . venv/bin/activate
             TESTFILES=$(circleci tests glob “tests/**_test.py”)
+            echo $TESTFILES
             python -W ignore -m unittest ${TESTFILES}
 
       - store_artifacts:
