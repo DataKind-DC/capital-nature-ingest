@@ -146,6 +146,7 @@ def main():
             'Timezone': 'America/New_York',
             'Event Venue Name': data['location']['name'],
             'Event Organizers': 'Friends of Kenilworth Gardens',
+            'Event Category': '',
             'Event Cost': '',
             'Event Currency Symbol': '$',
             'Event Currency Position': 'prefix',
