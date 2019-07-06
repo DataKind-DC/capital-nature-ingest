@@ -34,9 +34,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            TESTFILES=$(circleci tests glob “tests/**_test.py”)
-            echo $TESTFILES
-            python -W ignore -m unittest ${TESTFILES}
+            circleci tests glob **/tests/*_test.py | circleci tests split --split-by=timings | xargs python3 -m unittest
 
       - store_artifacts:
           path: test-reports
