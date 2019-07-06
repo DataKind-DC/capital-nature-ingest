@@ -103,6 +103,8 @@ class EventbriteIngester:
             self.venues[venue_id] = venue_json
 
     def parse_events(self):
+        if not self.all_events:
+            self.all_events = []
         for event in self.all_events:
             event_data = {}
             for field in self.field_handlers:
