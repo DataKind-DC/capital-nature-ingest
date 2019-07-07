@@ -41,14 +41,18 @@ def get_event_description(event_website_soup):
     except AttributeError:
         #AttributeError because no divs found
         p_tags = event_website_soup.find_all('p')
-        event_description = max([p.get_text() for p in p_tags], key = len)
-        event_description = unicodedata.normalize('NFKD', event_description).strip()
+        p_tags_text = [p.get_text() for p in p_tags]
+        if not p_tags_text:
+            event_description = ''
+        else:
+            event_description = max(p_tags_text, key = len)
+            event_description = unicodedata.normalize('NFKD', event_description).strip()
     if not event_description:
         event_desc = event_website_soup.find('div', {'id':'event_desc'})
         if event_desc:
             event_description = unicodedata.normalize('NFKD', event_desc.get_text())
         else:
-            event_description = ''
+            event_description = 'See event website.'
             
     return event_description
 
