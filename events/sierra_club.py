@@ -76,15 +76,22 @@ def handle_ans_page(event_list):
     events = []
     for e in event_list:
         event = {}
+        event_website = e.get('urlToShare','')
         event['Event Name'] = e.get('eventName','')
         event['Event Description'] = encode_event_description(e.get('description', ''))
         start_date = schematize_event_date(e.get('startDate',''))
+        start_time = schematize_event_time(e.get('startTime',''))
+        if not all([start_date, start_time]):
+            # Can't save an event w/o these
+            logger.warning(f"Couldn't get a start date/time for {event_website}")
+            continue
         event['Event Start Date'] = start_date
-        event['Event Start Time'] = schematize_event_time(e.get('startTime',''))
+        event['Event Start Time'] = start_time
         end_date = schematize_event_date(e.get('endDate',''))
         end_date = end_date if end_date else start_date
         event['Event End Date'] = end_date
         end_time = schematize_event_time(e.get('endTime',''))
+        end_time = end_time if end_time else start_time
         event['Event End Time'] = end_time
         event['All Day Event'] = False
         event['Timezone'] = "America/New_York"
@@ -92,7 +99,7 @@ def handle_ans_page(event_list):
         event['Event Cost'] = get_event_cost(e.get('cost','0'))
         event['Event Currency Symbol'] = "$"
         event['Event Category'] = e.get('eventCategory','')
-        event['Event Website'] = e.get('urlToShare','')
+        event['Event Website'] = event_website
         event_venue = e.get('location','')
         event_venue = event_venue if event_venue else "See event website"
         event['Event Venue Name'] = event_venue

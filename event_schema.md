@@ -4,7 +4,7 @@
 
 > *Although **latitude** and **longitude** aren't in this table, please capture this data (if possible) when you scrape a page (just comment that part of the code out afterwards). That's because we might want to eventually use that geo-data to creata an events map!*
 
-**Required fields are bolded**
+**Required fields are bolded, although you can fill a missing end time with a valid start time and a missing end date with a valid start date.**
 
 ## Schema
 
