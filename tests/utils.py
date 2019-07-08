@@ -115,10 +115,11 @@ def schema_test_types(events):
              # Tests if the event cost is a string of digits
             elif k == 'Event Cost':
                 val = event[k]
+                val = val.lower().replace(",",'').replace(".",'').replace("free",'')
                 #empty strings are "falsy"
                 is_digit = val.isdigit() or not val
                 if not is_digit:
-                    msg = f"Non '$' value of {val} found in {k} event field of {event}"
+                    msg = f"Invalid value of {val} found in {k} event field of {event}."
                     raise Exception (msg)
             # Tests if the timezone event field is 'America/New_York'
             elif k == 'Timezone':
