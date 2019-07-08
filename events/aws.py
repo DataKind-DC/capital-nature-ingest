@@ -53,7 +53,7 @@ def get_event_description(event_li):
     
 def get_event_url(event_li):
     href = event_li.find('a', 
-                         class_ = 'rsttip rse_event_link ', 
+                         class_ = 'rsttip rse_event_link', 
                          href = True).get('href')
     event_url = href if href.startswith('http') else f'https://www.anacostiaws.org{href}'
     
