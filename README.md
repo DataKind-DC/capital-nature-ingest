@@ -1,3 +1,4 @@
+[![CircleCI](https://circleci.com/gh/DataKind-DC/capital-nature-ingest/tree/master.svg?style=svg)](https://circleci.com/gh/DataKind-DC/capital-nature-ingest/tree/master) 
 # capital-nature-ingest
 Webscraping nature-related events from a variety of sources to populate an events calendar on [Capital Nature](http://capitalnature.org/).
 
