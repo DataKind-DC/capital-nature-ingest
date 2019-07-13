@@ -1,16 +1,17 @@
-import requests
-import json
 import csv
-import boto3
-import os
 import datetime
+import json
+import logging
+import os
 
+import requests
 
-bucket = 'aimeeb-datasets-public'
-is_local = False
-EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
-FONA_EVENTBRITE_ORG_ID = 13276552841
-
+try:
+    EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
+except KeyError:
+    EVENTBRITE_TOKEN = input("Enter your NPS API key:")
+    
+logger = logging.getLogger(__name__)
 
 class EventbriteIngester:
     '''
@@ -132,7 +133,7 @@ def parse_venue_name(name):
 
 # Create an EventbriteParser object, parse API, and convert to dict
 def handle_fona_eventbrite_api():
-    fona_ingester = EventbriteIngester(FONA_EVENTBRITE_ORG_ID)
+    fona_ingester = EventbriteIngester(13276552841)
     fona_ingester.scrape()
     event_output = []
     for e in fona_ingester.output_data.keys():
@@ -163,36 +164,11 @@ def handle_fona_eventbrite_api():
             'Event Featured Image': data['image']
         }
         event_output.append(event_data)
+   
     return event_output
-
-def handler(event, context):
-    url = event['url']
-    source_name = event['source_name']
-    event_output = handle_fona_eventbrite_api()
-    filename = '{0}-results.csv'.format(source_name)
-    if not is_local:
-        with open('/tmp/{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = event_output[0].keys())
-            writer.writeheader()
-            [writer.writerow(event) for event in event_output]
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file(
-            '/tmp/{0}'.format(filename),
-            bucket,
-            'capital-nature/{0}'.format(filename)
-        )
-    else:
-        with open('{0}'.format(filename), mode = 'w') as f:
-            writer = csv.DictWriter(f, fieldnames = event_output[0].keys())
-            writer.writeheader()
-            [writer.writerow(event) for event in event_output]
-    return json.dumps(event_output, indent=2)
 
 # For local testing
 if __name__ == "__main__":
-    event = {
-        'url': f'https://www.eventbriteapi.com/v3/events/search/?token={EVENTBRITE_TOKEN}&organizer.id={FONA_EVENTBRITE_ORG_ID}&',
-        'source_name': 'fona'
-    }
-    is_local = True
-    print(handler(event, {}))
+    
+    events = handle_fona_eventbrite_api()
+    
