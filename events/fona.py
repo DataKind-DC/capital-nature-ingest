@@ -9,7 +9,7 @@ import requests
 try:
     EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
 except KeyError:
-    EVENTBRITE_TOKEN = input("Enter your NPS API key:")
+    EVENTBRITE_TOKEN = input("Enter your Eventbrite API key:")
     
 logger = logging.getLogger(__name__)
 
