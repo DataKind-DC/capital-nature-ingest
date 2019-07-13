@@ -132,7 +132,7 @@ def parse_venue_name(name):
 
 
 # Create an EventbriteParser object, parse API, and convert to dict
-def handle_fona_eventbrite_api():
+def main():
     fona_ingester = EventbriteIngester(13276552841)
     fona_ingester.scrape()
     event_output = []
@@ -170,5 +170,5 @@ def handle_fona_eventbrite_api():
 # For local testing
 if __name__ == "__main__":
     
-    events = handle_fona_eventbrite_api()
+    events = main()
     
