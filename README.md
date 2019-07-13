@@ -13,27 +13,35 @@ Capital Nature is a 501c3 nonprofit organization dedicated to bringing nature in
 
 ## Getting Started
 1. Assuming you've got Python 3.6 and a GitHub account, clone the repo:
+
 ```bash
 git clone https://github.com/DataKind-DC/capital-nature-ingest.git
 ```
 
 2. Navigate into the repository you just cloned:
+
 ```bash
 cd capital-nature-ingest
 ```
 
-3. Start a virtual environment
+3. Start a virtual environment:
+
 ```bash
 python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
 ```
 
-You can deactivate the virtual environment with `deactivate`.
+>You can deactivate the virtual environment with `deactivate`.
 
 
 4. Get the events:
-Before getting the events, you'll need to have a National Park Service (NPS) API key and an Eventbrite API key. Get one for NPS [here](https://www.nps.gov/subjects/developer/index.htm) and for Eventbrite [here](https://www.eventbrite.com/platform/api). For the Eventbrite token, we've found it helpful to follow the instructions in [this blog post](https://www.appypie.com/faqs/how-can-i-get-my-eventbrite-personal-oauth-token-key). Once you've got the tokens, add them as environment variables called `NPS_KEY` and `EVENTBRITE_TOKEN`, respectively. Or simply run the script and input them when prompted.
+
+Before getting the events, you'll need to have a National Park Service (NPS) API key and an Eventbrite API key. 
+ - Get one for NPS [here](https://www.nps.gov/subjects/developer/index.htm)
+ - Get one for Eventbrite [here](https://www.eventbrite.com/platform/api). For the Eventbrite token, we've found it helpful to follow the instructions in [this blog post](https://www.appypie.com/faqs/how-can-i-get-my-eventbrite-personal-oauth-token-key). 
+ 
+Once you've got your tokens, add them as environment variables called `NPS_KEY` and `EVENTBRITE_TOKEN`, respectively. Or simply run the script and input them when prompted.
 
 To run the script:
 
