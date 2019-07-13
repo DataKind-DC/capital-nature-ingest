@@ -9,7 +9,7 @@ import requests
 try:
     EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
 except KeyError:
-    EVENTBRITE_TOKEN = input("Enter your NPS API key:")
+    EVENTBRITE_TOKEN = input("Enter your Eventbrite API key:")
     
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ class EventbriteIngester:
             get_params = {'token': EVENTBRITE_TOKEN, 'organizer.id': self.org_id})
         page = requests.get(events_url)
         page = page.json()
-        self.all_events = page['events']
+        self.all_events = page.get('events', [])
         self.parse_events()
 
 
