@@ -94,7 +94,7 @@ def schema_test_types(events):
             # boolean fields
             if k in booleans:
                 val = event[k]
-                is_bool = isinstance(val, bool)
+                is_bool = isinstance(val, bool) or val in ['False', 'True']
                 if not is_bool:
                     msg = f"Non boolean value of {val} found in {k} event field of {event}"
                     raise Exception (msg)
