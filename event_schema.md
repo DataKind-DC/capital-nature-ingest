@@ -4,7 +4,7 @@
 
 > *Although **latitude** and **longitude** aren't in this table, please capture this data (if possible) when you scrape a page (just comment that part of the code out afterwards). That's because we might want to eventually use that geo-data to creata an events map!*
 
-**Required fields are bolded**
+**Required fields are bolded, although you can fill a missing end time with a valid start time and a missing end date with a valid start date.**
 
 ## Schema
 
@@ -22,7 +22,7 @@
 |Hide from Event Listings|FALSE|Boolean|When true, the event will appear in Month View, but in "List" views like the outright List View, the Photo View, etc.|
 |Sticky in Month View|TRUE|Boolean|When true, the event will appear at the top of its corresponding "day" square in the Month View, regardless of other events that day at other times.|
 |**Event Venue Name**|Archer's Penthouse|Comma Separated|Must match exactly the Venue Name of a preexisting Venue (see note about multiple venues).|
-|**Event Organizers**|Montgomery County|String|Must be the event source from our [event sources list](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_sources.md).|
+|**Event Organizers**|Montgomery County|String|Must be the event source. Hardcode this.|
 |Event Show Map Link|TRUE|Boolean||
 |Event Show Map|TRUE|Boolean||
 |**Event Cost**|500|String|Set to 0 for a free event. Leave blank if you do not wish the cost field to appear. Otherwise specify a single number for the event cost. This field is essentially unused when a ticketing plugin is active.|

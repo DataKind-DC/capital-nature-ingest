@@ -1,14 +1,18 @@
+from datetime import datetime
+import logging
+import sys
+import unicodedata
+
 import bs4
 import requests
-import unicodedata
-import sys
-from datetime import datetime
 
+logger = logging.getLogger(__name__)
 
 def soupify_event_page(url = 'https://anshome.org/events-calendar/'):
     try:
         r = requests.get(url)
-    except:
+    except Exception as e:
+        logger.critical(f'Exception making GET to {url}: {e}', exc_info = True)
         return
     content = r.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
@@ -18,7 +22,8 @@ def soupify_event_page(url = 'https://anshome.org/events-calendar/'):
 def soupify_event_website(event_website):
     try:
         r = requests.get(event_website)
-    except:
+    except Exception as e:
+        logger.critical(f'Exception making GET to {event_website}: {e}', exc_info = True)
         return
     content = r.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
@@ -29,15 +34,25 @@ def get_event_description(event_website_soup):
     '''
     Scrape the event description from the event website.
     '''
-    eventon_full_description = event_website_soup.find('div', {'class':'eventon_desc_in'})
-    p_tags = eventon_full_description.find_all('p')
-    event_description = "".join(unicodedata.normalize('NFKD',f'{p.get_text()} ') for p in p_tags).strip()
+    try:
+        eventon_full_description = event_website_soup.find('div', {'class':'eventon_desc_in'})
+        p_tags = eventon_full_description.find_all('p')
+        event_description = "".join(unicodedata.normalize('NFKD',f'{p.get_text()} ') for p in p_tags).strip()
+    except AttributeError:
+        #AttributeError because no divs found
+        p_tags = event_website_soup.find_all('p')
+        p_tags_text = [p.get_text() for p in p_tags]
+        if not p_tags_text:
+            event_description = ''
+        else:
+            event_description = max(p_tags_text, key = len)
+            event_description = unicodedata.normalize('NFKD', event_description).strip()
     if not event_description:
         event_desc = event_website_soup.find('div', {'id':'event_desc'})
         if event_desc:
             event_description = unicodedata.normalize('NFKD', event_desc.get_text())
         else:
-            event_description = ''
+            event_description = 'See event website.'
             
     return event_description
 
@@ -59,6 +74,7 @@ def schematize_event_time(event_time):
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
+        logger.warning(f'Exception schematizing this date: {event_time}', exc_info = True)
         schematized_event_time = ''
     
     return schematized_event_time
@@ -109,4 +125,6 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()

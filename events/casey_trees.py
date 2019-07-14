@@ -1,15 +1,23 @@
 import ast
-import bs4
 from datetime import datetime
-import re
-import requests
+import logging
 import unicodedata
 
+import bs4
+import re
+import requests
+
+logger = logging.getLogger(__name__)
 
 def fetch_page_soup(url):
-    r = requests.get(url)
+    try:
+        r = requests.get(url)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {url}: {e}", exc_info=True)
+        return
     content = r.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
+    
     return soup
 
 def parse_event_cost(event_cost):
@@ -86,8 +94,13 @@ def handle_ans_page(soup):
         events_data['Timezone'] = "America/New_York"
         events_data['Event Venue Name'] = event_venue
         events_data['Event Featured Image'] = con.get('image','')
-        events_data['Event Description'] = unicodedata.normalize('NFKD', get_event_description(events_data['Event Website']))
-        events_data['Event Cost'] = parse_event_cost(con['offers']['price'])
+        event_desc = get_event_description(events_data['Event Website'])
+        event_desc = event_desc if event_desc else ''
+        events_data['Event Description'] = unicodedata.normalize('NFKD', event_desc)
+        try:
+            events_data['Event Cost'] = parse_event_cost(con['offers']['price'])
+        except KeyError:
+            events_data['Event Cost'] = '0'
         events_data['Event Currency Symbol'] = "$"
         events_data['All Day Event'] = False
         events_data['Event Organizers'] = 'Casey Trees'
@@ -111,15 +124,23 @@ def handle_ans_page(soup):
         #checks if next month calender is present and passes the url to handle_ans_page function
         next_url = soup.find('li', {'class': 'tribe-events-nav-next'}).a['href']
         soup = fetch_page_soup(next_url)
+        if not soup:
+            return result_all_event
         result_all_event.extend(handle_ans_page(soup))
-    except:
+    except TypeError:
+        #means we've found the last page
         pass
+    except Exception as e:
+        logger.error(f"Exception checking for additional pages: {e}", exc_info = True)
+        return []
 
     return result_all_event
 
 
 def get_event_description(url):
     soup = fetch_page_soup(url)
+    if not soup:
+        return
     events_url = soup.find('meta', {'property': 'og:description'})['content']
     
     return events_url
@@ -128,11 +149,14 @@ def main():
     current_date = datetime.today()
     url="https://caseytrees.org/events/"+current_date.strftime("%Y-%m")+"/"
     soup = fetch_page_soup(url)
+    if not soup:
+        return []
     events = handle_ans_page(soup)
     
     return events
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
     
-

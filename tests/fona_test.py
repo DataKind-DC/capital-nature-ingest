@@ -1,13 +1,14 @@
 from os import path
 import sys
 import unittest
+
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-from events.sierra_club import main
+from events.fona import main
 from .utils import schema_test_required, schema_test_all, schema_test_types
 
-class SierraClubTestCase(unittest.TestCase):
+class FONATestCase(unittest.TestCase):
     '''
-    Test cases for Sierra Club events.
+    Test cases for FONA events.
     '''
 
     def setUp(self):
@@ -26,3 +27,4 @@ class SierraClubTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    

@@ -1,16 +1,19 @@
-import bs4
 import html
 import json
+import logging
 import re
-import requests
-import sys
 import unicodedata
 
+import bs4
+import requests
+
+logger = logging.getLogger(__name__)
 
 def soupify_event_page(url='http://dugnetwork.org/events/'):
     try:
         r = requests.get(url)
-    except:
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {url}: {e}", exc_info=True)
         return
     content = r.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
@@ -22,6 +25,7 @@ def schematize_event_date(event_date):
     Converts a date like '2019-03-22T00:00:00-04:00' to '2019-03-22'
     '''
     schematize_event_date = event_date[0:10]
+    
     return schematize_event_date
 
 def schematize_event_time(event_time):
@@ -29,6 +33,7 @@ def schematize_event_time(event_time):
     Converts a time string like '2019-03-22T00:00:00-04:00' to '13:30:00'
     '''
     schematize_event_time = event_time[11:19]
+    
     return schematize_event_time
 
 def get_event_location(location):
@@ -53,16 +58,20 @@ def get_event_description(description):
     description = unicodedata.normalize("NFKD", description)
     #Removing new line character at the end of the string
     description = description[:-2]
+    
     return description
 
 
 def main():
     soup = soupify_event_page()
     if not soup:
-        sys.exit(1)
-
+        return []
     events_divs = soup.findAll('script',{'type':'application/ld+json'})
-    events_content = json.loads(events_divs[0].string.strip())
+    try:
+        events_content = json.loads(events_divs[0].string.strip())
+    except IndexError:
+        #means the site has 0 events on their calendar
+        return []
 
     events = []
     for event in events_content:
@@ -81,24 +90,28 @@ def main():
         event_category = event['@type']
         event_organizers = 'DUG Network'
         all_day_event = False
-        event = {
-                 'Event Name': event_name,
-                 'Event Website': event_website,
-                 'Event Start Date': start_date,
-                 'Event Start Time': start_time,
-                 'Event End Date': end_date,
-                 'Event End Time': end_time,
-                 'Event Venue Name': event_venue,
-                 'Timezone': 'America/New_York',
-                 'Event Cost': '',
-                 'Event Description': event_description,
-                 'Event Category': event_category,
-                 'Event Organizers': event_organizers,
-                 'Event Currency Symbol':'$',
-                 'All Day Event': all_day_event}
-        events.append(event)
+        if start_time != '00:00:00' and all([start_time, end_time]):
+            event = {
+                     'Event Name': event_name,
+                     'Event Website': event_website,
+                     'Event Start Date': start_date,
+                     'Event Start Time': start_time,
+                     'Event End Date': end_date,
+                     'Event End Time': end_time,
+                     'Event Venue Name': event_venue,
+                     'Timezone': 'America/New_York',
+                     'Event Cost': '',
+                     'Event Description': event_description,
+                     'Event Category': event_category,
+                     'Event Organizers': event_organizers,
+                     'Event Currency Symbol':'$',
+                     'All Day Event': all_day_event}
+            events.append(event)
+    
     return events
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()

@@ -1,10 +1,6 @@
-import unittest
-import httpretty
-import requests
-import re
-from datetime import datetime
-import sys
 from os import path
+import sys
+import unittest
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
 import get_events
 

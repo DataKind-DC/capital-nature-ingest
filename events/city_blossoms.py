@@ -1,8 +1,13 @@
+from datetime import datetime, timedelta
+from dateutil import tz
+import logging
+import re
+import time
+
 from bs4 import BeautifulSoup
 import requests
-from datetime import datetime, timedelta
-import time
-import re
+
+logger = logging.getLogger(__name__)
 
 def filter_events(events_data):
     '''
@@ -33,10 +38,17 @@ def get_datetime(event_date):
         event_date (str): the date component of the timestamp (e.g. '2019-02-23')
         event_time (str): the time component of the timestamps (e.g. '14:00:00')
     '''
-    if not isinstance(event_date, int):
-        event_date = int(event_date)
-    event_time = time.strftime("%Y-%m-%d,%H:%M:%S", time.gmtime(event_date / 1000.0))
-    event_date, event_time = event_time.split(",")
+    
+    event_date = int(event_date)
+    #dates are in milliseconds
+    event_date /= 1000
+    from_zone = tz.gettz('UTC')
+    to_zone = tz.gettz('America/New_York')
+    utc_time = datetime.utcfromtimestamp(event_date)
+    utc_time = utc_time.replace(tzinfo=from_zone)
+    est_time = utc_time.astimezone(to_zone)
+    est_event_time = est_time.strftime('%Y-%m-%d,%H:%M:%S')
+    event_date, event_time = est_event_time.split(",")
     
     return event_date, event_time
 
@@ -52,7 +64,9 @@ def get_event_description(event_website):
     '''
     try:
         r = requests.get(event_website)
-    except:
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {event_website}: {e}", 
+                        exc_info=True)
         return ''
     soup = BeautifulSoup(r.content, 'html.parser')
     desc_div = soup.find('div',{'class':'sqs-block-content'})
@@ -116,10 +130,7 @@ def schematize_event(event):
         event_cost = '' #this field isn't returned by the API or on the event's website
         event_description = get_event_description(event_website)
         event_categories = get_event_categories(event)
-        try:
-            event_image = event['assetUrl']
-        except KeyError:
-            event_image = ''
+        event_image = event.get('assetUrl', '')
         schematized_event = {'Event Start Date': start_date,
                              'Event End Date': end_date, 
                              'Event Start Time': start_time,
@@ -166,12 +177,23 @@ def get_event_data():
     '''
     Returns the results of the city blossoms events API
     '''
-    r = requests.get('http://cityblossoms.org/calendar')
+    cal = 'http://cityblossoms.org/calendar'
+    try:
+        r = requests.get(cal)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {cal}: {e}", 
+                        exc_info=True)
+        return
     cookies = r.cookies
     crumb = cookies.get_dict()['crumb']
     month = datetime.now().strftime("%m-%Y")
     url = f'http://cityblossoms.org/api/open/GetItemsByMonth?month={month}&collectionId=55a52dfce4b09a8bb0485083&crumb={crumb}'
-    r = requests.get(url)
+    try:
+        r = requests.get(url)
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {url}: {e}", 
+                        exc_info=True)
+        return
     events_data = r.json()
     
     return events_data
@@ -179,6 +201,8 @@ def get_event_data():
     
 def main():
     events_data = get_event_data()
+    if not events_data:
+        return []
     filtered_data = filter_events(events_data)
     events = []
     for event in filtered_data:
@@ -189,4 +213,6 @@ def main():
     return events
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()

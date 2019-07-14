@@ -1,9 +1,14 @@
-import requests
-import os
-import re
-from bs4 import BeautifulSoup
 from datetime import datetime
 import json
+import logging
+import os
+import re
+
+from astral import Astral
+from bs4 import BeautifulSoup
+import requests
+
+
 # For a local run, be sure to create an env variable with the NPS API key. 
 # For example:
 # $ export NPS_KEY=<NPS API Key>
@@ -12,6 +17,8 @@ try:
 except KeyError:
     #if it's not an env var, then we might be testing
     NPS_KEY = input("Enter your NPS API key:")
+
+logger = logging.getLogger(__name__)
 
 def get_park_events(park_code, limit=1000):
     '''
@@ -22,7 +29,7 @@ def get_park_events(park_code, limit=1000):
         limit (int): number of results to return per request. Default is 1000
 
     Returns:
-        park_events (list): A list of dicts representing each event with 'park' as the siteType.
+        park_events (list): A list of dicts representing each event with 'park' as the sitetype.
                             The dict structures follow that of the NPS Events API.
     '''
     park_code_param = f'?parkCode={park_code}'
@@ -31,14 +38,20 @@ def get_park_events(park_code, limit=1000):
     url = "https://developer.nps.gov/api/v1/events"+park_code_param+limit_param+key_param
     try:
         r = requests.get(url)
-        r_json = r.json()
-        data = r_json['data']
-        park_events = []
-        for d in data:
-            if d['siteType'] == 'park':
-                park_events.append(d)
-    except:
-        park_events = []
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {url}: {e}", exc_info=True)
+        return []
+    r_json = r.json()
+    data = r_json['data']
+    park_events = []
+    for d in data:
+        try:
+            site_type = d['sitetype']
+        except KeyError:
+            site_type = d['siteType']
+        if site_type == 'park':
+            park_events.append(d)
+    
 
     return park_events
 
@@ -65,7 +78,9 @@ def get_nps_events(park_codes = ['afam','anac','anti','apco','appa','arho','asis
             if len(park_events) > 1:
                 for park_event in park_events:
                     nps_events.append(park_event)
-        except Exception:
+        except Exception as e:
+            logger.error(f"Exception getting NPS events for this park code: {park_code}: {e}", 
+                         exc_info=True)
             pass
 
     return nps_events
@@ -84,16 +99,15 @@ def get_specific_event_location(event_id):
     website = f"https://www.nps.gov/planyourvisit/event-details.htm?id={event_id}"
     try:
         r = requests.get(website)
-    except:
+    except Exception as e:
+        logger.critical(f"Exception making GET request to {website}: {e}", exc_info=True)
         return ''
     content = r.content
     soup = BeautifulSoup(content, "html.parser")
     # kill all script and style elements
     for script in soup(["script", "style"]):
         script.extract()    # rip it out
-    # get text
     text = soup.get_text()
-    # break into lines and remove leading and trailing space on each
     lines = (line.strip() for line in text.splitlines())
     # break multi-headlines into a line each
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
@@ -115,10 +129,13 @@ def schematize_event_time(event_time):
     '''
     Converts a time string like '1:30 pm' to 24hr time like '13:30:00'
     '''
+    if not event_time:
+        return ''
     try:
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
+        logger.warning(f"Exception schematizing this event time: {event_time}", exc_info=True)
         schematized_event_time = ''
     
     return schematized_event_time
@@ -142,6 +159,56 @@ def parse_event_cost(event_cost):
     else:
         return ''
 
+def scrape_event_description(event_website):
+    '''
+    Givent the event's website, scrape the event's description by finding the lost <p> tag text
+    
+    Parameters:
+        event_website (str): the url to an event page
+        
+    Returns:
+        event_description (str): description of the event
+    
+    '''
+    try:
+        r = requests.get(event_website)
+    except:
+        event_description = 'See event website'
+        return event_description
+    content = r.content
+    soup = BeautifulSoup(content, 'html.parser')
+    divs = soup.find_all('div', {'class':'Truncatable__Content'})
+    try:
+        event_description = max([d.text for d in divs], key = len).strip()
+    except:
+        return 'See event website'
+    
+    return event_description
+    
+def get_sun_times(event_date):
+    '''
+    Given an event's data as a string, use the astral module to get the
+    times for sunrise and sunset.
+
+    Parameters:
+        event_date (str): the date of an vent in "%Y-%m-%d"
+
+    Returns:
+        sunrise (str): the time sunrise time
+        sunset (str): the sunset time
+    '''
+    event_date_dt = datetime.strptime(event_date, "%Y-%m-%d")
+    city_name = 'Washington DC'
+    a = Astral()
+    a.solar_depression = 'civil'
+    city = a[city_name]
+    sun = city.sun(date = event_date_dt, local = True)
+    sunrise = sun['sunrise'].time().strftime("%H:%M:%S")
+    sunset = sun['sunset'].time().strftime("%H:%M:%S")
+    
+    return sunrise, sunset
+
+
 def schematize_nps_event(nps_event):
     '''
     Extract data from the nps event so that it conforms to the wordpress schema.
@@ -151,52 +218,64 @@ def schematize_nps_event(nps_event):
     Returns:
         schematized_nps_events (list): a list of dicts, with each dict representing an event
     '''
-    date_end = nps_event['dateStart']
-    date_start = nps_event['dateEnd']
+    date_end = nps_event['datestart']
+    date_start = nps_event['dateend']
     if date_start == date_end:
         schematized_nps_events = []
         dates = nps_event['dates']
         for date in dates:
             times = nps_event['times']
             for time in times:
-                event_start_time = schematize_event_time(time['timeStart'])
-                event_end_time = schematize_event_time(time['timeEnd'])
+                if not time['timestart']:
+                    if time['sunsetend']:
+                        event_start_time, event_end_time = get_sun_times(date)
+                    else:
+                        logger.warning(f"Unable to get start and end times for event_id: {nps_event.get('id')}")
+                        continue
+                else:
+                    event_start_time = schematize_event_time(time['timestart'])
+                    event_end_time = schematize_event_time(time['timeend'])
                 event_name = nps_event['title']
                 try:
                     event_description = BeautifulSoup(nps_event['description'], "html.parser").find("p").text
                 except AttributeError:
                     event_description = ''
-                event_all_day = nps_event['isAllDay']
+                event_all_day = True if nps_event['isallday'].title() == 'True' else False
                 event_id = nps_event['id']
                 specific_event_location = get_specific_event_location(event_id)
                 if specific_event_location:
-                    park_name_w_location = re.sub(' +', ' ', nps_event['parkFullName'] + ", " + specific_event_location)
+                    park_name_w_location = re.sub(' +', ' ', nps_event['parkfullname'] + ", " + specific_event_location)
                 else:
-                    park_name_w_location = re.sub(' +', ' ', nps_event['parkFullName'])
-                event_venue = nps_event['organizationName']
-                event_venue = event_venue if event_venue else nps_event['parkFullName']
+                    park_name_w_location = re.sub(' +', ' ', nps_event['parkfullname'])
+                event_venue = nps_event['organizationname']
+                event_venue = event_venue if event_venue else nps_event['parkfullname']
                 event_venue = re.sub('  +', ' ', event_venue)
-                event_cost = '0' if nps_event['isFree'] else parse_event_cost(nps_event['feeInfo'])
+                event_cost = '0' if nps_event['isfree'] else parse_event_cost(nps_event['feeinfo'])
                 _ = nps_event['category']
                 event_tags = ", ".join(nps_event['tags'])
-                regResURL = nps_event['regResURL']
-                infoURL = nps_event['infoURL']
-                portalName = nps_event['portalName']
+                regResURL = nps_event['regresurl']
+                infoURL = nps_event['infourl']
+                portalName = nps_event['portalname']
                 if len(regResURL) > 0:
                     event_website = regResURL
                 else:
-                    r = requests.get(f"https://www.nps.gov/planyourvisit/event-details.htm?id={event_id}")
+                    event_site = f"https://www.nps.gov/planyourvisit/event-details.htm?id={event_id}"
+                    try:
+                        r = requests.get(event_site)
+                    except Exception as e:
+                        logger.error(f"Exception making GET request to {event_site}: {e}", 
+                                        exc_info=True)
                     if r.status_code == 404:
                         if len(portalName) > 0:
                             event_website = portalName
                         else:
                             event_website = infoURL
                     else:
-                        event_website = f"https://www.nps.gov/planyourvisit/event-details.htm?id={event_id}"
+                        event_website = event_site
                 try:
                     event_image = nps_event['images'][0]['url']
                 except IndexError:
-                    event_image = None
+                    event_image = ''
                 if event_image:
                     if "nps.gov" not in event_image:
                         event_image = f"https://www.nps.gov{event_image}"
@@ -206,26 +285,31 @@ def schematize_nps_event(nps_event):
                 else:
                     event_organizer = "National Park Service"
                 event_venue = event_venue if event_venue else "See event website"
+                if not event_description:
+                    event_description = scrape_event_description(event_website)
                 schematized_nps_event = {
-                                            "Event Name":event_name,
-                                            "Event Description":event_description,
-                                            "Event Start Date":date,
-                                            "Event Start Time":event_start_time,
-                                            "Event End Date":date,
-                                            "Event End Time":event_end_time,
-                                            "All Day Event":event_all_day,
-                                            "Event Venue Name":event_venue,
-                                            "Event Organizers":event_organizer,
-                                            "Timezone":'America/New_York',
-                                            "Event Cost":event_cost,
-                                            "Event Currency Symbol":"$",
-                                            "Event Category":event_tags,
-                                            "Event Website":event_website,
-                                            "Event Featured Image":event_image
+                                         "Event Name":event_name,
+                                         "Event Description":event_description,
+                                         "Event Start Date":date,
+                                         "Event Start Time":event_start_time,
+                                         "Event End Date":date,
+                                         "Event End Time":event_end_time,
+                                         "All Day Event":event_all_day,
+                                         "Event Venue Name":event_venue,
+                                         "Event Organizers":event_organizer,
+                                         "Timezone":'America/New_York',
+                                         "Event Cost":event_cost,
+                                         "Event Currency Symbol":"$",
+                                         "Event Category":event_tags,
+                                         "Event Website":event_website,
+                                         "Event Featured Image":event_image
                                           }
                 schematized_nps_events.append(schematized_nps_event)
     else:
-        #TODO maybe log these occurrences, which I don't think really occur given the API's schema
+        #TODO: when this occurs, it seems there's a discrepancy between the NPS API results
+        #and what's displayed on an event's website. This might be an issue
+        #to raise with the NPS API maintainers.
+        logger.warning(f'This event did not have equal start and end dates: {nps_event}')
         schematized_nps_events = []
 
     return schematized_nps_events
@@ -242,5 +326,8 @@ def main():
 
     return events
 
+
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
