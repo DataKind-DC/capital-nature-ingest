@@ -11,7 +11,6 @@ import sys
 import requests
 from bs4 import BeautifulSoup
 import logging
-import unicodedata
 
 logger = logging.getLogger(__name__)
 
@@ -47,34 +46,76 @@ def schematize_event_time(event_startTime):
         datetime_obj = datetime.strptime(event_startTime.split(' @ ',1)[1], "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except IndexError: 
-        logger.warning(f'Exception schematizing this date: {event_startTime}', exc_info = True)
+        logger.warning(f'Exception schematizing this time: {event_startTime}', exc_info = True)
         print(event_startTime)
         schematized_event_time = ''
     except ValueError:
-        logger.warning(f'Exception schematizing this date: {event_startTime}', exc_info = True)
+        logger.warning(f'Exception schematizing this time: {event_startTime}', exc_info = True)
         schematized_event_time = ''
     
     return schematized_event_time
 
-def get_event_description(event_website_soup):
+def schematize_event_dates(event_id, start_date, end_date):
+    '''
+    Convert a date string like 'May 30 @ 1:30 PM' to a date like 2019-05-30.
+    Checks what year the event is taking place in.
+    
+    '''
+    start_date_out = ''
+    end_date_out = ''
+    all_day_event = False
     try:
-        soup_paragraphs = event_website_soup.find('div','tribe-events-single-event-description').find_all('p')
-        str_paragraphs = []
-        for p in soup_paragraphs:    
-            str_paragraphs.append(p.text)
-        description = '\n'.join(str_paragraphs)
+        start_date = datetime.strptime(start_date.split(' @ ', 1)[0], '%B %d')
+        end_date = datetime.strptime(end_date.split(' @ ', 1)[0], '%B %d')
+        id_date = datetime.strptime(event_id[5:], '%Y-%m-%d')
+        start_date = start_date.replace(year = id_date.year)
+        end_date = end_date.replace(year = id_date.year)
+        if start_date > end_date:
+            start_date = start_date.replace(year = id_date.year - 1)
+        if (end_date-start_date).days >= 1:
+            all_day_event = True
+        start_date_out = datetime.strftime(start_date, '%Y-%m-%d')
+        end_date_out = datetime.strftime(end_date, '%Y-%m-%d')
+    except IndexError: 
+        logger.warning(f'Exception schematizing this date: {start_date}', exc_info = True)
+        logger.warning(f'Exception schematizing this date: {end_date}', exc_info = True)
+    except ValueError:
+        logger.warning(f'Exception schematizing this date: {start_date}', exc_info = True)
+        logger.warning(f'Exception schematizing this date: {end_date}', exc_info = True)
+    return start_date_out, end_date_out, all_day_event
         
-def get_event_organizers(event_website_soup):
+def get_event_description(event_website_soup, event_name):
+    soup_paragraphs = ''
     try:
+        soup_paragraphs = event_website_soup.find('div','tribe-events-single-event-description').text
+    except:
+        logger.warning(f'Exception finding this event description: {event_name}', exc_info = True)
+    return soup_paragraphs
 
-def get_event_venue(event_website_soup):
+def get_event_venue(event_website_soup, event_name):
+    venue = ''
     try:
-        venue_paragraphs = event_website_soup.find('div').find_all('script', 'type':'text/javascript')      
-#def schematize_end_date(eventId, event_endTime):
-#    try:
-#        year = 
-#        datetime_obj = datetime.strptime(' '.join(event_endTime.split(' @ ',1)[0], )
-#        if date
+        venue = event_website_soup.find('dd', class_ = 'tribe-venue').text      
+    except:
+        logger.warning(f'Exception finding this event venue: {event_name}', exc_info = True)
+    return venue.strip()
+
+def get_event_category(event_website_soup, event_name):
+    category = ''
+    try:
+        category = event_website_soup.find('dd', class_ = 'tribe-events-event-categories').text      
+    except:
+        logger.warning(f'Exception finding this event category: {event_name}', exc_info = True)
+    return category
+
+def get_event_cost(event_website_soup, event_name):
+    cost = ''
+    try:
+        cost = event_website_soup.find('dd', class_ = 'tribe-events-event-cost').text
+    except:
+        logger.warning(f'Exception finding this event cost: {event_name}', exc_info = True)
+    return cost.strip()
+    
 def main():
     soup = soupify_event_page()
     if not soup:
@@ -87,30 +128,29 @@ def main():
         event_website_soup = soupify_event_website(event_website)
         event_info = eval(e.get('data-tribejson')) # create dict of info
         start_time = schematize_event_time(event_info['startTime'])
-        start_date = schematize_event_date(event_info['eventId'], event_info['startTime'])
+        dates = schematize_event_dates(event_info['eventId'], event_info['startTime'], event_info['endTime'])
         end_time = schematize_event_time(event_info['endTime'])
-        end_date =  start_date
+        event_description = get_event_description(event_website_soup, event_name)
+        event_organizers = ''
+        event_venue = get_event_venue(event_website_soup, event_name)
+        event_category = get_event_category(event_website_soup, event_name)
+        event_cost = get_event_cost(event_website_soup, event_name)
         
-        event_description = get_event_description(event_website_soup)
-        event_organizers = get_event_organizers(event_website_soup)
-        all_day_event = not(bool(start_time))
-        event_venue = get_event_venue(event_website_soup)
-
         event = {
                  'Event Name': event_name,
                  'Event Website': event_website,
-                 'Event Start Date': start_date,
+                 'Event Start Date': dates[0],
                  'Event Start Time': start_time,
-                 'Event End Date': end_date,
+                 'Event End Date': dates[1],
                  'Event End Time': end_time,
                  'Event Venue Name': event_venue,
                  'Timezone':'America/New_York',
-                 'Event Cost': '',
+                 'Event Cost': event_cost,
                  'Event Description': event_description,
                  'Event Category': event_category,
                  'Event Organizers': event_organizers,
                  'Event Currency Symbol':'$',
-                 'All Day Event':all_day_event}
+                 'All Day Event':dates[2]}
         events_out.append(event)
 
 
