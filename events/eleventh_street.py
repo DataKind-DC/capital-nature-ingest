@@ -143,7 +143,7 @@ def main():
         dates = schematize_event_dates(event_info['eventId'], event_info['startTime'], event_info['endTime'])
         end_time = schematize_event_time(event_info['endTime'])
         event_description = get_event_description(event_website_soup, event_name)
-        event_organizers = ''
+        event_organizers = 'Building Bridges Across the River'
         event_venue = get_event_venue(event_website_soup, event_name)
         event_category = get_event_category(event_website_soup, event_name)
         event_cost = get_event_cost(event_website_soup, event_name)
