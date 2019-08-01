@@ -1,6 +1,7 @@
 from events import montgomery, ans, arlington, casey_trees, fairfax, nps, vnps, \
                    sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens
 from datetime import datetime
+from datetime import timedelta
 import csv
 import linecache
 import boto3
@@ -29,6 +30,32 @@ def unicoder(value):
     else:
         return value
 
+def date_filter(events):
+    '''Given an event, determine if it occurs within the next 7 months
+    Paramters:
+        events (list): a list of dicts, with each dict representing an event
+
+    Returns:
+        events_filtered (list): a list of dicts, with each dict representing an event
+    '''
+    events_filtered = []
+    for e in events:
+        start_date = e.get('Event Start Date','')
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+        except ValueError:
+            continue
+        except Exception as e:
+            logger.error(f"Exception parsing event start date of {start_date}. Here's the event:\n{e}",
+                         exc_info = True)
+            continue
+        too_far_into_the_future = datetime.now() + timedelta(100)
+        date_diff = start - too_far_into_the_future
+        if date_diff <= timedelta(210):
+            events_filtered.append(e)
+
+    return events_filtered
+            
 def tag_events_with_state(events):
     '''
     Tries to prepend event descriptions with the abbreviation of the location's state, e.g. DC, VA, MD
@@ -101,7 +128,7 @@ def get_events():
             source_events = event_source.main()
         except Exception as e:
             logger.critical(f'Exception getting events in {event_source.__name__}:  {e}',
-                           exc_info = True)
+                            exc_info = True)
             #TODO: schema test events and write failures to (separate) log
             continue
         unicoded_source_events = [{k: unicoder(v) for k,v in i.items()} for i in source_events]
