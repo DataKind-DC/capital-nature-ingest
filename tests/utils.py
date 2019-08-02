@@ -142,17 +142,31 @@ def schema_test_types(events):
             # the "%H:%M:%S" format. Examples: '21:30:00' or '00:50:00'
             elif k in time:
                 val = event[k]
-                if val != '':
+                all_day = event.get('All Day Event')
+                if val:
                     try:
                         _dt_val = datetime.strptime(val, "%H:%M:%S")
                     except Exception as e:
-                        if event.get('All Day Event'):
-                            # All day events can have missing values
-                            continue
                         msg = f"{e}: Incorrect time format of {val} found in {k} event field of {event}"
                         raise Exception (msg)
+                elif all_day:
+                    # When true, the Start/End fields can be empty.
+                    continue
+                else:
+                    # Case of no value and not all day
+                    if 'Start' in k:
+                        msg = f"Event can't lack start time and not be all day."
+                        raise Exception (msg)
+                    else:
+                        # If there's no end time, then there must be a start time
+                        start_time = event.get('Event Start Time')
+                        if start_time:
+                            continue
+                        else:
+                            msg = "A non-all-day event must have a start time"
+                            raise Exception (msg)
             # Tests if the event website and event featured image fields contain strings
-            # that pass Django's test as urls
+            # that pass the url regex test
             elif k in url:
                 val = event[k]
                 if not val:
