@@ -17,9 +17,14 @@ def handle_ans_page(soup):
     events = soup.find_all('a', {'class': 'timely-event'})
     event_output = []
     for e in events:
+        all_day = False
         start_date = e.attrs['data-date']
         start_time = e.find('div', {'class': 'timely-start-time'}).text.strip()
-        start_time = schematize_event_time(start_time)
+        if start_time == 'All-day':
+            all_day = True
+            start_time = ''
+        else:
+            start_time = schematize_event_time(start_time)
         event_description = e.find('div', {'class': 'timely-excerpt'}).text.strip()
         event_description = event_description.replace("\n",'').replace("\t","")
         event_data = {
@@ -33,7 +38,7 @@ def handle_ans_page(soup):
             'Event End Time': start_time, #TODO: get end time from event website
             'Event Currency Symbol': '$',
             'Timezone': 'America/New_York',
-            'All Day Event': False,
+            'All Day Event': all_day,
             'Event Category': '',
             'Event Description': event_description,
             'Event Cost': '' #TODO: get cost from event website
