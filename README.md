@@ -39,7 +39,7 @@ pip install -r requirements.txt
 
 Before getting the events, you'll need to have a National Park Service (NPS) API key and an Eventbrite API key. 
  - Get one for NPS [here](https://www.nps.gov/subjects/developer/index.htm)
- - Get one for Eventbrite [here](https://www.eventbrite.com/platform/api). For the Eventbrite token, we've found it helpful to follow the instructions in [this blog post](https://www.appypie.com/faqs/how-can-i-get-my-eventbrite-personal-oauth-token-key). 
+ - Get one for Eventbrite [here](https://www.eventbrite.com/platform/api). For the Eventbrite token, we've found it helpful to follow the instructions in [this blog post](https://www.appypie.com/faqs/how-can-i-get-my-eventbrite-personal-oauth-token-key). After signing up, in the top right dropdown, click on Account Settings > Developer Links sidebar > API Keys then click  on Create API Key or go to this [link](https://www.eventbrite.com/account-settings/apps/new)
  
 Once you've got your tokens, add them as environment variables called `NPS_KEY` and `EVENTBRITE_TOKEN`, respectively. Or simply run the script and input them when prompted.
 
