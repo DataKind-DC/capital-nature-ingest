@@ -136,11 +136,15 @@ def main():
         event_venue = get_event_venue(event_website_soup, event_name)
         event_category = get_event_category(event_website_soup, event_name)
         event_cost = get_event_cost(event_website_soup, event_name)
+        start_time = timing[0]
+        all_day = dates[2]
+        if not start_time and not all_day:
+            continue
         event = {
                  'Event Name': event_name,
                  'Event Website': event_website,
                  'Event Start Date': dates[0],
-                 'Event Start Time': timing[0],
+                 'Event Start Time': start_time,
                  'Event End Date': dates[1],
                  'Event End Time': timing[1],
                  'Event Venue Name': event_venue,
@@ -150,7 +154,7 @@ def main():
                  'Event Category': event_category,
                  'Event Organizers': event_organizers,
                  'Event Currency Symbol':'$',
-                 'All Day Event': dates[2]}
+                 'All Day Event': all_day}
         events_out.append(event)
 
     return events_out
