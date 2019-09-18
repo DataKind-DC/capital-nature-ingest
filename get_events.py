@@ -1,5 +1,5 @@
 from events import montgomery, ans, arlington, casey_trees, fairfax, nps, vnps, \
-                   sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street
+                   sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street, dc_audubon
 from datetime import datetime
 from datetime import timedelta
 import csv
@@ -121,7 +121,7 @@ def get_events():
         events (list): a list of dicts, with each dict representing a single event.
     '''
     event_sources = [montgomery, ans, arlington, casey_trees, fairfax, nps, vnps,
-                     sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street]
+                     sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street, dc_audubon]
     events = []
     for event_source in event_sources:
         try:
