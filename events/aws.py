@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import sys
 
 import requests
 from bs4 import BeautifulSoup
@@ -11,16 +12,27 @@ def get_event_times(event_soup):
     strong_texts = [strong.get_text().replace('<strong>','') for strong in strongs]
     # do this to avoid IndexError below when slicing text
     strong_texts = [f'{s} ' for s in strong_texts]
-    start, end = [text.strip() for text in strong_texts if text[0].isdigit()]
-    # datetime conversions
-    start_dt = datetime.strptime(start, "%m/%d/%y %I:%M %p")
-    start_date = start_dt.strftime("%Y-%m-%d")
-    start_time = start_dt.strftime("%H:%M:%S")
-    end_dt = datetime.strptime(end, "%m/%d/%y %I:%M %p")
-    end_date = end_dt.strftime("%Y-%m-%d")
-    end_time = end_dt.strftime("%H:%M:%S")
+    date_data = [text.strip() for text in strong_texts if text.strip()[0].isdigit()]
+    try:
+        start, end = date_data
+        start_dt = datetime.strptime(start, "%m/%d/%y %I:%M %p")
+        start_date = start_dt.strftime("%Y-%m-%d")
+        start_time = start_dt.strftime("%H:%M:%S")
+        end_dt = datetime.strptime(end, "%m/%d/%y %I:%M %p")
+        end_date = end_dt.strftime("%Y-%m-%d")
+        end_time = end_dt.strftime("%H:%M:%S")
+        all_day = False
+    except ValueError:
+        # occurs when there's only one date to extract, meaning there's no end time
+        start = date_data[0]
+        start_dt = datetime.strptime(start, "%m/%d/%y")
+        start_date = start_dt.strftime("%Y-%m-%d")
+        start_time = ''
+        end_time = ''
+        end_date = start_date
+        all_day = True
     
-    return start_date, start_time, end_date, end_time
+    return start_date, start_time, end_date, end_time, all_day
 
 def get_event_categories(event_soup):
     i_tag = event_soup.find('i', class_ = 'fa fa-folder fa-fw')
@@ -93,7 +105,7 @@ def main():
         event_description = get_event_description(event_li)
         event_url = get_event_url(event_li)
         event_soup = soupify_event_url(event_url)
-        start_date, start_time, end_date, end_time = get_event_times(event_soup)
+        start_date, start_time, end_date, end_time, all_day = get_event_times(event_soup)
         event_categories = get_event_categories(event_soup)
         
         event_venue = get_event_venue(event_soup)
@@ -112,7 +124,7 @@ def main():
             'Timezone': 'America/New_York',
             'Event Organizers': 'Anacostia Watershed Society',
             'Event Category': event_categories,
-            'All Day Event': False
+            'All Day Event': all_day
         }
         events.append(event)
         
