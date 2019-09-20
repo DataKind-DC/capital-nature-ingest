@@ -77,8 +77,12 @@ class EventbriteIngester:
     def handle_location(self, event, keys):
         id = event[keys[0]]
         self.load_venue(id)
+        if self.venues[id]['name'] == None:
+            alt_venue_name =self.venues[id]['address']['localized_address_display'].split(',')[0]
+        else:
+            alt_venue_name = self.venues[id]['name']
         return {
-            'name': self.venues[id]['name'],
+            'name': alt_venue_name,
             'streetAddress': self.venues[id]['address']['address_1'],
             'addressLocality': self.venues[id]['address']['city'],
             'addressRegion': self.venues[id]['address']['region'],
