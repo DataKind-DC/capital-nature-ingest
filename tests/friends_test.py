@@ -7,7 +7,7 @@ from .utils import schema_test_required, schema_test_all, schema_test_types
 
 class KenliworthTestCase(unittest.TestCase):
     '''
-    Test cases for Kenilworth events.
+    Test cases for Friends of Kenilworth events.
     '''
 
     def setUp(self):

@@ -89,8 +89,17 @@ def get_event_venue(event_website_soup, event_name):
     venue = ''
     try:
         venue = event_website_soup.find('dd', class_ = 'tribe-venue').text
-    except:
-        logger.warning(f'Exception finding the event venue for {event_name}', exc_info = True)
+    except AttributeError:
+        #try to look in dd tag for the dl tag
+        dls = event_website_soup.find_all('dl')
+        for dl in dls:
+            _venue = dl.find('dd', {'class': 'tribe-venue'})
+            if _venue:
+                venue += _venue.get_text()
+                break
+    except Exception as e:    
+        logger.warning(f'Exception {e} finding the event venue for {event_name}', 
+                       exc_info = True)
     return venue.strip()
 
 def get_event_category(event_website_soup, event_name):
@@ -107,7 +116,9 @@ def get_event_category(event_website_soup, event_name):
 def get_event_cost(event_website_soup, event_name):
     cost = ''
     try:
-        cost = event_website_soup.find('dd', class_ = 'tribe-events-event-cost').text
+        cost = event_website_soup.find('dd', class_ = 'tribe-events-event-cost').text.strip()
+        if cost.lower() == 'free':
+            return '0'
         str_prices = re.findall(r"[-+]?\d*\.\d+|\d+", cost)
         float_prices = [float(f) for f in str_prices]
         cost = str(math.ceil(max(float_prices)))
@@ -129,11 +140,14 @@ def main():
         event_name = e.select('h3 > a')[0].text
         event_website =  e.select('h3 > a')[0].get("href")
         event_website_soup = soupify_event_website(event_website)
+        event_venue = get_event_venue(event_website_soup, event_name)
+        if not event_venue:
+            continue
         timing = get_event_timing(event_website_soup)
         dates = get_event_dates(event_website_soup)
         event_description = get_event_description(event_website_soup, event_name)
         event_organizers = 'Building Bridges Across the River'
-        event_venue = get_event_venue(event_website_soup, event_name)
+        
         event_category = get_event_category(event_website_soup, event_name)
         event_cost = get_event_cost(event_website_soup, event_name)
         start_time = timing[0]
@@ -159,4 +173,5 @@ def main():
 
     return events_out
 
-main()
+if __name__ == '__main__':
+    events = main()

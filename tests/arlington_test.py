@@ -5,9 +5,9 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from events.arlington import main
 from .utils import schema_test_required, schema_test_all, schema_test_types
 
-class DUGTestCase(unittest.TestCase):
+class ArlingtonTestCase(unittest.TestCase):
     '''
-    Test cases for DUG events.
+    Test cases for Arlington events.
     '''
 
     def setUp(self):
