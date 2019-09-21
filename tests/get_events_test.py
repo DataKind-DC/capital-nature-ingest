@@ -8,7 +8,7 @@ import get_events
 class GetEventsTestCase(unittest.TestCase):
 
     def setUp(self):
-        pass
+        self.maxDiff = None
 
     def tearDown(self):
         pass
@@ -36,6 +36,11 @@ class GetEventsTestCase(unittest.TestCase):
     def test_unicoder_quotes(self):
         result = get_events.unicoder('â€œ')
         expected = '“'
+        self.assertEqual(result, expected)
+
+    def test_unicoder_accents(self):
+        result = get_events.unicoder('áéíóúüñ¿¡')
+        expected = 'áéíóúüñ¿¡'
         self.assertEqual(result, expected)
 
     def test_date_filter(self):
