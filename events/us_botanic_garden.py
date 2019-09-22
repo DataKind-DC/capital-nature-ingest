@@ -13,9 +13,10 @@ def get_event_ids(num_months):
     https://www.usbg.gov/programs
     is populated from a JSON returned by a request to DoubleKnot's server on page load.
 
-    This function makes this request to retrieve an ID for each event, which is used to generating the event detail
-    URL in `get_event_info`. I considered just retrieving events for each month until I found a month without events,
-    but recurring events mean that might never happen.
+    This function makes that request `num_months` times, with different start offsets, to retrieve `num_months` worth of
+    event IDs. The IDs are used in `get_event_info` to generate the event detail URLs.
+    URL in `get_event_info`.
+
     :param num_months: number of months to retrieve data for - should be an int > 0
     :return: set of event ids
     '''
@@ -23,18 +24,19 @@ def get_event_ids(num_months):
         ("calendarid", "dkdpm"),
     )
 
-    # most of these parameters are copied directly from the request that ran when the calendar loaded in
+    # Most of these parameters are copied directly from the request that ran when the calendar loaded in
     # my browser. Even changing "visibleEnd" to greater than a month out seems to only retrieve a month's worth
-    # of data, so just going to run the request with the start date offset from 0 to num_months - 1
+    # of data, so we will run the request with a start date offset from the first of today's month from
+    # 0 to num_months - 1
     base_req_data = {
         "action": "Init",
         "header": {
             "control": "dpm",
             "id": "DKdpm",
             "v": "218-lite",
-            "visibleStart": None,
+            "visibleStart": None, # populated below
             "visibleEnd": "9999-12-31T23:59:59",
-            "startDate": None,
+            "startDate": None, # populated below
             "reqStartDate": "9999-12-31T23:59:59",
             "reqEndDate": "9999-12-31T23:59:59",
             "orgKey": 4153,
@@ -50,15 +52,16 @@ def get_event_ids(num_months):
     }
 
 
-    # seen_event_ids needs to be a set since sometimes you get overlapping events from adjacent months used to
-    # pad the start and end of the calendar view
+    # `seen_event_ids` needs to be a set since sometimes the request returns overlapping events from adjacent months
+    # (these are used to pad the start and end of the calendar view)
     seen_event_ids = set()
     today = datetime.datetime.now()
     base_month = today.month
     base_year = today.year
     for month_offset in range(num_months):
         req_data = copy.deepcopy(base_req_data)
-        # request everything starting from the first of the current month so users can see entire month's history
+        # request all events starting from the first of the current month, even if the current date is later,
+        # so users can see entire month's history if needed
         curr_year = base_year
         curr_month = month_offset+base_month
         if curr_month > 12:
