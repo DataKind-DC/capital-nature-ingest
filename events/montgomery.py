@@ -59,16 +59,11 @@ def parse_event_date(event_date, event_website):
     start_date = schematize_event_date(" ".join(split_date[:4]))
     try:
         start_time = schematize_event_time(split_date[-2])
-    except ValueError:
-        logger.warning(f"Exception schematizing this event time '{split_date}' from \
-                        {event_website}", exc_info=True)
-        start_time = ''
-    try:
         end_time = schematize_event_time(split_date[-1])
     except ValueError:
-        logger.warning(f"Exception schematizing this event time '{split_date}' from \
-                        {event_website}", exc_info=True)
-        end_time = ''
+        #occurs for multi-day events, with some days being all-day. We can't support this now
+        start_time = None
+        end_time = None
 
     return start_date, start_time, end_time
 
@@ -165,7 +160,6 @@ def schematize_event_time(event_time):
     '''
     Converts an event time like '9:00am' to 24hr time like '09:00:00'
     '''
-    #ValuErrors will be caught where this function is called in order to better inspect err
     datetime_obj = datetime.strptime(event_time, "%I:%M%p")
     schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
 

@@ -5,9 +5,9 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from events.city_blossoms import main
 from .utils import schema_test_required, schema_test_all, schema_test_types
 
-class DUGTestCase(unittest.TestCase):
+class CityBlossomsTestCase(unittest.TestCase):
     '''
-    Test cases for DUG events.
+    Test cases for City Blossoms events.
     '''
 
     def setUp(self):

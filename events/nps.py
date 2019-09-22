@@ -306,10 +306,9 @@ def schematize_nps_event(nps_event):
                                           }
                 schematized_nps_events.append(schematized_nps_event)
     else:
-        #TODO: when this occurs, it seems there's a discrepancy between the NPS API results
+        #it seems there's a discrepancy between the NPS API results
         #and what's displayed on an event's website. This might be an issue
-        #to raise with the NPS API maintainers.
-        logger.warning(f'This event did not have equal start and end dates: {nps_event}')
+        #to raise with the NPS API maintainers. Until then, ignore
         schematized_nps_events = []
 
     return schematized_nps_events

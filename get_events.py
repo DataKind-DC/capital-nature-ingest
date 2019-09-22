@@ -1,18 +1,29 @@
 from events import montgomery, ans, arlington, casey_trees, fairfax, nps, vnps, \
                    sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street, \
-                   us_botanic_garden
+                   dc_audubon, us_botanic_garden
 from datetime import datetime
 from datetime import timedelta
 import csv
 import linecache
 import boto3
 import re
+import string
 import sys
 import os
 import geocoder
 import logging
 
 logger = logging.getLogger(__name__)
+
+# defined globally for unicoder function
+chars_to_keep = ' '
+chars_to_keep += string.punctuation
+chars_to_keep += string.ascii_lowercase
+chars_to_keep += string.ascii_uppercase
+chars_to_keep += string.digits
+latinate_chars = 'áéíóúüñ¿¡'
+chars_to_keep += latinate_chars
+sub_re = re.compile(rf'[^{chars_to_keep}]')
 
 def unicoder(value):
     '''
@@ -24,12 +35,22 @@ def unicoder(value):
     Returns:
         If value is a string, return a utf-8 decoded string. Otherwise return value.
     '''
-    if isinstance(value, str):
-        s = value.encode('windows-1252', errors = 'ignore').decode("utf8", errors='ignore')
-        s = re.sub(r' +', ' ', s)
-        return s
-    else:
+    if not isinstance(value, str):
         return value
+    value = re.sub(r' +', ' ', value)
+    tokens = value.split()
+    v = ''
+    for token in tokens:
+        if not any(s in token for s in latinate_chars):
+            u_token = token.encode('windows-1252', errors = 'ignore').decode("utf8", errors='ignore')
+            v += f'{u_token} '
+        else:
+            u_token = re.sub(sub_re, '', value)
+            v += f'{u_token} '
+    v = re.sub(r' +', ' ', v)
+    v = v.strip()
+
+    return v
 
 def date_filter(events):
     '''Given an event, determine if it occurs within the next 7 months
@@ -123,7 +144,7 @@ def get_events():
     '''
     event_sources = [montgomery, ans, arlington, casey_trees, fairfax, nps, vnps,
                      sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street,
-                     us_botanic_garden]
+                     dc_audubon, us_botanic_garden]
     events = []
     for event_source in event_sources:
         try:
