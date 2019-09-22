@@ -121,8 +121,9 @@ def get_events():
     Returns:
         events (list): a list of dicts, with each dict representing a single event.
     '''
-    event_sources = [us_botanic_garden, montgomery, ans, arlington, casey_trees, fairfax, nps, vnps,
-                     sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street]
+    event_sources = [montgomery, ans, arlington, casey_trees, fairfax, nps, vnps,
+                     sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street,
+                     us_botanic_garden]
     events = []
     for event_source in event_sources:
         try:
