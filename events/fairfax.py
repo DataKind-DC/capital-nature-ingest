@@ -37,6 +37,9 @@ def get_event_date_times(soup, event_website):
     start_date = get_event_date_from_event_website(event_website)
     try:
         event_time_div_text = soup.find_all('h5')[-1].text
+        if not event_time_div_text:
+            #no event time
+            return None, None, None, None
     except Exception as e:
         logger.error(f'Exception getting event datetimes from {event_website}: {e}', 
                     exc_info = True)
@@ -44,7 +47,9 @@ def get_event_date_times(soup, event_website):
     if start_date:
         end_date = start_date
     else:
-        start_date, end_date = get_event_dates(event_time_div_text)
+        start_date, end_date = get_event_dates(event_time_div_text, event_website)
+        if not start_date:
+            return None, None, None, None
     start_time, end_time = get_event_times(event_time_div_text)
         
     return start_date, end_date, start_time, end_time
@@ -101,7 +106,7 @@ def get_event_venue(soup):
 
     return event_venue
 
-def get_event_dates(event_time_div_text):
+def get_event_dates(event_time_div_text, event_website):
     '''
     Given the text from the event time div (e.g. '3/06/2019 8:00 am to 3/06/2019 8:00 pm'),
     extract the event's start and end dates.
@@ -116,7 +121,11 @@ def get_event_dates(event_time_div_text):
     '''
     date_re = re.compile(r'[\d]{1,2}/[\d]{1,2}/[\d]{4}')
     dates = re.findall(date_re, event_time_div_text)
-    start_date = dates[0]
+    try:
+        start_date = dates[0]
+    except IndexError:
+        logger.error(f'Unable to grab start date from {event_website}')
+        return None, None
     if len(dates) <= 1:
         end_date = start_date
     else:
