@@ -144,7 +144,7 @@ def get_events():
     '''
     event_sources = [montgomery, ans, arlington, casey_trees, fairfax, nps, vnps,
                      sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street,
-                     dc_audubon, us_botanic_garden]
+                     dc_audubon, us_botanic_garden, riverkeeper]
     events = []
     for event_source in event_sources:
         try:
