@@ -140,9 +140,11 @@ from events.ans import main # change this line to import events.<your_file>
 ...
 ```
 
-4. To verify that your scraper can pass the tests, run the following:
+4. To verify that your scraper can pass the tests, `cd` to the root of the repo, make sure you've activate the virtual environemnt, and then run the test:
 
 ```bash
+cd path/to/root/of/this/repo #if you're not already here
+source env/bin/activate #if you haven't already done this
 python3 -W ignore -m unittest <name_of_your_scraper>_test.py
 ```
 
