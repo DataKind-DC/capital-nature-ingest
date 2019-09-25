@@ -6,9 +6,9 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from events.riverkeeper import main
 from .utils import schema_test_required, schema_test_all, schema_test_types
 
-class ANSTestCase(unittest.TestCase):
+class RiverkeeperTestCase(unittest.TestCase):
     '''
-    Test cases for ANS events.
+    Test cases for Anacostia Riverkeeper events.
     '''
 
     def setUp(self):
