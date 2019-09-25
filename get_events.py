@@ -1,5 +1,6 @@
 from events import montgomery, ans, arlington, casey_trees, fairfax, nps, vnps, \
-                   sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street, dc_audubon
+                   sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street, \
+                   dc_audubon, us_botanic_garden
 from datetime import datetime
 from datetime import timedelta
 import csv
@@ -48,7 +49,7 @@ def unicoder(value):
             v += f'{u_token} '
     v = re.sub(r' +', ' ', v)
     v = v.strip()
-    
+
     return v
 
 def date_filter(events):
@@ -76,14 +77,14 @@ def date_filter(events):
             events_filtered.append(e)
 
     return events_filtered
-            
+
 def tag_events_with_state(events):
     '''
     Tries to prepend event descriptions with the abbreviation of the location's state, e.g. DC, VA, MD
-    
+
     Parameters:
         events (list): a list of dictionaries, with each dict representing an event
-        
+
     Returns:
         events_with_states (list): the updated list of dictionaries, with each dict representing an event
     '''
@@ -94,7 +95,7 @@ def tag_events_with_state(events):
         event_organizer = event['Event Organizers']
         event_venue = event['Event Venue Name']
         va_orgs = ['Arlington Parks', 'Fairfax Parks']
-        dc_orgs = ['National Park Service, Rock Creek Park']
+        dc_orgs = ['National Park Service, Rock Creek Park', 'United States Botanic Garden']
         md_orgs = ['Montgomery Parks']
         if event_organizer in va_orgs or 'virginia' in event_venue.lower():
             event_state = '(VA)'
@@ -104,7 +105,7 @@ def tag_events_with_state(events):
             event_state = '(MD)'
         else:
             event_state = None
-        if not event_state: 
+        if not event_state:
             if event_venue[0].isdigit():
                 m = state_abbreviation.findall(event_venue)
                 if 'DC' in m:
@@ -131,7 +132,7 @@ def tag_events_with_state(events):
             updated_event_description = f'{event_state} {event_description}'
             event['Event Description'] = updated_event_description
         events_with_states.append(event)
-    
+
     return events_with_states
 
 def get_events():
@@ -142,7 +143,8 @@ def get_events():
         events (list): a list of dicts, with each dict representing a single event.
     '''
     event_sources = [montgomery, ans, arlington, casey_trees, fairfax, nps, vnps,
-                     sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street, dc_audubon]
+                     sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street,
+                     dc_audubon, us_botanic_garden]
     events = []
     for event_source in event_sources:
         try:
@@ -186,7 +188,7 @@ def events_to_csv(events, is_local = True, bucket = None):
     if not os.path.exists(os.path.join(os.getcwd(), 'data')):
         os.mkdir(os.path.join(os.getcwd(), 'data'))
     with open(out_path,
-              mode = 'w', 
+              mode = 'w',
               encoding = 'utf-8',
               errors = 'ignore') as f:
         writer = csv.DictWriter(f, fieldnames = fieldnames)
@@ -202,7 +204,7 @@ def events_to_csv(events, is_local = True, bucket = None):
 
 def get_past_venues():
     '''
-    Returns a set of event venues from current venue csv in temp/ (if it exists) 
+    Returns a set of event venues from current venue csv in temp/ (if it exists)
     and then deletes that file (if it exists) as it will soon be replaced by a new,
     more updated one.
 
@@ -231,12 +233,12 @@ def get_past_venues():
     past_venues = set(venues)
     past_venues.remove('VENUE NAME')
     os.remove(venue_file)
-    
+
     return past_venues
 
 def venues_to_csv(events, is_local = True, bucket = None):
     '''
-    Void function that writes unique event venues to csv, either locally or to 
+    Void function that writes unique event venues to csv, either locally or to
     an S3 bucket.
 
     Parameters:
@@ -278,7 +280,7 @@ def venues_to_csv(events, is_local = True, bucket = None):
 
 def get_past_organizers():
     '''
-    Returns a set of event organizers from current organizer csv in temp/ (if it exists) 
+    Returns a set of event organizers from current organizer csv in temp/ (if it exists)
     and then deletes that file (if it exists) as it will soon be replaced by a new,
     more updated one.
 
@@ -296,7 +298,7 @@ def get_past_organizers():
         organizer_file = [f for f in data_files if 'organizers-' in f][0]
     except IndexError:
         #IndexError because there's no past file
-        return set() 
+        return set()
     organizer_file = os.path.join(data_path, organizer_file)
     organizers = []
     with open(organizer_file) as f:
@@ -307,12 +309,12 @@ def get_past_organizers():
     past_organizers = set(organizers)
     past_organizers.remove('Event Organizer Name(s) or ID(s)')
     os.remove(organizer_file)
-    
+
     return past_organizers
 
 def organizers_to_csv(events, is_local = True, bucket = None):
     '''
-    Void function that writes unique event organizers to csv, either locally or to 
+    Void function that writes unique event organizers to csv, either locally or to
     an S3 bucket.
 
     Parameters:
@@ -358,11 +360,11 @@ def main(is_local = True, bucket = None):
     events_to_csv(events, is_local, bucket)
     organizers_to_csv(events, is_local, bucket)
     venues_to_csv(events, is_local, bucket)
-    
+
     return events
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s') 
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
     logger.info(f'Found {len(events)} events!')
