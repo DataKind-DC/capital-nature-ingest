@@ -1,11 +1,13 @@
-import requests
-import logging
-import json
-import datetime
 import copy
+import datetime
+import json
+import logging
 import re
-from bs4 import BeautifulSoup
 
+from bs4 import BeautifulSoup
+import requests
+
+logger = logging.getLogger(__name__)
 
 def get_event_ids(num_months):
     '''
@@ -162,7 +164,7 @@ def main():
     try:
         event_ids = get_event_ids(6)
     except Exception as e:
-        logging.exception("Failed to retrieve US Botanic Garden event IDs.")
+        logger.error("{e}: failed to retrieve US Botanic Garden event IDs.", exc_info = True)
 
     # retrieve event information
     event_info = []
@@ -170,7 +172,7 @@ def main():
         try:
             event_info.append(get_event_info(evt_id))
         except Exception as e:
-            logging.exception(f"Failed to retrieve event information for US Botanic Garden event {evt_id}.")
+            logging.exception(f"{e}: failed to retrieve event information for US Botanic Garden event {evt_id}.", exc_info = True)
     return event_info
 
 
