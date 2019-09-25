@@ -131,7 +131,7 @@ def get_event_info(evt_id):
             description += text+"\n"
 
     evt_info = {
-        "Event Name": evt_name,
+        "Event Name": evt_name.title(),
         "Event Description": description,
         "Event Start Date": start_date,
         "Event Start Time": start_time,
@@ -143,7 +143,7 @@ def get_event_info(evt_id):
         "Event Organizers": "United States Botanic Garden",
         "Event Cost": cost,
         "Event Currency Symbol": "$",
-        "Event Category": evt_category,
+        "Event Category": evt_category.title(),
         "Event Website": url,
         "Event Featured Image": featured_image
     }
