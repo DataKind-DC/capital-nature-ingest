@@ -65,6 +65,7 @@ def schematize_event(event_data, event_websites):
                  'Event Description': event_description,
                  'Event Organizers': 'Audubon Naturalist Society',
                  'Event Currency Symbol':'$',
+                 'Event Category':'',
                  'Event Featured Image': image,
                  'All Day Event': False}
         events.append(event)
