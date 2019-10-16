@@ -44,8 +44,8 @@ def schematize_event(event_data, event_websites):
     for i,e in enumerate(event_data):
         event_name = e.get('name')
         event_website = event_websites[i]
-        start_date, start_time = schematize_event_time(e.get('startDate'))
-        end_date, end_time = schematize_event_time(e.get('endDate'))
+        start_time, end_date = schematize_event_time(e.get('startDate'))
+        end_time, end_date = schematize_event_time(e.get('endDate'))
         event_venue = e.get('location',{}).get('name')
         event_description = e.get('description')
         image = e.get('image','')
@@ -79,15 +79,15 @@ def schematize_event_time(event_time):
     time = time[time.index("-")+1:]
 
     try:
-        datetime_obj = datetime.strptime(time, "%H-%M-%S")
-        schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
+        time_obj = datetime.strptime(time, "%H-%M-%S")
+        schematized_event_time = datetime.strftime(time_obj, "%H:%M:%S")
     except ValueError:
         logger.warning(f'Exception schematizing this time: {time}', exc_info=True)
         schematized_event_time = ''
         
     try:
-        datetime_obj = datetime.strptime(date, "%Y-%m-%d")
-        schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        schematized_event_date = datetime.strftime(date_obj, "%Y-%m-%d")
     except ValueError:
         logger.warning(f'Exception schematizing this time: {date}', exc_info=True)
         schematized_event_date = ''
