@@ -1,14 +1,14 @@
 from datetime import datetime
+import json
 import logging
-import sys
-import unicodedata
+import re
 
 import bs4
 import requests
 
 logger = logging.getLogger(__name__)
 
-def soupify_event_page(url = 'https://anshome.org/events-calendar/'):
+def soupify_page(url = 'https://anshome.org/events-calendar/'):
     try:
         r = requests.get(url)
     except Exception as e:
@@ -19,93 +19,41 @@ def soupify_event_page(url = 'https://anshome.org/events-calendar/'):
     
     return soup
 
-def soupify_event_website(event_website):
-    try:
-        r = requests.get(event_website)
-    except Exception as e:
-        logger.critical(f'Exception making GET to {event_website}: {e}', exc_info = True)
-        return
-    content = r.content
-    soup = bs4.BeautifulSoup(content, 'html.parser')
+def get_event_data(soup):
+    scripts = soup.find_all('script', {'type':'application/ld+json'})
+    comma_hugged_by_quotes = re.compile(r'(?<!"),(?!")')
+    event_data = []
+    for event in scripts:
+        e = event.string.replace("\n",'').replace("\t",'').replace("\r",'').replace("@","").strip()
+        e = re.sub(r'  +','',e)
+        e = re.sub(comma_hugged_by_quotes,"",e)
+        e = e.replace('""','","')
+        e = json.loads(e)
+        event_data.append(e)
     
-    return soup
+    return event_data
 
-def get_event_description(event_website_soup):
-    '''
-    Scrape the event description from the event website.
-    '''
-    try:
-        eventon_full_description = event_website_soup.find('div', {'class':'eventon_desc_in'})
-        p_tags = eventon_full_description.find_all('p')
-        event_description = "".join(unicodedata.normalize('NFKD',f'{p.get_text()} ') for p in p_tags).strip()
-    except AttributeError:
-        #AttributeError because no divs found
-        p_tags = event_website_soup.find_all('p')
-        p_tags_text = [p.get_text() for p in p_tags]
-        if not p_tags_text:
-            event_description = ''
-        else:
-            event_description = max(p_tags_text, key = len)
-            event_description = unicodedata.normalize('NFKD', event_description).strip()
-    if not event_description:
-        event_desc = event_website_soup.find('div', {'id':'event_desc'})
-        if event_desc:
-            event_description = unicodedata.normalize('NFKD', event_desc.get_text())
-        else:
-            event_description = 'See event website.'
-            
-    return event_description
-
-def schematize_event_date(event_date):
-    '''
-    Converts a date like '2019-12-2' to '2019-12-02'
-    '''
-    datetime_obj = datetime.strptime(event_date, "%Y-%m-%d")
-    schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
-    schematized_event_date
-    
-    return schematized_event_date
-
-def schematize_event_time(event_time):
-    '''
-    Converts a time string like '1:30 pm' to 24hr time like '13:30:00'
-    '''
-    try:
-        datetime_obj = datetime.strptime(event_time, "%I:%M %p")
-        schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
-    except ValueError:
-        logger.warning(f'Exception schematizing this date: {event_time}', exc_info = True)
-        schematized_event_time = ''
-    
-    return schematized_event_time
-
-def main():
-    soup = soupify_event_page()
-    if not soup:
-        sys.exit(1)
+def get_event_websites(soup):
     events_divs = soup.find_all('div', {'class': 'event'})
+    event_websites = [e.find('a',{}).get('href') for e in events_divs]
+    
+    return event_websites
+
+def schematize_event(event_data, event_websites):
     events = []
-    for e in events_divs:
-        event_name = e.find('span', {'class': 'evcal_event_title'}).text
-        event_website =  e.find('a')['href']
-        event_website_soup = soupify_event_website(event_website)
-        span_time = e.find('p').find('span', {'class': 'evo_time'})
-        start_time = schematize_event_time(span_time.find('span', {'class': 'start'}).text)
-        end_date = schematize_event_date(e.find('time', {'itemprop': 'endDate'})['datetime'])
-        start_date = schematize_event_date(e.find('time', {'itemprop': 'startDate'})['datetime'])
-        end_time = schematize_event_time(span_time.find('span', {'class': 'end'}).text.replace('- ', ''))
-        event_description = get_event_description(event_website_soup)
-        event_category = ''
-        event_organizers = 'Audubon Naturalist Society'
-        all_day_event = False
-        try:
-            event_venue = e.find('span', {'itemprop': 'name'}).get_text()
-        except AttributeError:
-            event_venue = "See event website"
-        event_venue = event_venue if event_venue else "See event website"
-        #TODO: try to get the event cost
-        event = {
-                 'Event Name': event_name,
+    for i,e in enumerate(event_data):
+        event_name = e.get('name')
+        event_website = event_websites[i]
+        start_time, start_date = schematize_event_time(e.get('startDate'))
+        end_time, end_date = schematize_event_time(e.get('endDate'))
+        event_venue = e.get('location',{}).get('name')
+        event_description = e.get('description')
+        image = e.get('image','')
+        if not all([event_name, event_website, start_date, event_venue, event_description]):
+            logger.warning(f"Unable to extract all data for ANS event:\n{e}")
+            continue
+
+        event = {'Event Name': event_name,
                  'Event Website': event_website,
                  'Event Start Date': start_date,
                  'Event Start Time': start_time,
@@ -115,14 +63,47 @@ def main():
                  'Timezone':'America/New_York',
                  'Event Cost': '',
                  'Event Description': event_description,
-                 'Event Category': event_category,
-                 'Event Organizers': event_organizers,
+                 'Event Organizers': 'Audubon Naturalist Society',
                  'Event Currency Symbol':'$',
-                 'All Day Event':all_day_event}
+                 'Event Category':'',
+                 'Event Featured Image': image,
+                 'All Day Event': False}
         events.append(event)
-    
+        
     return events
 
+def schematize_event_time(event_time):
+    '''
+    Converts a time string like 2019-10-5T08-08-00-00.
+    '''
+    date, time = event_time.split("T")
+    time = time[time.index("-")+1:]
+
+    try:
+        time_obj = datetime.strptime(time, "%H-%M-%S")
+        schematized_event_time = datetime.strftime(time_obj, "%H:%M:%S")
+    except ValueError:
+        logger.warning(f'Exception schematizing this time: {time}', exc_info=True)
+        schematized_event_time = ''
+        
+    try:
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        schematized_event_date = datetime.strftime(date_obj, "%Y-%m-%d")
+    except ValueError:
+        logger.warning(f'Exception schematizing this time: {date}', exc_info=True)
+        schematized_event_date = ''
+            
+    return schematized_event_time, schematized_event_date
+
+def main():
+    soup = soupify_page()
+    if not soup:
+        return []
+    event_data = get_event_data(soup)
+    event_websites = get_event_websites(soup)
+    events = schematize_event(event_data, event_websites)
+    
+    return events
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
