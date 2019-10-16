@@ -44,7 +44,7 @@ def schematize_event(event_data, event_websites):
     for i,e in enumerate(event_data):
         event_name = e.get('name')
         event_website = event_websites[i]
-        start_time, end_date = schematize_event_time(e.get('startDate'))
+        start_time, start_date = schematize_event_time(e.get('startDate'))
         end_time, end_date = schematize_event_time(e.get('endDate'))
         event_venue = e.get('location',{}).get('name')
         event_description = e.get('description')
