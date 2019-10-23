@@ -5,9 +5,9 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from events.dc_audubon import main
 from .utils import schema_test_required, schema_test_all, schema_test_types
 
-class DUGTestCase(unittest.TestCase):
+class DcAudobonTestCase(unittest.TestCase):
     '''
-    Test cases for DUG events.
+    Test cases for DC Audobon events.
     '''
 
     def setUp(self):
