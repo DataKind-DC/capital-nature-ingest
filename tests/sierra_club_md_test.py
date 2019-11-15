@@ -5,9 +5,9 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from events.sierra_club_md import main
 from .utils import schema_test_required, schema_test_all, schema_test_types
 
-class ANSTestCase(unittest.TestCase):
+class SierraClubMDTestCase(unittest.TestCase):
     '''
-    Test cases for ANS events.
+    Test cases for Sierra Club MD events.
     '''
 
     def setUp(self):
