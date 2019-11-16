@@ -83,7 +83,7 @@ Doing ‘git status’ again should give something like:
 
 5. `commit` your changes to your local branch
 
-Once you've added files, you're ready to commit your changes to your local repository with an explanatory message. Use the `-m` flag if you don't want to include a full commit body. See the [style guide](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md) for details on how to format your commit messags.
+Once you've added files, you're ready to commit your changes to your local repository with an explanatory message. Use the `-m` flag if you don't want to include a full commit body. See the [style guide](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md) for details on how to format your commit messages.
 
 ```bash
 git commit -m "ENH: add scraper for awesome new source (#123)"
@@ -140,7 +140,7 @@ from events.ans import main # change this line to import events.<your_file>
 ...
 ```
 
-4. To verify that your scraper can pass the tests, `cd` to the root of the repo, make sure you've activate the virtual environemnt, and then run the test:
+4. To verify that your scraper can pass the tests, `cd` to the root of the repo, make sure you've activate the virtual environment, and then run the test:
 
 ```bash
 cd path/to/root/of/this/repo #if you're not already here
@@ -154,7 +154,7 @@ python3 -W ignore -m unittest tests/<name_of_your_scraper>_test.py
 
 So you've written some code, added your tests, and passed your tests. Now you'r ready to ask for a code review! Let's initiate a Pull Request.
 
-A pull request is how code from a local repository becomes available to the GitHub community and can be looked at and eventually merged into the master version. 
+A pull request is how code from a local repository becomes available to the GitHub community and can be looked at and eventually merged into the master version.
 
 To submit a pull request:
 
@@ -215,7 +215,7 @@ We use GitHub issues to track bugs and make feature requests. [Open a new issue]
 - A quick summary and/or background
 - Steps to reproduce
   - Be specific!
-  - Give sample code if you can. 
+  - Give sample code if you can.
 - What you expected would happen
 - What actually happens
 - Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
