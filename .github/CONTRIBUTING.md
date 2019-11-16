@@ -145,7 +145,7 @@ from events.ans import main # change this line to import events.<your_file>
 ```bash
 cd path/to/root/of/this/repo #if you're not already here
 source env/bin/activate #if you haven't already done this
-python3 -W ignore -m unittest <name_of_your_scraper>_test.py
+python3 -W ignore -m unittest tests/<name_of_your_scraper>_test.py
 ```
 
 5. If your tests pass, you'll see `OK` logged to your terminal. If not, inspect the errors that were raised and update your code accordingly. If you've got questions on how to interpret the test output, feel free to [create an issue](https://github.com/DataKind-DC/capital-nature-ingest/issues) or contact us on Slack.
