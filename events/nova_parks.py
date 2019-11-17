@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import os
+import re
 
 import requests
 
@@ -128,6 +129,16 @@ def parse_venue_name(name):
         return name
 
 
+def get_event_cost(event_description):
+    currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
+    event_cost = currency_re.findall(event_description)
+    if len(event_cost) > 0:
+        event_cost = event_cost[0].split(".")[0].replace("$",'')
+        event_cost = ''.join(s for s in event_cost if s.isdigit())
+        return event_cost
+    else:
+        return ''
+
 # Create an EventbriteParser object, parse API, and convert to dict
 def main():
     fona_ingester = EventbriteIngester(15206349515)
@@ -139,12 +150,14 @@ def main():
         end = datetime.datetime.strptime(data['endDate'], '%Y-%m-%dT%H:%M:%SZ')
         # Note: no address, latitude, or longitude fields in the current calendar schema...
         venue_name = parse_venue_name(data['location']['name'])
-        venueAddress = f"{data['location']['streetAddress']} {data['location']['addressLocality']}, {data['location']['addressRegion']} {data['location']['postalCode']}, USA"
-        latitude = float(data['geo']['lat'])
-        longitude = float(data['geo']['lon'])
+        #venueAddress = f"{data['location']['streetAddress']} {data['location']['addressLocality']}, {data['location']['addressRegion']} {data['location']['postalCode']}, USA"
+        #latitude = float(data['geo']['lat'])
+        #longitude = float(data['geo']['lon'])
+        event_description = data['description'].strip('\r')
+        event_cost = get_event_cost(event_description)
         event_data = {
             'Event Name': data['name'],
-            'Event Description': data['description'].strip('\r'),
+            'Event Description': event_description,
             # TODO: replace newlines with double for WP formatting
             'Event Start Date': start.strftime('%Y-%m-%d'),
             'Event Start Time': start.strftime('%H:%M:%S'),
@@ -154,7 +167,7 @@ def main():
             'Timezone': "America/New_York",
             'Event Venue Name': venue_name,
             'Event Organizers': 'NOVA Parks',
-            'Event Cost': "",  # TODO: parse description for cost
+            'Event Cost': event_cost,  
             'Event Currency Symbol': "$",
             'Event Category': "",  # TODO: parse event data for optional category fields if present
             'Event Website': data['url'],

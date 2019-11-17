@@ -12,7 +12,7 @@ event_source_map = {
             'friends_of_kenilworth_gardens':"Friends of Kenilworth Gardens",
             'montgomery':"Montgomery Parks",
             'nova_parks':"NOVA Parks",
-            'sierra_club_md':"Sierra Club MD"
+            'sierra_club_md':"Sierra Club MD",
             'nps':"National Park Service",
             'rcc':"Rock Creek Conservancy",
             'riverkeeper':"Anacostia Riverkeeper",

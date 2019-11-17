@@ -50,17 +50,6 @@ class EventbriteIngester:
                     'https://github.com/DataKind-DC/capital-nature-ingest/tree/master/lambdas/fona/lambda_function.py',
                 'handler': self.handle_fixed},
         }
-        self.currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
-
-
-    def get_event_cost(self, event_description):
-        event_cost = re.findall(self.currency_re, event_description)
-        if len(event_cost) > 0:
-            event_cost = event_cost[0].split(".")[0].replace("$",'')
-            event_cost = ''.join(s for s in event_cost if s.isdigit())
-            return event_cost
-        else:
-            return ''
 
     def get_eventbrite_url(self, endpoint, endpoint_params={}, get_params={'token': EVENTBRITE_TOKEN}):
         eventbrite_api_base_url = 'https://www.eventbriteapi.com/v3'
@@ -142,6 +131,15 @@ def parse_venue_name(name):
     else:
         return name
 
+def get_event_cost(event_description):
+    currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
+    event_cost = currency_re.findall(event_description)
+    if len(event_cost) > 0:
+        event_cost = event_cost[0].split(".")[0].replace("$",'')
+        event_cost = ''.join(s for s in event_cost if s.isdigit())
+        return event_cost
+    else:
+        return ''
 
 # Create an EventbriteParser object, parse API, and convert to dict
 def main():
@@ -158,7 +156,7 @@ def main():
         #latitude = float(data['geo']['lat'])
         #longitude = float(data['geo']['lon'])
         event_description = data['description'].strip('\r')
-        event_cost = self.get_event_cost(event_description)
+        event_cost = get_event_cost(event_description)
         event_data = {
             'Event Name': data['name'],
             'Event Description': event_description,
@@ -170,10 +168,10 @@ def main():
             'All Day Event': "False",
             'Timezone': "America/New_York",
             'Event Venue Name': venue_name,
-            'Event Organizers': 'Friends of the National Arboretum',
+            'Event Organizers': 'Sierra Club MD',
             'Event Cost': event_cost,
             'Event Currency Symbol': "$",
-            'Event Category': "",  # TODO: parse event data for optional category fields if present
+            'Event Category': "", 
             'Event Website': data['url'],
             'Event Featured Image': data['image']
         }
