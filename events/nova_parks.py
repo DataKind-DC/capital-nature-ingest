@@ -130,7 +130,7 @@ def parse_venue_name(name):
 
 # Create an EventbriteParser object, parse API, and convert to dict
 def main():
-    fona_ingester = EventbriteIngester(10605256752)
+    fona_ingester = EventbriteIngester(15206349515)
     fona_ingester.scrape()
     event_output = []
     for e in fona_ingester.output_data.keys():
@@ -139,9 +139,9 @@ def main():
         end = datetime.datetime.strptime(data['endDate'], '%Y-%m-%dT%H:%M:%SZ')
         # Note: no address, latitude, or longitude fields in the current calendar schema...
         venue_name = parse_venue_name(data['location']['name'])
-        #venueAddress = f"{data['location']['streetAddress']} {data['location']['addressLocality']}, {data['location']['addressRegion']} {data['location']['postalCode']}, USA"
-        #latitude = float(data['geo']['lat'])
-        #longitude = float(data['geo']['lon'])
+        venueAddress = f"{data['location']['streetAddress']} {data['location']['addressLocality']}, {data['location']['addressRegion']} {data['location']['postalCode']}, USA"
+        latitude = float(data['geo']['lat'])
+        longitude = float(data['geo']['lon'])
         event_data = {
             'Event Name': data['name'],
             'Event Description': data['description'].strip('\r'),
@@ -153,7 +153,7 @@ def main():
             'All Day Event': "False",
             'Timezone': "America/New_York",
             'Event Venue Name': venue_name,
-            'Event Organizers': 'Anacostia Riverkeeper',
+            'Event Organizers': 'NOVA Parks',
             'Event Cost': "",  # TODO: parse description for cost
             'Event Currency Symbol': "$",
             'Event Category': "",  # TODO: parse event data for optional category fields if present
