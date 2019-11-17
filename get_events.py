@@ -5,9 +5,10 @@ import logging
 
 import boto3
 
-from events import montgomery, ans, arlington, casey_trees, fairfax, nps, vnps, \
-                   sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street, \
-                   dc_audubon, us_botanic_garden, riverkeeper, aws, fona, rcc, nova_parks, sierra_club_md
+from events import ans, arlington, aws, casey_trees, city_blossoms, dc_audubon, dug_network, \
+                   eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, montgomery, \
+                   nova_parks, nps, rcc, riverkeeper, sierra_club_md, sierra_club, tnc, \
+                   us_botanic_garden, vnps
 from log import CsvFormatter
 from tests.utils import schema_test
 from utils import formatters, reports
@@ -23,7 +24,8 @@ def get_events():
     '''
     event_sources = [ans, arlington, aws, casey_trees, city_blossoms, dc_audubon, dug_network,
                      eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, montgomery,
-                     nps, rcc, riverkeeper, sierra_club, tnc, us_botanic_garden, vnps]
+                     nova_parks, nps, rcc, riverkeeper, sierra_club_md, sierra_club, tnc, 
+                     us_botanic_garden, vnps]
     events = []
     for event_source in event_sources:
         try:
