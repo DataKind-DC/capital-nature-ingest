@@ -95,7 +95,7 @@ def handle_ans_page(event_list):
         event['Event End Time'] = end_time
         event['All Day Event'] = False
         event['Timezone'] = "America/New_York"
-        event['Event Organizers'] = "Sierra Club"
+        event['Event Organizers'] = "Sierra Club DC"
         event['Event Cost'] = get_event_cost(e.get('cost','0'))
         event['Event Currency Symbol'] = "$"
         event['Event Category'] = e.get('eventCategory','')

@@ -11,10 +11,12 @@ event_source_map = {
             'fona':"Friends of the National Arboretum",
             'friends_of_kenilworth_gardens':"Friends of Kenilworth Gardens",
             'montgomery':"Montgomery Parks",
+            'nova_parks':"NOVA Parks",
+            'sierra_club_md':"Sierra Club MD"
             'nps':"National Park Service",
             'rcc':"Rock Creek Conservancy",
             'riverkeeper':"Anacostia Riverkeeper",
-            'sierra_club':"Sierra Club",
+            'sierra_club':"Sierra Club DC",
             'tnc':"The Nature Conservancy (Virginia)",
             'us_botanic_garden':"United States Botanic Garden",
             'vnps':"Virginia Native Plant Society"
