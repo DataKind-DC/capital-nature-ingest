@@ -135,7 +135,7 @@ def schematize_event_time(event_time):
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
-        logger.warning(f"Exception schematizing this event time: {event_time}", exc_info=True)
+        logger.error(f"Exception schematizing this event time: {event_time}", exc_info=True)
         schematized_event_time = ''
     
     return schematized_event_time
@@ -230,7 +230,7 @@ def schematize_nps_event(nps_event):
                     if time['sunsetend']:
                         event_start_time, event_end_time = get_sun_times(date)
                     else:
-                        logger.warning(f"Unable to get start and end times for event_id: {nps_event.get('id')}")
+                        logger.error(f"Unable to get start/end times for event_id: {nps_event.get('id')}", exc_info=True)
                         continue
                 else:
                     event_start_time = schematize_event_time(time['timestart'])

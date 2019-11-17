@@ -54,7 +54,7 @@ def schematize_event_time(event_time):
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
-        logger.warning(f'Exception schematzing this event time: {event_time}', 
+        logger.error(f'Exception schematzing this event time: {event_time}', 
                         exc_info = True)
         schematized_event_time = ''
     

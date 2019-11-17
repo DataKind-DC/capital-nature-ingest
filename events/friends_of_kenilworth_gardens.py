@@ -136,9 +136,9 @@ def main():
         start = datetime.datetime.strptime(data['startDate'], '%Y-%m-%dT%H:%M:%SZ')
         end = datetime.datetime.strptime(data['endDate'], '%Y-%m-%dT%H:%M:%SZ')
         # Note: no address, latitude, or longitude fields in the current calendar schema...
-        venueAddress = f"{data['location']['streetAddress']} {data['location']['addressLocality']}, {data['location']['addressRegion']} {data['location']['postalCode']}, USA"
-        latitude = float(data['geo']['lat'])
-        longitude = float(data['geo']['lon'])
+        #venueAddress = f"{data['location']['streetAddress']} {data['location']['addressLocality']}, {data['location']['addressRegion']} {data['location']['postalCode']}, USA"
+        #latitude = float(data['geo']['lat'])
+        #longitude = float(data['geo']['lon'])
         event_data = {
             'Event Name': data['name'],
             'Event Description': data['description'],
