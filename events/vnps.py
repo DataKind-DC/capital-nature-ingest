@@ -222,7 +222,7 @@ def main(categories=[]):
                 date_and_time = tds[0]
                 description_and_location = tds[2]
             except IndexError:
-                logger.warning(f"No table elements (td tags) found in {row}")
+                logger.error(f"No table elements (td tags) found in {row}", exc_info=True)
                 continue
             all_day, start_time, end_time, start_date, end_date = parse_date_and_time(date_and_time)
             event_website, event_name, event_venue, event_categories, event_description = parse_description_and_location(description_and_location)

@@ -41,7 +41,7 @@ def schematize_event_time(event_time):
         datetime_obj = datetime.strptime(event_time.lower(), "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
-        logger.warning(f"Exception schematizing this event time: {event_time}", exc_info=True)
+        logger.error(f"Exception schematizing this event time: {event_time}", exc_info=True)
         schematized_event_time = ''
 
     return schematized_event_time
@@ -66,7 +66,7 @@ def schematize_event_date(event_date):
         datetime_obj = datetime.strptime(event_date, "%Y-%m-%d")
         schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
     except ValueError:
-        logger.warning(f"Exception schematizing this event date: {event_date}", exc_info=True)
+        logger.error(f"Exception schematizing this event date: {event_date}", exc_info=True)
         schematized_event_date = ''
 
     return schematized_event_date
@@ -83,7 +83,7 @@ def handle_ans_page(event_list):
         start_time = schematize_event_time(e.get('startTime',''))
         if not all([start_date, start_time]):
             # Can't save an event w/o these
-            logger.warning(f"Couldn't get a start date/time for {event_website}")
+            logger.error(f"Couldn't get a start date/time for {event_website}", exc_info=True)
             continue
         event['Event Start Date'] = start_date
         event['Event Start Time'] = start_time
@@ -95,7 +95,7 @@ def handle_ans_page(event_list):
         event['Event End Time'] = end_time
         event['All Day Event'] = False
         event['Timezone'] = "America/New_York"
-        event['Event Organizers'] = "Sierra Club"
+        event['Event Organizers'] = "Sierra Club DC"
         event['Event Cost'] = get_event_cost(e.get('cost','0'))
         event['Event Currency Symbol'] = "$"
         event['Event Category'] = e.get('eventCategory','')

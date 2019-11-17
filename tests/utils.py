@@ -1,7 +1,11 @@
 from datetime import datetime
+import logging
+import os
 import re
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 url_regex = re.compile(
             r'^(?:http|ftp)s?://' # http:// or https://
@@ -198,3 +202,10 @@ def schema_test_types(events):
 
     # Return True if we made it to the end without raising an Exception
     return True
+
+def schema_test(events):
+    '''Run all of the tests'''
+    has_correct_types = schema_test_types(events)
+    has_required_fields = schema_test_required(events)
+    has_allowed_fields = schema_test_all(events)
+    return all([has_correct_types, has_required_fields, has_allowed_fields])

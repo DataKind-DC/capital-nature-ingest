@@ -50,7 +50,7 @@ def schematize_event(event_data, event_websites):
         event_description = e.get('description')
         image = e.get('image','')
         if not all([event_name, event_website, start_date, event_venue, event_description]):
-            logger.warning(f"Unable to extract all data for ANS event:\n{e}")
+            logger.error(f"Unable to extract all data for ANS event:\n{e}", exc_info=True)
             continue
 
         event = {'Event Name': event_name,
@@ -83,14 +83,14 @@ def schematize_event_time(event_time):
         time_obj = datetime.strptime(time, "%H-%M-%S")
         schematized_event_time = datetime.strftime(time_obj, "%H:%M:%S")
     except ValueError:
-        logger.warning(f'Exception schematizing this time: {time}', exc_info=True)
+        logger.error(f'Exception schematizing this time: {time}', exc_info=True)
         schematized_event_time = ''
         
     try:
         date_obj = datetime.strptime(date, "%Y-%m-%d")
         schematized_event_date = datetime.strftime(date_obj, "%Y-%m-%d")
     except ValueError:
-        logger.warning(f'Exception schematizing this time: {date}', exc_info=True)
+        logger.error(f'Exception schematizing this time: {date}', exc_info=True)
         schematized_event_date = ''
             
     return schematized_event_time, schematized_event_date

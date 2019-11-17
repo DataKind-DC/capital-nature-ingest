@@ -150,7 +150,7 @@ def schematize_event_date(event_date):
         datetime_obj = datetime.strptime(event_date, "%a. %B %d, %Y")
         schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
     except ValueError:
-        logger.warning(f"Exception schematizing this event date: {event_date}", 
+        logger.error(f"Exception schematizing this event date: {event_date}", 
                         exc_info=True)
         schematized_event_date = ''
     

@@ -82,7 +82,7 @@ def get_event_description(event_website_soup, event_name):
         soup_paragraphs = [i.text for i in soup_paragraphs]
         description = ''.join(soup_paragraphs)
     except:
-        logger.warning(f'Exception finding the event description for {event_name}', exc_info = True)
+        logger.error(f'Exception finding the event description for {event_name}', exc_info = True)
     return description
 
 def get_event_venue(event_website_soup, event_name):
@@ -98,7 +98,7 @@ def get_event_venue(event_website_soup, event_name):
                 venue += _venue.get_text()
                 break
     except Exception as e:    
-        logger.warning(f'Exception {e} finding the event venue for {event_name}', 
+        logger.error(f'Exception {e} finding the event venue for {event_name}', 
                        exc_info = True)
     return venue.strip()
 
@@ -110,7 +110,7 @@ def get_event_category(event_website_soup, event_name):
         #print(event_name)
         category = ''
     except:
-        logger.warning(f'Exception finding the event category for {event_name}', exc_info = True)
+        logger.error(f'Exception finding the event category for {event_name}', exc_info = True)
     return category
 
 def get_event_cost(event_website_soup, event_name):
@@ -126,7 +126,7 @@ def get_event_cost(event_website_soup, event_name):
         #print(event_name)
         cost = ''
     except:
-        logger.warning(f'Exception finding the event cost for {event_name}', exc_info = True)
+        logger.error(f'Exception finding the event cost for {event_name}', exc_info = True)
     return cost
 
 def main():
