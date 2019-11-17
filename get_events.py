@@ -7,7 +7,7 @@ import boto3
 
 from events import montgomery, ans, arlington, casey_trees, fairfax, nps, vnps, \
                    sierra_club, dug_network, city_blossoms, tnc, friends_of_kenilworth_gardens, eleventh_street, \
-                   dc_audubon, us_botanic_garden, riverkeeper, aws, fona, rcc
+                   dc_audubon, us_botanic_garden, riverkeeper, aws, fona, rcc, nova_parks, sierra_club_md
 from log import CsvFormatter
 from tests.utils import schema_test
 from utils import formatters, reports
