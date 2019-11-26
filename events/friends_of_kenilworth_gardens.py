@@ -4,6 +4,8 @@ import os
 
 import requests
 
+logger = logging.getLogger(__name__)
+
 FONA_EVENTBRITE_ORG_ID = 8632128868
 # For a local run, be sure to create an env variable with your Eventbrite token
 # For example:
@@ -129,7 +131,11 @@ def fetch_page(options):
 # Create an EventbriteParser object, parse API, and convert to
 def main():
     fona_ingester = EventbriteIngester(FONA_EVENTBRITE_ORG_ID)
-    fona_ingester.scrape()
+    try:
+        fona_ingester.scrape()
+    except Exception as e:
+        logger.critical(f"Unable to use Eventbrite API for {__name__} due to {e}", exc_info=True)
+        return []
     event_output = []
     for e in fona_ingester.output_data.keys():
         data = fona_ingester.output_data[e]
@@ -161,7 +167,8 @@ def main():
     
     return event_output
 
+#for local testing
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
     events = main()
+    print(len(events))
