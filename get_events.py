@@ -5,7 +5,7 @@ import logging
 
 import boto3
 
-from events import ans, arlington, aws, casey_trees, city_blossoms, dc_audubon, dug_network, \
+from events import ans, arlington, aws, casey_trees, city_blossoms, dc_audubon, \
                    eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, montgomery, \
                    nova_parks, nps, rcc, riverkeeper, sierra_club_md, sierra_club, tnc, \
                    us_botanic_garden, vnps
@@ -22,7 +22,7 @@ def get_events():
     Returns:
         events (list): a list of dicts, with each dict representing a single event.
     '''
-    event_sources = [ans, arlington, aws, casey_trees, city_blossoms, dc_audubon, dug_network,
+    event_sources = [ans, arlington, aws, casey_trees, city_blossoms, dc_audubon,
                      eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, montgomery,
                      nova_parks, nps, rcc, riverkeeper, sierra_club_md, sierra_club, tnc, 
                      us_botanic_garden, vnps]

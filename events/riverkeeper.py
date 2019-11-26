@@ -131,7 +131,11 @@ def parse_venue_name(name):
 # Create an EventbriteParser object, parse API, and convert to dict
 def main():
     fona_ingester = EventbriteIngester(10605256752)
-    fona_ingester.scrape()
+    try:
+        fona_ingester.scrape()
+    except Exception as e:
+        logger.critical(f"Unable to use Eventbrite API for {__name__} due to {e}", exc_info=True)
+        return []
     event_output = []
     for e in fona_ingester.output_data.keys():
         data = fona_ingester.output_data[e]
@@ -168,3 +172,4 @@ def main():
 if __name__ == "__main__":
 
     events = main()
+    print(len(events))
