@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import logging
 import re
@@ -12,7 +12,7 @@ def soupify_page(url = 'https://anshome.org/events-calendar/'):
     try:
         r = requests.get(url)
     except Exception as e:
-        logger.critical(f'Exception making GET to {url}: {e}', exc_info = True)
+        logger.critical(f'Exception making GET to {url}: {e}', exc_info=True)
         return
     content = r.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
@@ -95,6 +95,81 @@ def schematize_event_time(event_time):
             
     return schematized_event_time, schematized_event_date
 
+def post_outmonth(outmonth):
+    url = 'https://anshome.org/wp-admin/admin-ajax.php'
+    data = {'action':'the_ajax_hook',
+            'direction':'none',
+            'sort_by':'sort_date',
+            'filters[0][filter_type]':'tax',
+            'filters[0][filter_name]':'event_type',
+            'filters[0][filter_val]':'39',
+            'shortcode[hide_past]':'no',
+            'shortcode[show_et_ft_img]':'yes',
+            'shortcode[event_order]':'ASC',
+            'shortcode[ft_event_priority]':'no',
+            'shortcode[lang]':'L1',
+            'shortcode[month_incre]':'0',
+            'shortcode[only_ft]':'no',
+            'shortcode[hide_ft]':'no',
+            'shortcode[evc_open]':'no',
+            'shortcode[show_limit]':'no',
+            'shortcode[etc_override]':'yes',
+            'shortcode[show_limit_redir]':'0',
+            'shortcode[tiles]':'no',
+            'shortcode[tile_height]':'0',
+            'shortcode[tile_bg]':'0',
+            'shortcode[tile_count]':'2',
+            'shortcode[tile_style]':'0',
+            'shortcode[members_only]':'no',
+            'shortcode[ux_val]':'1',
+            'shortcode[show_limit_ajax]':'no',
+            'shortcode[show_limit_paged]':'1',
+            'shortcode[hide_mult_occur]':'no',
+            'shortcode[show_repeats]':'no',
+            'shortcode[hide_end_time]':'no',
+            'shortcode[eventtop_style]':'0',
+            'evodata[cyear]':f'{outmonth.strftime("%Y")}',
+            'evodata[cmonth]':f'{outmonth.strftime("%m")}',
+            'evodata[runajax]':'1',
+            'evodata[evc_open]':'0',
+            'evodata[cal_ver]':'2.7.3',
+            'evodata[mapscroll]':'true',
+            'evodata[mapformat]':'roadmap',
+            'evodata[mapzoom]':'18',
+            'evodata[ev_cnt]':'0',
+            'evodata[show_limit]':'no',
+            'evodata[tiles]':'no',
+            'evodata[sort_by]':'sort_date',
+            'evodata[filters_on]':'true',
+            'evodata[range_start]':'0',
+            'evodata[range_end]':'0',
+            'evodata[send_unix]':'0',
+            'evodata[ux_val]':'1',
+            'evodata[accord]':'0',
+            'evodata[rtl]':'no',
+            'ajaxtype':'jumper'}
+    try:
+        r = requests.post(url, data=data)
+        return r.json().get('content')
+    except Exception as e:
+        logger.error(f"Error of {e} requesting outmonth events for {outmonth} for ANS", exc_info=True)
+
+def get_out_month_events():
+    outmonths = []
+    now = datetime.now()
+    for i in range(1,4):
+        outmonths.append(now+timedelta(days=30*i))
+    outmonth_events = []
+    for outmonth in outmonths:
+        outmonth_content = post_outmonth(outmonth)
+        soup = bs4.BeautifulSoup(outmonth_content, 'html.parser')
+        event_data = get_event_data(soup)
+        event_websites = get_event_websites(soup)
+        events = schematize_event(event_data, event_websites)
+        outmonth_events.extend(events)
+
+    return outmonth_events
+
 def main():
     soup = soupify_page()
     if not soup:
@@ -102,10 +177,13 @@ def main():
     event_data = get_event_data(soup)
     event_websites = get_event_websites(soup)
     events = schematize_event(event_data, event_websites)
-    
+    outmonth_events = get_out_month_events()
+    events.extend(outmonth_events)
+
     return events
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
+    print(len(events))
