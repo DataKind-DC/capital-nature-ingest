@@ -1,19 +1,31 @@
 from datetime import datetime
+import logging
 import os
 
-import logging
+#import boto3
 
-import boto3
+try:
+    NPS_KEY = os.environ['NPS_KEY']
+except KeyError:
+    NPS_KEY = input("Enter your NPS API key:")
+    os.environ["NPS_KEY"] = NPS_KEY
+
+try:
+    EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
+except KeyError:
+    EVENTBRITE_TOKEN = input("Enter your Eventbrite API key:")
+    os.environ["EVENTBRITE_TOKEN"] = EVENTBRITE_TOKEN
 
 from events import ans, arlington, aws, casey_trees, city_blossoms, dc_audubon, \
                    eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, montgomery, \
-                   nova_parks, nps, rcc, riverkeeper, sierra_club_md, sierra_club, tnc, \
-                   us_botanic_garden, vnps
+                   nova_parks, nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md, sierra_club, \
+                   tnc, us_botanic_garden, vnps
 from log import CsvFormatter
 from tests.utils import schema_test
 from utils import formatters, reports
 
 logger = logging.getLogger(__name__)
+
 
 def get_events():
     '''
@@ -24,8 +36,8 @@ def get_events():
     '''
     event_sources = [ans, arlington, aws, casey_trees, city_blossoms, dc_audubon,
                      eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, montgomery,
-                     nova_parks, nps, rcc, riverkeeper, sierra_club_md, sierra_club, tnc, 
-                     us_botanic_garden, vnps]
+                     nova_parks, nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md, sierra_club, \
+                     tnc, us_botanic_garden, vnps]
     events = []
     for event_source in event_sources:
         try:
