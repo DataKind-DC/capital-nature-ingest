@@ -56,10 +56,12 @@ def parse_event_date(event_date, event_website):
     '''
     date_times = re.sub('  +',' ', event_date)
     split_date = date_times.split()
-    start_date = schematize_event_date(" ".join(split_date[:4]))
+    start_date = schematize_event_date(split_date, event_website)
+    
+    filtered_split_date = list(filter(lambda x: x != "-", split_date))
     try:
-        start_time = schematize_event_time(split_date[-2])
-        end_time = schematize_event_time(split_date[-1])
+        start_time = schematize_event_time(filtered_split_date[-2], event_website)
+        end_time = schematize_event_time(filtered_split_date[-1], event_website)
     except ValueError:
         #occurs for multi-day events, with some days being all-day. We can't support this now
         start_time = None
@@ -141,26 +143,45 @@ def parse_event_website(event_website):
 
     return event_description, event_cost
 
-def schematize_event_date(event_date):
+def schematize_event_date(split_date, event_website):
     '''
     Converts and event date like 'Sat. March 23rd, 2019' to '2019-03-23'
     '''
+    event_date = " ".join(split_date[:4])
     event_date = re.sub(r'(\d)(st|nd|rd|th)', r'\1', event_date)
     try:
         datetime_obj = datetime.strptime(event_date, "%a. %B %d, %Y")
         schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
     except ValueError:
-        logger.error(f"Exception schematizing this event date: {event_date}", 
-                        exc_info=True)
-        schematized_event_date = ''
-    
+        #See GH #179
+        event_date = event_date.replace(" -","")
+        try:
+            datetime_obj = datetime.strptime(event_date, "%B %d, %Y")
+            schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
+        except ValueError:
+            logger.error(f"Exception schematizing the event date - {event_date} - from {event_website}", 
+                exc_info=True)
+            schematized_event_date = ''
+
     return schematized_event_date
 
-def schematize_event_time(event_time):
+def schematize_event_time(event_time, event_wesbite):
     '''
     Converts an event time like '9:00am' to 24hr time like '09:00:00'
     '''
-    datetime_obj = datetime.strptime(event_time, "%I:%M%p")
+    try:
+        datetime_obj = datetime.strptime(event_time, "%I:%M%p")
+    except ValueError:
+        try:
+            datetime_obj = datetime.strptime(event_time, "%I%p")
+        except ValueError:
+            logger.error(f"Exception schematizing the event time - {event_time} - from {event_website}", 
+                exc_info=True)
+            return
+    except Exception as e:
+        logger.error(f"Exception {e} schematizing the event time - {event_time} - from {event_website}", 
+                exc_info=True)
+        return
     schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
 
     return schematized_event_time
@@ -198,7 +219,7 @@ def parse_event_item(event_item, event_category):
         event_venue = ", ".join([i.get_text() for i in event_item.find_all('span',{'class':'location'})])
         event_venue = event_venue if event_venue else "See event website"
         event = {'Event Start Date': start_date,
-                 'Event End Date': start_date, #assuing events are just one day
+                 'Event End Date': start_date, #assuming events are just one day
                  'Event Start Time': start_time,
                  'Event End Time': end_time,
                  'Event Website': event_website,
@@ -337,3 +358,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
+    print(len(events))
