@@ -8,14 +8,9 @@ from astral import Astral
 from bs4 import BeautifulSoup
 import requests
 
-
-# For a local run, be sure to create an env variable with the NPS API key. 
-# For example:
-# $ export NPS_KEY=<NPS API Key>
 try:
     NPS_KEY = os.environ['NPS_KEY']
 except KeyError:
-    #if it's not an env var, then we might be testing
     NPS_KEY = input("Enter your NPS API key:")
 
 logger = logging.getLogger(__name__)

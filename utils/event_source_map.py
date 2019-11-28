@@ -14,6 +14,7 @@ event_source_map = {
             'nova_parks':"NOVA Parks",
             'sierra_club_md':"Sierra Club MD",
             'nps':"National Park Service",
+            'potomac_conservancy':"Potomac Conservancy",
             'rcc':"Rock Creek Conservancy",
             'riverkeeper':"Anacostia Riverkeeper",
             'sierra_club':"Sierra Club DC",
