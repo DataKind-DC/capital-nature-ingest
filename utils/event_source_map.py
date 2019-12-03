@@ -5,7 +5,6 @@ event_source_map = {
             'casey_trees':"Casey Trees",
             'city_blossoms':"City Blossoms",
             'dc_audubon':"DC Audubon",
-            'dug_network':"DUG Network",
             'eleventh_street':"Building Bridges Across the River",
             'fairfax':"Fairfax Parks",
             'fona':"Friends of the National Arboretum",
