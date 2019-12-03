@@ -26,6 +26,8 @@ def handle_ans_page(soup):
             start_time = ''
         else:
             start_time = schematize_event_time(start_time, event_website)
+            if start_time is None:
+                continue
         event_description = e.find('div', {'class': 'timely-excerpt'}).text.strip()
         event_description = event_description.replace("\n",'').replace("\t","")
         event_data = {
@@ -57,7 +59,7 @@ def schematize_event_time(event_time, event_website):
     except ValueError:
         schematized_event_time = ''
         if 'Day' in event_time:
-            return schematized_event_time
+            return None
         logger.error(f'Exception schematzing this event time: {event_time} for {event_website}', 
                        exc_info = True)
         return schematized_event_time
@@ -75,4 +77,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
-    print(len(events))
+    for e in events:
+        if not e.get('Event Start Time') and not e.get('All Day Event'):
+            print(e)
+    
