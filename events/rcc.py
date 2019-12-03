@@ -19,19 +19,20 @@ def handle_ans_page(soup):
     for e in events:
         all_day = False
         start_date = e.attrs['data-date']
+        event_website = e.attrs['href']
         start_time = e.find('div', {'class': 'timely-start-time'}).text.strip()
         if start_time == 'All-day':
             all_day = True
             start_time = ''
         else:
-            start_time = schematize_event_time(start_time)
+            start_time = schematize_event_time(start_time, event_website)
         event_description = e.find('div', {'class': 'timely-excerpt'}).text.strip()
         event_description = event_description.replace("\n",'').replace("\t","")
         event_data = {
             'Event Name': e.find('div', {'class': 'timely-title'}).find('span').text,
             'Event Organizers': 'Rock Creek Conservancy',
             'Event Venue Name': e.find('span', {'class': 'timely-venue'}).text.strip()[2:],
-            'Event Website': e.attrs['href'],
+            'Event Website': event_website,
             'Event Start Date': start_date,
             'Event Start Time': start_time,
             'Event End Date': start_date, #TODO: get end date from event website
@@ -46,7 +47,7 @@ def handle_ans_page(soup):
         event_output.append(event_data)
     return event_output
 
-def schematize_event_time(event_time):
+def schematize_event_time(event_time, event_website):
     '''
     Converts a time string like '1:30 pm' to 24hr time like '13:30:00'
     '''
@@ -54,9 +55,12 @@ def schematize_event_time(event_time):
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
-        logger.error(f'Exception schematzing this event time: {event_time}', 
-                        exc_info = True)
         schematized_event_time = ''
+        if 'Day' in event_time:
+            return schematized_event_time
+        logger.error(f'Exception schematzing this event time: {event_time} for {event_website}', 
+                       exc_info = True)
+        return schematized_event_time
     
     return schematized_event_time
 
@@ -71,3 +75,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
+    print(len(events))
