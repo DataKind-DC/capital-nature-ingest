@@ -19,7 +19,7 @@ except KeyError:
 from events import ans, arlington, aws, casey_trees, city_blossoms, dc_audubon, \
                    eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, montgomery, \
                    nova_parks, nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md, sierra_club, \
-                   tnc, us_botanic_garden, vnps
+                   tnc, us_botanic_garden, vnps, nva_audubon_society
 from log import CsvFormatter
 from tests.utils import schema_test
 from utils import formatters, reports
@@ -37,7 +37,7 @@ def get_events():
     event_sources = [ans, arlington, aws, casey_trees, city_blossoms, dc_audubon,
                      eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, montgomery,
                      nova_parks, nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md, sierra_club, \
-                     tnc, us_botanic_garden, vnps]
+                     tnc, us_botanic_garden, vnps, nva_audubon_society]
     events = []
     for event_source in event_sources:
         try:
@@ -62,12 +62,12 @@ def create_log_file():
     log_dir = os.path.join(os.getcwd(),'logs')
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
-    
+
     now = datetime.now().strftime("%m-%d-%Y")
     log_path = os.path.join(log_dir, f'log_{now}.csv')
     if os.path.exists(log_path):
         os.remove(log_path)
-    
+
     return log_path
 
 def main(is_local = True, bucket = None):
@@ -81,9 +81,9 @@ if __name__ == '__main__':
     log_file = create_log_file()
     logging.basicConfig(level=logging.WARNING, filename=log_file)
     logging.root.handlers[0].setFormatter(CsvFormatter())
-    
+
     events = main()
-    
+
     print(f"Done scraping {len(events)} events!")
     print(f"You can find the logs here:  {log_file}")
     print("And you can find the data and scrape report in ./data/ and ./reports/, respectively.")

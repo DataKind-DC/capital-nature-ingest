@@ -1,8 +1,11 @@
 import logging
 import re
+import requests
+import time
+import unicodedata
 
 from bs4 import BeautifulSoup
-import requests
+from dateutil import parser
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +19,12 @@ def get_description(soup):
     description_container = soup.find("div", {"class": "eventitem-column-content"})
     if not description_container:
         return ""
-    description_parts = [p.get_text() for p in description_container.find_all("p")]
+    description_parts = []
+    for p in description_container.find_all("p"):
+        if p.parent.has_attr("class") and ("image-caption" in p.parent["class"]):
+            # filter out image captions
+            continue
+        description_parts.append(unicodedata.normalize("NFKD", p.get_text()))
     if len(description_parts) == 0:
         return ""
     clean_description_parts = description_parts
@@ -41,7 +49,7 @@ def get_start_and_end_times(soup):
         times = soup.find_all("time", {"class": "event-time-12hr"})
         start_time = times[0].get_text()
         end_time = times[1].get_text()
-    return start_time, end_time
+    return [parser.parse(t).strftime("%H:%M:%S") for t in [start_time, end_time]]
 
 
 def get_category(soup):
@@ -75,8 +83,9 @@ def get_event_detail(url):
     :param url: link to event detail page
     :return: Dict of event detail information
     '''
-    soup = BeautifulSoup(requests.get(url).text, "html.parser")
+    soup = BeautifulSoup(get_request_result(url).text, "html.parser")
 
+    # get dates/times
     dates = [d.get_text() for d in soup.find_all("time", {"class": "event-date"})]
     description = get_description(soup)
     start_time, end_time = get_start_and_end_times(soup)
@@ -97,9 +106,9 @@ def get_event_detail(url):
 
     return {
         "Event Description": description,
-        "Event Start Date": dates[0],
+        "Event Start Date": parser.parse(dates[0]).strftime("%Y-%m-%d"),
         "Event Start Time": start_time,
-        "Event End Date": dates[-1],
+        "Event End Date": parser.parse(dates[-1]).strftime("%Y-%m-%d"),
         "Event End Time": end_time,
         "All Day Event": False,
         "Event Venue Name": event_venue_name,
@@ -121,13 +130,29 @@ def clean_event_info(evt_info):
             evt_info[key] = evt_info[key].strip()
 
 
+def get_request_result(url, num_retries=10):
+    '''
+    This website tends to throw 429 (Too Many Requests) status codes. Try to make a request to `url`, and if it
+    fails, wait and retry up to `num_retries` times
+    :param url: url of the page to scrape
+    :param num_retries: number of times to try to scrape the page
+    :return: the request result
+    '''
+    for i in range(num_retries):
+        result = requests.get(url)
+        if result.status_code == 429:
+            time.sleep(1+i) # do a little backoff if the error is persistent
+        else:
+            return result
+
+
 def get_event_info():
     '''
     Retrieve the upcoming events from the list below the calendar on the calendar-view page
     :return: list of dicts of event information
     '''
     url = "http://audubonva.org/calendar-view"
-    soup = BeautifulSoup(requests.get(url).text, "html.parser")
+    soup = BeautifulSoup(get_request_result(url).text, "html.parser")
     all_event_info = []
 
     for idx, event in enumerate(soup.find_all("div", {"class": "summary-content"})):
@@ -151,7 +176,8 @@ def get_event_info():
             clean_event_info(evt_info)
             all_event_info.append(evt_info)
         except Exception as e:
-            logger.error(f"{e}: failed to retrieve Audubon Society of Northern Virginia event at index {idx}", exc_info=True)
+            logger.error(f"{e}: failed to retrieve Audubon Society of Northern Virginia event at index {idx}",
+                         exc_info=True)
 
     return all_event_info
 
@@ -161,8 +187,7 @@ def main():
     try:
         event_info = get_event_info()
     except Exception as e:
-        logger.error(f"{e}: failed to retrieve Audubon Society of Northern Virginia event IDs.", exc_info = True)
-    print(event_info)
+        logger.error(f"{e}: failed to retrieve Audubon Society of Northern Virginia event IDs.", exc_info=True)
     return event_info
 
 
