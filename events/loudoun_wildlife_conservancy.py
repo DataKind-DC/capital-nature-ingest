@@ -67,7 +67,7 @@ def fees(event):
         fee_dict = {}
         fee_list = re.findall(r"[-+]?\d*\.\d+|\d+", event)
         return str(fee_list[1])
-    return str('None')
+    return str('0')
 
 
 def month(url):
@@ -88,18 +88,18 @@ def location(event_dict, event):
     these to event dictionary"""
     if 'location' in event:
         event_dict['Event Venue Name'] = event['location']['name']
-        if 'geo' in event['location']:
-            event_dict['latitude'] = str(event['location']['geo']['latitude'])
-            event_dict['longitude'] = str(
-                event['location']['geo']['longitude']
-            )
-            return event_dict
-        event_dict['latitude'] = 'None listed'
-        event_dict['longitude'] = 'None listed'
+        #if 'geo' in event['location']:
+            #event_dict['latitude'] = str(event['location']['geo']['latitude'])
+            #event_dict['longitude'] = str(
+                #event['location']['geo']['longitude']
+            #)
+            #return event_dict
+        #event_dict['latitude'] = 'None listed'
+        #event_dict['longitude'] = 'None listed'
         return event_dict
-    event_dict['location'] = 'None listed'
-    event_dict['latitude'] = 'None listed'
-    event_dict['longitude'] = 'None listed'
+    event_dict['Event Venue Name'] = 'None listed'
+    #event_dict['latitude'] = 'None listed'
+    #event_dict['longitude'] = 'None listed'
     return event_dict
 
 
