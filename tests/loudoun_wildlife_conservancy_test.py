@@ -5,9 +5,9 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from events.loudoun_wildlife_conservancy import main
 from .utils import schema_test_required, schema_test_all, schema_test_types
 
-class ANSTestCase(unittest.TestCase):
+class LoudounWildlifeTestCase(unittest.TestCase):
     '''
-    Test cases for ANS events.
+    Test cases for Loudoun Wildlife Conservancy events.
     '''
 
     def setUp(self):
