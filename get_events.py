@@ -17,8 +17,9 @@ except KeyError:
     os.environ["EVENTBRITE_TOKEN"] = EVENTBRITE_TOKEN
 
 from events import ans, arlington, aws, casey_trees, city_blossoms, dc_audubon, \
-                   eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, montgomery, \
-                   nova_parks, nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md, sierra_club, \
+                   eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, \
+                   loudoun_wildlife_conservancy, montgomery, nova_parks, \
+                   nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md, sierra_club, \
                    tnc, us_botanic_garden, vnps, nva_audubon_society
 from log import CsvFormatter
 from tests.utils import schema_test
@@ -35,8 +36,9 @@ def get_events():
         events (list): a list of dicts, with each dict representing a single event.
     '''
     event_sources = [ans, arlington, aws, casey_trees, city_blossoms, dc_audubon,
-                     eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, montgomery,
-                     nova_parks, nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md, sierra_club, \
+                     eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, 
+                     loudoun_wildlife_conservancy, montgomery, nova_parks,
+                     nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md, sierra_club, \
                      tnc, us_botanic_garden, vnps, nva_audubon_society]
     events = []
     for event_source in event_sources:
