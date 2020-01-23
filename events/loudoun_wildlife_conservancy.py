@@ -3,10 +3,13 @@ Scrapes Loudoun Wildlife Conservancy calendar through
 February 2020, creates pandas dataframe of calendar information.
 """
 
+from datetime import date
 import json
 import logging
 import re
+
 import bs4
+from dateutil.relativedelta import relativedelta
 import requests
 
 logger = logging.getLogger(__name__)
@@ -109,11 +112,26 @@ def clean(events):
     new_events = [i for n, i in enumerate(events) if i not in events[(n+1):]]
     return new_events
 
+def get_n_months_out(n=3):
+    current_date = date.today()
+    dates = []
+    for i in range(n):
+        dates.append(current_date + relativedelta(months=i+1))
+    dates = [d.strftime("%Y-%m") for d in dates]
+    
+    return dates
 
 def main():
     """Pulls dictionary of events from January and February 2020,
     sorts events and removes duplicates"""
-    events = month('https://loudounwildlife.org/events/')
-    events += month('https://loudounwildlife.org/events/2020-02/')
+    url = 'https://loudounwildlife.org/events/'
+    events = month(url)
+    months = get_n_months_out()
+    for m in months:
+        events += month(f'https://loudounwildlife.org/events/{m}/')
     events = clean(events)
+    
     return events
+
+if __name__ == '__main__':
+    events = main()
