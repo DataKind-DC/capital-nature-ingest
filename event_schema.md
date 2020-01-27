@@ -29,7 +29,7 @@
 |**Event Currency Symbol**|$|String|This field is essentially unused when a ticketing plugin is active.|
 |Event Currency Position|prefix|Unique|Sets whether the Currency Symbol is a prefix or suffix. Accepts two values "prefix" and "suffix". When left blank the default "prefix" is used. This field is essentially unused when a ticketing plugin is active.|
 |Event Phone|+1-326-437-9663|Phone Number||
-|**Event Category**|Tacktleneck, Tailor|Comma Separated|Separate multiple categories with commas. The example puts this event in two categories: Tacktleneck and Tailor.|
+|**Event Category**|Tacktleneck, Tailor|Comma Separated|Separate multiple categories with commas. You can use an empty string if there aren't any identifiable categories. The example puts this event in two categories: Tacktleneck and Tailor.|
 |Event Tags|Valet, Mission ready, PPK|Comma Separated|Separate multiple tags with commas|
 |**Event Website**|http://doyounot.com|URL||
 |Event Featured Image|http://doyounot.com/wp-content/uploads/thumbs/event.png|URL|This should be a direct URL to the image.|
