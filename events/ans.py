@@ -8,7 +8,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-def soupify_page(url = 'https://anshome.org/events-calendar/'):
+def soupify_page(url='https://anshome.org/events-calendar/'):
     try:
         r = requests.get(url)
     except Exception as e:
@@ -39,8 +39,20 @@ def get_event_websites(soup):
     
     return event_websites
 
+def get_missing_locations(event_website, event_venue):
+    if not event_venue:
+        soup = soupify_page(event_website)
+        ps_with_locations = soup.find_all("p", {"style": "padding-left: 40px;"})
+        missing_locations = []
+        for p in ps_with_locations:
+            location = p.find("em").text.replace("Location:","").split("–")[0].strip()
+            missing_locations.append(location)
+
+        return missing_locations
+
 def schematize_event(event_data, event_websites):
     events = []
+    n_missing_locations = 0
     for i,e in enumerate(event_data):
         event_name = e.get('name')
         event_website = event_websites[i]
@@ -49,9 +61,18 @@ def schematize_event(event_data, event_websites):
         event_venue = e.get('location',{}).get('name')
         event_description = e.get('description')
         image = e.get('image','')
-        if not all([event_name, event_website, start_date, event_venue, event_description]):
-            logger.error(f"Unable to extract all data for ANS event:\n{e}", exc_info=True)
-            continue
+        required = [event_name, event_website, start_date, event_venue, event_description]
+        missing_locations = get_missing_locations(event_website, event_venue)
+        
+        if not all(required):
+            #might be a place with different venues at different times
+            #although the times are updated by their api, the venues need to be scraped
+            if not event_venue:
+                event_venue = missing_locations[n_missing_locations]
+                n_missing_locations+=1
+            else:   
+                logger.error(f"Unable to extract required data for ANS event:\n{e}", exc_info=True)
+                continue
 
         event = {'Event Name': event_name,
                  'Event Website': event_website,
@@ -186,4 +207,3 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
-    print(len(events))
