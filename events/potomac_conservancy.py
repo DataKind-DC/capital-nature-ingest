@@ -21,7 +21,8 @@ def get_events(soup):
     events = []
     for div in divs:
         event = get_event(div)
-        events.append(event)
+        if event:
+            events.append(event)
     
     return events
 
@@ -62,8 +63,17 @@ def get_event(div):
 def update_event_data(event_website, event_data):
     soup = soupify_event_page(event_website)
     time_span = soup.find('span', {'class':"event-time-24hr"})
-    event_start_time = time_span.find('time', {'class':"event-time-24hr-start"}).get_text()
-    event_end_time = time_span.find('time', {'class':"event-time-12hr-end"}).get_text()
+    try:
+        event_start_time = time_span.find('time', {'class':"event-time-24hr-start"}).get_text()
+    except AttributeError as e:
+        logger.error(f"Unable to scrape event_start_time: {e}", exc_info=True)
+        return
+    try:   
+        event_end_time = time_span.find('time', {'class':"event-time-12hr-end"}).get_text()
+    except AttributeError as e:
+        logger.error(f"Unable to scrape event_end_time: {e}", exc_info=True)
+        return
+
     event_venue = soup.find('span', {'class':"eventitem-meta-address-line"}).get_text()
     try:
         event_category = soup.find('li', {'class':"eventitem-meta-item eventitem-meta-tags event-meta-item"}).get_text().replace("Tagged","")
