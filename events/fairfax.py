@@ -54,10 +54,6 @@ def get_event_date_times(soup, event_website):
         
     return start_date, end_date, start_time, end_time
 
-
-
-
-
 def get_event_description(soup):
     p_texts = []
     for p in soup.find_all("p"):
@@ -83,7 +79,6 @@ def get_event_description(soup):
             golf_index = event_description.find("Golf Course")
             event_description = event_description[golf_index+13:]
         return event_description
-
 
 def get_event_venue(soup):
     try:
@@ -212,7 +207,6 @@ def schematize_event_date(event_date):
     
     return schematized_event_date
 
-
 def schematize_event_time(event_time):
     '''
     Converts a time string like '1:30 pm' to 24hr time like '13:30:00'
@@ -226,7 +220,6 @@ def schematize_event_time(event_time):
         schematized_event_time = ''
     
     return schematized_event_time
-
 
 def main():
     cal = 'https://www.fairfaxcounty.gov/parks/park-events-calendar'
