@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun 17 20:49:38 2019
+
+@author: Scott Mcallister
+@author: Francisco Vannini
+"""
+
+
 import logging 
 from bs4 import BeautifulSoup
 import requests
