@@ -3,11 +3,11 @@ import datetime
 import json
 import logging
 import os
-
 import requests
 
 try:
-    EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
+    # EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
+    EVENTBRITE_TOKEN ='TBQNST6U37HN55FFCSQY'
 except KeyError:
     EVENTBRITE_TOKEN = input("Enter your Eventbrite API key:")
 
@@ -22,7 +22,6 @@ class EventbriteIngester:
     >>> ingester.scrape()
     which will pull that organizer's events from the Eventbrite API and PUT them to the Elasticsearch instance
     '''
-
     def __init__(self, org_id):
         self.org_id = org_id
         self.org_data = {}
@@ -51,6 +50,8 @@ class EventbriteIngester:
         eventbrite_api_base_url = 'https://www.eventbriteapi.com/v3'
         endpoint = endpoint.format(**endpoint_params)
         get_args = ''.join([key + '=' + str(get_params[key]) + '&' for key in get_params.keys()])
+        print(get_args)
+        print(eventbrite_api_base_url + endpoint + '?' + get_args)
         return eventbrite_api_base_url + endpoint + '?' + get_args
 
     def handle_simple(self, event, keys):
@@ -87,6 +88,7 @@ class EventbriteIngester:
 
     def handle_org(self, event, keys):
         if len(self.org_data.keys()) == 0:
+            
             api_url = self.get_eventbrite_url('/organizers/{id}/', endpoint_params={'id': keys[0]})
             org_json = requests.get(api_url).json()
             self.org_data = {
@@ -118,7 +120,6 @@ class EventbriteIngester:
         self.all_events = page.get('events', [])
         self.parse_events()
 
-
 def parse_venue_name(name):
     if name == "United States National Arboretum":
         return name
@@ -126,7 +127,6 @@ def parse_venue_name(name):
         return "National Arboretum"
     else:
         return name
-
 
 # Create an EventbriteParser object, parse API, and convert to dict
 def main():
@@ -170,6 +170,5 @@ def main():
 
 # For local testing
 if __name__ == "__main__":
-
     events = main()
     print(len(events))
