@@ -22,8 +22,7 @@ FONA_EVENTBRITE_ORG_ID = 8632128868
 # $ export EVENTBRITE_TOKEN=<EVENTBRITE TOKEN Key>
 
 try:
-    # EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
-    EVENTBRITE_TOKEN = "TBQNST6U37HN55FFCSQY"
+    EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
 except KeyError:
     #if it's not an env var, then we might be testing
     EVENTBRITE_TOKEN = input("Enter your Eventbrite Token Key:")
