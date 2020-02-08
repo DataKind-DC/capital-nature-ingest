@@ -62,7 +62,7 @@ git checkout master
 git pull upstream master --ff-only
 ```
 
-4. Do some work and see the changes, and stage files you've edited:
+4. Do some work, see the changes, and stage files you've edited:
 
 Once you’ve made changes, you can see them by typing:
 
