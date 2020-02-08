@@ -18,12 +18,15 @@ Our project backlog can be found on our [Issues Page](https://github.com/DataKin
 We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), so all code changes happen through pull requests. We use a **Fork and Pull Model**.
 
 ### The Fork and Pull Model
+
 #### Short Version
+
 Before you start to work on something, fork this repo, clone the repository, and then make a new branch for your feature.
 
 As you implement changes, commit them to your local branch, ideally following our [style guide](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/.github/STYLE-GUIDE.md). When you're ready, push that branch to GitHub and then make a pull request. Then await review and, if necessary, push some more changes.
 
 #### Long Version
+
 ##### Writing your Code
 
 1. Fork the repository
@@ -59,9 +62,10 @@ git checkout master
 git pull upstream master --ff-only
 ```
 
-4. Do some work, see the changes, and stage files you've edited
+4. Do some work and see the changes, and stage files you've edited:
 
 Once you’ve made changes, you can see them by typing:
+
 ```bash
 git status
 ```
@@ -116,6 +120,22 @@ upstream        git://github.com/capital-nature-ingest.git (push)
 
 Once you've pushed your code, your code is on your GitHub repo and is not yet a part of the main project. For that to happen, a **Pull Request (PR)** needs to be submitted on GitHub.
 
+But first, let's lint and test your code.
+
+#### Lint your Code
+
+We try to follow subset of the [PEP8](https://www.python.org/dev/peps/pep-0008/) standard by using [Flake8](http://flake8.pycqa.org/en/latest/) to ensure a consistent code format throughout the project.
+
+Although Continuous Integration will run Flake8 and report any stylistic errors in your code, it is helpful before submitting code to run the check yourself:
+
+```bash
+flake8 <your-file>.py
+```
+
+The output will tell you the line and column numbers where there are stylistic errors. It'll also tell you the related PEP8 standard.
+
+>Optionally, you may wish to setup [pre-commit](https://pre-commit.com/) hooks to automatically run flake8 when you make a git commit.
+
 #### Testing your Code
 
 Before you initiate a pull request, you need to add a test suite that ensures you're code properly schematizes each scraped event's data fields based on our [event schema](https://github.com/DataKind-DC/capital-nature-ingest/blob/master/event_schema.md).
@@ -150,23 +170,40 @@ python3 -W ignore -m unittest tests/<name_of_your_scraper>_test.py
 
 5. If your tests pass, you'll see `OK` logged to your terminal. If not, inspect the errors that were raised and update your code accordingly. If you've got questions on how to interpret the test output, feel free to [create an issue](https://github.com/DataKind-DC/capital-nature-ingest/issues) or contact us on Slack.
 
-#### Reviewing your Code and Submitting a Pull Request
+#### Submitting a Pull Request
 
-So you've written some code, added your tests, and passed your tests. Now you'r ready to ask for a code review! Let's initiate a Pull Request.
+So you've written some code, added your tests, and passed your tests. Now you're ready to ask for a code review! Let's initiate a Pull Request. But first...
 
-A pull request is how code from a local repository becomes available to the GitHub community and can be looked at and eventually merged into the master version.
+##### One Final Review
+
+Before you start a pull request, let's double check your branch changes against the branch it was based on:
+
+1. Navigate to your repository on GitHub.
+
+2. Click on `Branches`.
+
+3. Click on the `Compare` button for your feature branch.
+
+4. Select the base and compare branches, if necessary. The defauly is usually right and this will pretty much always be `master` and your `shiny-new-feature` branch, respectively.
+
+So what are we doing? Here you're checking to make sure your feature branch doesn't conflict with the base branch. It shouldn't, since the files you added never existed on the base branch. But it can happen and this little step can save you some trouble.
+
+##### Initiate a Pull Request
+
+Now you're ready to initiate a pull request. A pull request is how code from a local repository becomes available to the GitHub community and can be looked at and eventually merged into the master version.
 
 To submit a pull request:
 
 1. Navigate to your repository on GitHub
-2. Click on the Pull Request button
-3. You can then click on Commits and Files Changed to make sure everything looks okay one last time
-4. Write a description of your changes in the Preview Discussion tab
-5. Click Send Pull Request.
+2. Click on the `Pull Request` button
+3. You can then click on `Commits` and `Files Changed` to make sure everything looks okay one last time
+4. Write a description of your changes in the `Preview Discussion` tab
+5. Click `Send Pull Request`.
 
 This request then goes to the repository maintainers, and they will review the code.
 
 #### Updating a Pull Request
+
 Sometimes, you'll need to update your pull request.
 
 If there's a gray bar saying "This pull request cannot be automatically merged.", then you've got some updates to make. That's because the file(s) that your pull request modifies was/were updated in the meantime. To avoid a conflict on the remote, GitHub won't let you automatically merge into master. This means you need to update your Pull Request by merging the upstream's master branch into your feature branch. In short, you need to “merge upstream master” in your branch:
@@ -184,6 +221,7 @@ If there are merge conflicts, you'll need to solve those conflicts. See [this](h
 >If you have uncommitted changes at the moment you want to update the branch with master, you will need to stash them prior to updating (see the [stash docs](https://git-scm.com/book/en/v2/Git-Tools-Stashing-and-Cleaning)). This will effectively store your changes and they can be reapplied after updating.
 
 After your feature branch has been updated locally, you can now update your pull request by pushing to the branch on GitHub:
+
 ```bash
 git push origin shiny-new-feature
 ```
