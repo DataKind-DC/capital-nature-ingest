@@ -32,7 +32,7 @@ jobs:
           name: run linter
           command: |
             . venv/bin/activate
-            flake8 ./ tests --output-file test-reports
+            circleci tests glob **/events/*.py | circleci tests split --split-by=timings --timings-type=classname | xargs flake8
       
       - run:
           name: run tests
