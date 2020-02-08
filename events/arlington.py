@@ -7,24 +7,33 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+
 def get_arlington_events():
     '''
-    Gets animal- and environment-related events for Arlington County (https://today.arlingtonva.us/)
+    Gets events for Arlington County (https://today.arlingtonva.us/)
 
     Parameters:
         None
 
     Returns:
-        event_items (list): a list of dictionaries, each of which represents an event.
+        event_items (list): a list of dicts, each of which represents an event.
     '''
     startDate = datetime.now().strftime("%Y-%m-%d")
     from_param = 0
-    uri = f'https://today-service.arlingtonva.us/api/event/elasticevent?&StartDate={startDate}T05:00:00.000Z&EndDate=null&TopicCode=ANIMALS&TopicCode=ENVIRONMENT&ParkingAvailable=false&NearBus=false&NearRail=false&NearBikeShare=false&From={from_param}&Size=5&OrderBy=featured&EndTime=86400000'
+    uri = (
+        'https://today-service.arlingtonva.us/api/event/elasticevent?'
+        f'&StartDate={startDate}T05:00:00.000Z&EndDate=null&TopicCode='
+        'ANIMALS&TopicCode=ENVIRONMENT&ParkingAvailable=false&NearBus=false&'
+        f'NearRail=false&NearBikeShare=false&From={from_param}&Size=5'
+        '&OrderBy=featured&EndTime=86400000'
+    )
     try:
         r = requests.get(uri)
     except Exception as e:
-        logger.critical(f"Exception making GET request to {uri}: {e}", exc_info=True)
-        return             
+        msg = f"Exception making GET request to {uri}: {e}"
+        logger.critical(msg, exc_info=True)
+        return
+    
     data = r.json()
     count = data['count']
     event_items = []
@@ -34,7 +43,13 @@ def get_arlington_events():
             for item in items:
                 event_items.append(item)
         else:
-            uri = f'https://today-service.arlingtonva.us/api/event/elasticevent?&StartDate={startDate}T05:00:00.000Z&EndDate=null&TopicCode=ANIMALS&TopicCode=ENVIRONMENT&ParkingAvailable=false&NearBus=false&NearRail=false&NearBikeShare=false&From={from_param}&Size=5&OrderBy=featured&EndTime=86400000'
+            uri = (
+                'https://today-service.arlingtonva.us/api/event/elasticevent?'
+                f'&StartDate={startDate}T05:00:00.000Z&EndDate=null&TopicCode'
+                '=ANIMALS&TopicCode=ENVIRONMENT&ParkingAvailable=false&'
+                'NearBus=false&NearRail=false&NearBikeShare=false&From'
+                f'={from_param}&Size=5&OrderBy=featured&EndTime=86400000'
+            )
             r = requests.get(uri)
             data = r.json()
             items = data['items']
@@ -43,6 +58,7 @@ def get_arlington_events():
         from_param += 5
 
     return event_items
+
 
 def get_event_website(event_name, start_date, end_date):
     params = {
@@ -59,6 +75,7 @@ def get_event_website(event_name, start_date, end_date):
         if(start_date == item_start_date and end_date == item_end_date):
             return item['eventUrlText']
     return None
+
 
 def html_textraction(html):
     '''
@@ -91,7 +108,7 @@ def html_textraction(html):
 
 def parse_event_name(event_name):
     '''
-    Clarifies the invasive plant removal event names and extracts text from html.
+    Clarifies the invasive plant removal event names and gets text from html.
 
     Parameters:
         event_name (str): the event name as a string
@@ -99,20 +116,32 @@ def parse_event_name(event_name):
     Returns:
         event_name (str): the parsed event name
     '''
-    if any(x in event_name for x in ('RIP','RiP','Invasive Plant Removal')):
+    if any(x in event_name for x in ('RIP', 'RiP', 'Invasive Plant Removal')):
         if "Invasive Plant Removal" in event_name:
-            parsed_event_name = re.sub('  +','',"".join(i for i in event_name if ord(i)<128)).replace("RiP",'').replace(" - ",'').replace("RIP",'')
-            parsed_event_name = re.sub("  +", " ", parsed_event_name).strip()
+            name = re.sub(
+                '  +',
+                '',
+                "".join(i for i in event_name if ord(i) < 128))\
+                .replace("RiP", '')\
+                .replace(" - ", '')\
+                .replace("RIP", '')
+            name = re.sub("  +", " ", name).strip()
         else:
-            parsed_event_name = re.sub('  +','',"".join(i for i in event_name if ord(i)<128))
-            parsed_event_name = parsed_event_name.replace("RiP",'').replace("RIP",'').replace(' - ','')
-            parsed_event_name = f'{parsed_event_name} Invasive Plant Removal'
-            parsed_event_name = re.sub("  +", " ", parsed_event_name).strip()
-        event_name = html_textraction(parsed_event_name)
+            name = re.sub(
+                '  +',
+                '',
+                "".join(i for i in event_name if ord(i) < 128))
+            name = name.replace("RiP", '')\
+                .replace("RIP", '')\
+                .replace(' - ', '')
+            name = f'{name} Invasive Plant Removal'
+            name = re.sub("  +", " ", name).strip()
+        event_name = html_textraction(name)
     else:
         event_name = html_textraction(event_name)
 
     return event_name
+
 
 def schematize_date(event_date):
     '''
@@ -122,21 +151,23 @@ def schematize_date(event_date):
         datetime_obj = datetime.strptime(event_date, "%Y-%m-%dT%H:%M:%S")
         schematized_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
     except ValueError:
-        logger.error(f"Exception schematizing this date: {event_date}", exc_info=True)
+        msg = f"Exception schematizing this date: {event_date}"
+        logger.error(msg, exc_info=True)
         return ''
     
     return schematized_date
+
 
 def schematize_events(event_items):
     '''
     Parses the events API output so that it conforms to our schema
 
     Parameters:
-        event_items (list): a list of dictionaries, each of which represents an event.
+        event_items (list): a list of dicts, each of which represents an event.
                             Output by get_arlington_events()
 
     Returns:
-        events (list): a list of dictionaries, each of which represents an event in our schema
+        events (list): a list of dicts, each being an event in our schema
     '''
     events = []
     for event_item in event_items:
@@ -156,27 +187,27 @@ def schematize_events(event_items):
             event_cost_desc = event_item['eventCostDsc']
             event_cost = ''.join(s for s in event_cost_desc if s.isdigit())
         else:
-            event_cost =  ''
-        event_venue = html_textraction(event_item['locationName'])
-        if event_venue == 'Earth Products Yard' or 'Library' in event_venue or not event_venue:
+            event_cost = ''
+        venue = html_textraction(event_item['locationName'])
+        if venue == 'Earth Products Yard' or 'Library' in venue or not venue:
             continue
         if not event_website:
             event_website = get_event_website(event_name, start_date, end_date)
-        event_venue = event_venue if event_venue else "See event website"
-        event = {'Event Start Date':start_date,
+        venue = venue if venue else "See event website"
+        event = {'Event Start Date': start_date,
                  'Event End Date': end_date,
-                 'Event Start Time':start_time,
-                 'Event End Time':end_time,
-                 'Event Website':event_website,
-                 'Event Name':event_name,
-                 'Event Venue Name':event_venue,
-                 'Event Cost':event_cost,
-                 'Event Description':event_description,
-                 'Timezone':'America/New_York',
-                 'Event Organizers':"Arlington Parks",
-                 'Event Currency Symbol':'$',
-                 'All Day Event':False,
-                 'Event Category':''}
+                 'Event Start Time': start_time,
+                 'Event End Time': end_time,
+                 'Event Website': event_website,
+                 'Event Name': event_name,
+                 'Event Venue Name': venue,
+                 'Event Cost': event_cost,
+                 'Event Description': event_description,
+                 'Timezone': 'America/New_York',
+                 'Event Organizers': "Arlington Parks",
+                 'Event Currency Symbol': '$',
+                 'All Day Event': False,
+                 'Event Category': ''}
         events.append(event)
 
     return events
@@ -187,7 +218,10 @@ def main():
     events = schematize_events(event_items)
     return events
 
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
+    print(len(events))

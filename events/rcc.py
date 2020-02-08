@@ -6,12 +6,14 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+
 def fetch_page(url):
     r = requests.get(url)
     content = r.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
     
     return soup
+
 
 def handle_ans_page(soup):
     events = soup.find_all('a', {'class': 'timely-event'})
@@ -28,26 +30,30 @@ def handle_ans_page(soup):
             start_time = schematize_event_time(start_time, event_website)
             if start_time is None:
                 continue
-        event_description = e.find('div', {'class': 'timely-excerpt'}).text.strip()
-        event_description = event_description.replace("\n",'').replace("\t","")
+        desc = e.find('div', {'class': 'timely-excerpt'}).text.strip()
+        desc = desc.replace("\n", '').replace("\t", "")
+        venue = e.find('span', {'class': 'timely-venue'}).text.strip()[2:]
+        e_name = e.find('div', {'class': 'timely-title'}).find('span').text
         event_data = {
-            'Event Name': e.find('div', {'class': 'timely-title'}).find('span').text,
+            'Event Name': e_name,
             'Event Organizers': 'Rock Creek Conservancy',
-            'Event Venue Name': e.find('span', {'class': 'timely-venue'}).text.strip()[2:],
+            'Event Venue Name': venue,
             'Event Website': event_website,
             'Event Start Date': start_date,
             'Event Start Time': start_time,
-            'Event End Date': start_date, #TODO: get end date from event website
-            'Event End Time': start_time, #TODO: get end time from event website
+            'Event End Date': start_date,  # TODO: get end date from event site
+            'Event End Time': start_time,  # TODO: get end time from event site
             'Event Currency Symbol': '$',
             'Timezone': 'America/New_York',
             'All Day Event': all_day,
             'Event Category': '',
-            'Event Description': event_description,
-            'Event Cost': '' #TODO: get cost from event website
+            'Event Description': desc,
+            'Event Cost': ''  # TODO: get cost from event website
         }
         event_output.append(event_data)
+    
     return event_output
+
 
 def schematize_event_time(event_time, event_website):
     '''
@@ -56,15 +62,16 @@ def schematize_event_time(event_time, event_website):
     try:
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
-    except ValueError:
+    except ValueError as e:
         schematized_event_time = ''
         if 'Day' in event_time:
             return None
-        logger.error(f'Exception schematzing this event time: {event_time} for {event_website}', 
-                       exc_info = True)
+        msg = f'{e} parsing this event time: {event_time} for {event_website}'
+        logger.error(msg, exc_info=True)
         return schematized_event_time
     
     return schematized_event_time
+
 
 def main():
     url = 'https://events.time.ly/8ib56fp'
@@ -73,11 +80,10 @@ def main():
     
     return event_output
 
+
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
-    for e in events:
-        if not e.get('Event Start Time') and not e.get('All Day Event'):
-            print(e)
-    
+    print(len(events))

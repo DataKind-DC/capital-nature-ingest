@@ -1,8 +1,3 @@
-"""
-Scrapes Loudoun Wildlife Conservancy calendar through
-February 2020, creates pandas dataframe of calendar information.
-"""
-
 from datetime import date
 import json
 import logging
@@ -20,9 +15,8 @@ def bs4_page(url):
     try:
         r_val = requests.get(url)
     except Exception as e_val:
-        logger.critical(
-            f'Exception making GET to {url}: {e_val}', exc_info=True
-        )
+        msg = f'Exception making GET to {url}: {e_val}'
+        logger.critical(msg, exc_info=True)
         return None
     content = r_val.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
@@ -67,7 +61,6 @@ def event_description(url):
 def fees(event):
     """Checks for fees in description and adds fees to dictionary"""
     if 'Fee:' in event:
-        fee_dict = {}
         fee_list = re.findall(r"[-+]?\d*\.\d+|\d+", event)
         return str(fee_list[1])
     return str('0')
@@ -91,35 +84,36 @@ def location(event_dict, event):
     these to event dictionary"""
     if 'location' in event:
         event_dict['Event Venue Name'] = event['location']['name']
-        #if 'geo' in event['location']:
-            #event_dict['latitude'] = str(event['location']['geo']['latitude'])
-            #event_dict['longitude'] = str(
-                #event['location']['geo']['longitude']
-            #)
-            #return event_dict
-        #event_dict['latitude'] = 'None listed'
-        #event_dict['longitude'] = 'None listed'
+        # if 'geo' in event['location']:
+            # event_dict['latitude'] = strevent['location']['geo']['latitude']
+            # event_dict['longitude'] = str(
+                # event['location']['geo']['longitude'])
+            # return event_dict
+        # event_dict['latitude'] = 'None listed'
+        # event_dict['longitude'] = 'None listed'
         return event_dict
     event_dict['Event Venue Name'] = 'None listed'
-    #event_dict['latitude'] = 'None listed'
-    #event_dict['longitude'] = 'None listed'
+    # event_dict['latitude'] = 'None listed'
+    # event_dict['longitude'] = 'None listed'
     return event_dict
 
 
 def clean(events):
     """Sorts events by date and removes duplicates"""
     events.sort(key=lambda x: x['Event Start Date'])
-    new_events = [i for n, i in enumerate(events) if i not in events[(n+1):]]
+    new_events = [i for n, i in enumerate(events) if i not in events[(n + 1):]]
     return new_events
+
 
 def get_n_months_out(n=3):
     current_date = date.today()
     dates = []
     for i in range(n):
-        dates.append(current_date + relativedelta(months=i+1))
+        dates.append(current_date + relativedelta(months=i + 1))
     dates = [d.strftime("%Y-%m") for d in dates]
     
     return dates
+
 
 def main():
     """Pulls dictionary of events from January and February 2020,
@@ -133,5 +127,10 @@ def main():
     
     return events
 
+
 if __name__ == '__main__':
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
+    print(len(events))

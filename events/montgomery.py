@@ -8,26 +8,29 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-def get_category_id_map(url = 'https://www.montgomeryparks.org/calendar/'):
+
+def get_category_id_map(url='https://www.montgomeryparks.org/calendar/'):
     '''
     Gets a mapping of event categories and their page ids
 
     Parameters:
-        url (str): Default value is the calendar page, which contains filters for each
-                   category
+        url (str): Default value is the calendar page, which contains 
+                   filters for each category
 
     Returns:
-        category_id_map (dict): a mapping of categories (e.g. Camp) to their ids, which are
-                                used to construct urls for webscraping that category's events
+        category_id_map (dict): a mapping of categories (e.g. Camp) to their 
+                                ids, which are used to construct urls for 
+                                webscraping that category's events
     '''
     try:
         r = requests.get(url)
     except Exception as e:
-        logger.critical(f"Exception making GET request to {url}: {e}", exc_info=True)
+        msg = f"{e} making GET request to {url}"
+        logger.critical(msg, exc_info=True)
         return
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
-    category_list = soup.find('ul',{'class':'filters accordion-wrap'})
+    category_list = soup.find('ul', {'class': 'filters accordion-wrap'})
     category_items = category_list.find_all('li')
     category_id_map = {}
     for category in category_items:
@@ -42,10 +45,10 @@ def get_category_id_map(url = 'https://www.montgomeryparks.org/calendar/'):
 
 def parse_event_date(event_date, event_website):
     '''
-    Extract the start date and start/end times from the scraped event_date string
+    Extract the start date and start/end times from the event_date string
 
     Parameters:
-        event_date (str): A str representing the event's date (e.g. Fri. January 18th, 
+        event_date (str): A str of the event's date (e.g. Fri. January 18th, 
                           2019 10:00am 11:00am) 
         event_website (str): the event's website; useful when debugging
 
@@ -54,16 +57,23 @@ def parse_event_date(event_date, event_website):
         start_time (str): the event's start time
         end_time (str): the event's end time
     '''
-    date_times = re.sub('  +',' ', event_date)
+    date_times = re.sub('  +', ' ', event_date)
     split_date = date_times.split()
     start_date = schematize_event_date(split_date, event_website)
     
     filtered_split_date = list(filter(lambda x: x != "-", split_date))
     try:
-        start_time = schematize_event_time(filtered_split_date[-2], event_website)
-        end_time = schematize_event_time(filtered_split_date[-1], event_website)
+        start_time = schematize_event_time(
+            filtered_split_date[-2],
+            event_website
+        )
+        end_time = schematize_event_time(
+            filtered_split_date[-1],
+            event_website
+        )
     except ValueError:
-        #occurs for multi-day events, with some days being all-day. We can't support this now
+        # occurs for multi-day events, with some days being all-day.
+        #  We can't support this now
         start_time = None
         end_time = None
 
@@ -76,7 +86,8 @@ def get_event_description(soup):
     '''
     p_tags = soup.find_all('p')
     p_texts = [p.get_text() for p in p_tags]
-    cookie_notice_index = [i for i, s in enumerate(p_texts) if 'website uses cookies' in s]
+    cookie_str = 'website uses cookies'
+    cookie_notice_index = [i for i, s in enumerate(p_texts) if cookie_str in s]
     if cookie_notice_index:
         del p_texts[cookie_notice_index.pop()]
     event_description = max(p_texts, key=len).strip()
@@ -92,7 +103,9 @@ def get_event_cost(soup):
     try:
         fee_text = [x.get_text() for x in dls if 'Fee' in x.get_text()][0]
         try:
-            first_digit_index = fee_text.index(next(s for s in fee_text if s.isdigit()))
+            first_digit_index = fee_text.index(
+                next(s for s in fee_text if s.isdigit())
+            )
             fee_text = fee_text[first_digit_index:]
             event_cost = "".join(takewhile(lambda x: x.isdigit(), fee_text))
         except StopIteration:
@@ -100,19 +113,18 @@ def get_event_cost(soup):
     except IndexError:
         event_cost = ''
 
-
-
     return event_cost
 
 
-def canceled_test(soup):
+def canceled_test(soup, terms=['canceled', 'cancelled']):
     '''
     Returns True if the event has been canceled
     '''
-    h1_tags = soup.find_all('h1', {'class':'section-head'})
-    h_texts = [h.get_text() for h in h1_tags]
+    h1_tags = soup.find_all('h1', {'class': 'section-head'})
+    txts = [h.get_text() for h in h1_tags]
+    is_canceled = any([i in t.lower() for t in txts for i in terms])
 
-    return any(i in t.lower() for t in h_texts for i in ['canceled', 'cancelled'])
+    return is_canceled
 
 
 def parse_event_website(event_website):
@@ -129,8 +141,8 @@ def parse_event_website(event_website):
     try:
         r = requests.get(event_website)
     except Exception as e:
-        logger.critical(f"Exception making GET request to {event_website}: {e}", 
-                        exc_info=True)
+        msg = f"{e} making GET request to {event_website}"
+        logger.critical(msg, exc_info=True)
         return None, None
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
@@ -143,6 +155,7 @@ def parse_event_website(event_website):
 
     return event_description, event_cost
 
+
 def schematize_event_date(split_date, event_website):
     '''
     Converts and event date like 'Sat. March 23rd, 2019' to '2019-03-23'
@@ -150,52 +163,54 @@ def schematize_event_date(split_date, event_website):
     event_date = " ".join(split_date[:4])
     event_date = re.sub(r'(\d)(st|nd|rd|th)', r'\1', event_date)
     try:
-        datetime_obj = datetime.strptime(event_date, "%a. %B %d, %Y")
-        schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
+        dt_obj = datetime.strptime(event_date, "%a. %B %d, %Y")
+        schematized_event_date = datetime.strftime(dt_obj, "%Y-%m-%d")
     except ValueError:
-        #See GH #179
-        event_date = event_date.replace(" -","")
+        # See GH #179
+        event_date = event_date.replace(" -", "")
         try:
-            datetime_obj = datetime.strptime(event_date, "%B %d, %Y")
-            schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
-        except ValueError:
-            logger.error(f"Exception schematizing the event date - {event_date} - from {event_website}", 
-                exc_info=True)
+            dt_obj = datetime.strptime(event_date, "%B %d, %Y")
+            schematized_event_date = datetime.strftime(dt_obj, "%Y-%m-%d")
+        except ValueError as e:
+            msg = f"{e} parsing date - {event_date} - from {event_website}"
+            logger.error(msg, exc_info=True)
             schematized_event_date = ''
 
     return schematized_event_date
 
-def schematize_event_time(event_time, event_wesbite):
+
+def schematize_event_time(event_time, event_website):
     '''
     Converts an event time like '9:00am' to 24hr time like '09:00:00'
     '''
     try:
-        datetime_obj = datetime.strptime(event_time, "%I:%M%p")
+        dt_obj = datetime.strptime(event_time, "%I:%M%p")
     except ValueError:
         try:
-            datetime_obj = datetime.strptime(event_time, "%I%p")
-        except ValueError:
-            logger.error(f"Exception schematizing the event time - {event_time} - from {event_website}", 
-                exc_info=True)
+            dt_obj = datetime.strptime(event_time, "%I%p")
+        except ValueError as e:
+            msg = f"{e} parsing time - {event_time} - from {event_website}"
+            logger.error(msg, exc_info=True)
             return
     except Exception as e:
-        logger.error(f"Exception {e} schematizing the event time - {event_time} - from {event_website}", 
-                exc_info=True)
+        msg = f"{e} parsing time - {event_time} - from {event_website}"
+        logger.error(msg, exc_info=True)
         return
-    schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
+    schematized_event_time = datetime.strftime(dt_obj, "%H:%M:%S")
 
     return schematized_event_time
+
 
 def parse_event_item(event_item, event_category):
     '''
     Schematizes the event data
 
     Parameters:
-        event_item (bs4 <li> tag): a list element scraped from the montgomery events page
+        event_item (bs4 <li> tag): a list element
         event_category (str): the event category (e.g. Hikes)
 
     Returns:
-        event (dict or None): if dict, the schematized event. If None, the even has been canceled
+        event (dict or None): if dict, the schematized event.
     '''
     href = event_item.find('a', href=True)['href']
     if 'https' not in href:
@@ -207,19 +222,30 @@ def parse_event_item(event_item, event_category):
         return
     else:
         try:
-            event_date = event_item.find('span',{'class':'time'}).get_text().strip().replace("to",'').replace("Ocber","October")
+            event_date = event_item.find(
+                'span',
+                {'class': 'time'})\
+                .text.strip()\
+                .replace("to", '')\
+                .replace("Ocber", "October")
         except Exception as e:
-            logger.error(f"Exception of {e} parsing date from this event item: {event_item}", 
-                        exc_info=True)
+            msg = f"{e} parsing date from this event item: {event_item}"
+            logger.error(msg, exc_info=True)
             return
-        start_date, start_time, end_time = parse_event_date(event_date, event_website)
+        start_date, start_time, end_time = parse_event_date(
+            event_date,
+            event_website)
         if not all([start_date, start_time, end_time]):
             return
-        event_name = event_item.find('span',{'class':'event-name'}).get_text().strip()
-        event_venue = ", ".join([i.get_text() for i in event_item.find_all('span',{'class':'location'})])
+        event_name = event_item.find(
+            'span',
+            {'class': 'event-name'}).text.strip()
+        event_venue = ", ".join([i.get_text() for i in event_item.find_all(
+            'span',
+            {'class': 'location'})])
         event_venue = event_venue if event_venue else "See event website"
         event = {'Event Start Date': start_date,
-                 'Event End Date': start_date, #assuming events are just one day
+                 'Event End Date': start_date,
                  'Event Start Time': start_time,
                  'Event End Time': end_time,
                  'Event Website': event_website,
@@ -230,8 +256,8 @@ def parse_event_item(event_item, event_category):
                  'Event Category': event_category,
                  'Timezone': 'America/New_York',
                  'Event Organizers': "Montgomery Parks",
-                 'Event Currency Symbol':'$',
-                 'All Day Event':False}
+                 'Event Currency Symbol': '$',
+                 'All Day Event': False}
 
     return event
 
@@ -256,6 +282,34 @@ def next_page_test(soup):
     return any(i in a_texts for i in ['Next Page'])
 
 
+def get_events(category_id, event_category):
+    url = f'https://www.montgomeryparks.org/calendar/?cat={category_id}&v=0'
+    try:
+        r = requests.get(url)
+    except Exception as e:
+        msg = f"Exception making GET request to {url}: {e}"
+        logger.critical(msg, exc_info=True)
+        return [], None
+    content = r.content
+    soup = BeautifulSoup(content, 'html.parser')
+    if no_events_test(soup):
+        events = [], None
+        return events
+    
+    event_item_div = soup.find('div', {'class': 'event-item'})
+    event_items = event_item_div.find_all('li')
+
+    events = []
+    for event_item in event_items:
+        event = parse_event_item(event_item, event_category)
+        if event:
+            events.append(event)
+        else:
+            continue
+
+    return events, soup
+
+
 def get_category_events(event_category, category_id_map):
     '''
     Scrapes all of the events for a given category
@@ -264,44 +318,32 @@ def get_category_events(event_category, category_id_map):
         event_category (str): the event category (e.g. Hikes)
 
     Returns:
-        events (list): a list of dicts, with each dict representing an event. Returns
+        events (list): a list of dicts, with each dict representing an event. 
                        None if there aren't any events or if the request fails.
     '''
     category_id = category_id_map[event_category]
-    url = f'https://www.montgomeryparks.org/calendar/?cat={category_id}&v=0'
-    try:
-        r = requests.get(url)
-    except Exception as e:
-        logger.critical(f"Exception making GET request to {url}: {e}", exc_info=True)
-        return
-    content = r.content
-    soup = BeautifulSoup(content, 'html.parser')
-    if no_events_test(soup):
-        events = []
+    events, soup = get_events(category_id, event_category)
+    if not soup:
         return events
-    event_item_div = soup.find('div',{'class':'event-item'})
-    event_items = event_item_div.find_all('li')
-    events = []
-    for event_item in event_items:
-        event = parse_event_item(event_item, event_category)
-        if event:
-            events.append(event)
-        else:
-            continue
+    
     is_next_page = next_page_test(soup)
+    
     page_counter = 2
     while is_next_page:
-        url = f'https://www.montgomeryparks.org/calendar/page/{page_counter}/?cat={category_id}&v=0'
+        url = (
+            'https://www.montgomeryparks.org/calendar/page/'
+            f'{page_counter}/?cat={category_id}&v=0'
+        )
         try:
             r = requests.get(url)
-        except:
+        except Exception:
             break
         content = r.content
-        soup = BeautifulSoup(content,'html.parser')
+        soup = BeautifulSoup(content, 'html.parser')
         if no_events_test(soup):
             break
         else:
-            event_item_div = soup.find('div',{'class':'event-item'})
+            event_item_div = soup.find('div', {'class': 'event-item'})
             event_items = event_item_div.find_all('li')
             for event_item in event_items:
                 event = parse_event_item(event_item, event_category)
@@ -319,30 +361,24 @@ def dedupe_events(events):
     '''
     De-dupes a list of dicts
     '''
-    events = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in events)]
+    events = [dict(t) for t in set(tuple(item.items()) for item in events)]
 
     return events
 
 
-def main(event_categories = ['Archaeology',
-                             'Clean Up',
-                             'Earth Month',
-                             'Gardens',
-                             'Hikes',
-                             'Nature',
-                             'Trails',
-                             'Trail Work',
-                             'Trips',
-                             'Weed Warrior']):
-    '''
-    Gets events for a number of event categories
-
-    Parameters:
-        event_categories (list): a list of event categories. Defaults to nature-like categories.
-
-    Returns:
-        events (list): a list of dicts, with each dict representing an event
-    '''
+def main():
+    event_categories = [
+        'Archaeology',
+        'Clean Up',
+        'Earth Month',
+        'Gardens',
+        'Hikes',
+        'Nature',
+        'Trails',
+        'Trail Work',
+        'Trips',
+        'Weed Warrior'
+    ]
     category_id_map = get_category_id_map()
     events = []
     for event_category in event_categories:
@@ -354,8 +390,10 @@ def main(event_categories = ['Archaeology',
 
     return events
 
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
     print(len(events))

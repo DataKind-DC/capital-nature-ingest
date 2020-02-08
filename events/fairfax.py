@@ -7,24 +7,25 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-def get_event_cost(soup):
+
+def get_cost(soup):
     currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
     b_tags = soup.find_all('b')
     for b in b_tags:
         if 'Cost' in b.text:
-            event_cost = b.nextSibling.strip()
-            event_cost = re.findall(currency_re, event_cost)
-            if len(event_cost) > 0:
-                event_cost = event_cost[0].split(".")[0].replace("$",'')
-                event_cost = ''.join(s for s in event_cost if s.isdigit())
-                return event_cost
+            cost = b.nextSibling.strip()
+            cost = re.findall(currency_re, cost)
+            if len(cost) > 0:
+                cost = cost[0].split(".")[0].replace("$", '')
+                cost = ''.join(s for s in cost if s.isdigit())
+                return cost
     return ''
 
 
 def get_event_date_from_event_website(event_website):
-    url_tail = event_website.split('/')[-1]
-    if all(s.isdigit() for s in url_tail):
-        event_date = '/'.join([url_tail[i:i+2] for i in range(0, len(url_tail), 2)])
+    tail = event_website.split('/')[-1]
+    if all(s.isdigit() for s in tail):
+        event_date = '/'.join([tail[i:i + 2] for i in range(0, len(tail), 2)])
         event_date_year = f'20{event_date[-2:]}'
         event_date = event_date[:-2] + event_date_year
         event_date = schematize_event_date(event_date)
@@ -38,16 +39,18 @@ def get_event_date_times(soup, event_website):
     try:
         event_time_div_text = soup.find_all('h5')[-1].text
         if not event_time_div_text:
-            #no event time
+            # no event time
             return None, None, None, None
     except Exception as e:
-        logger.error(f'Exception getting event datetimes from {event_website}: {e}', 
-                    exc_info=True)
+        msg = f'Exception getting event datetimes from {event_website}: {e}'
+        logger.error(msg, exc_info=True)
         return None, None, None, None
     if start_date:
         end_date = start_date
     else:
-        start_date, end_date = get_event_dates(event_time_div_text, event_website)
+        start_date, end_date = get_event_dates(
+            event_time_div_text, 
+            event_website)
         if not start_date:
             return None, None, None, None
     start_time, end_time = get_event_times(event_time_div_text)
@@ -55,39 +58,37 @@ def get_event_date_times(soup, event_website):
     return start_date, end_date, start_time, end_time
 
 
-
-
-
-def get_event_description(soup):
+def get_e_desc(soup):
     p_texts = []
     for p in soup.find_all("p"):
         p_text = p.get_text()
         p_texts.append(p_text)
-    sorted_descriptions = sorted(p_texts, key = len)
+    sorted_descriptions = sorted(p_texts, key=len)
     longest_description = sorted_descriptions[-1].strip()
     if longest_description.startswith('Click to view in Google Maps'):
-        event_description = sorted_descriptions[-3].strip()
+        e_desc = sorted_descriptions[-3].strip()
     else:
-        event_description = longest_description
-    event_description = event_description
-    if event_description.startswith('Please wait while we redirect'):
+        e_desc = longest_description
+    e_desc = e_desc
+    if e_desc.startswith('Please wait while we redirect'):
         return
     else:
-        if event_description.startswith("Event Description\n"):
-            event_description = event_description.replace("Event Description\n",'', 1)
-        if event_description.startswith("("):
-            between_parentheses = event_description[event_description.find("(")+1:event_description.find(")")]
+        if e_desc.startswith("Event Description\n"):
+            e_desc = e_desc.replace("Event Description\n", '', 1)
+        if e_desc.startswith("("):
+            between_parentheses = e_desc[e_desc.find("(") + 1:e_desc.find(")")]
             to_replace = f'({between_parentheses})'
-            event_description = event_description.replace(to_replace,'').strip()
-        if "Golf Course" in event_description:
-            golf_index = event_description.find("Golf Course")
-            event_description = event_description[golf_index+13:]
-        return event_description
+            e_desc = e_desc.replace(to_replace, '').strip()
+        if "Golf Course" in e_desc:
+            golf_index = e_desc.find("Golf Course")
+            e_desc = e_desc[golf_index + 13:]
+        
+        return e_desc
 
 
-def get_event_venue(soup):
+def get_venue(soup):
     try:
-        event_venue = soup.find('h3').find('span').get_text().replace(' Location','')
+        venue = soup.find('h3').find('span').text.replace(' Location', '')
     except AttributeError:
         p_tags = soup.find_all('p')
         p_tag_index = 0
@@ -100,20 +101,21 @@ def get_event_venue(soup):
             if br_count > highest_br_count:
                 p_tag_index = i
             highest_br_count = br_count
-        event_venue = p_tags[p_tag_index]
-        test = [x.strip() for x in event_venue.get_text().split("\n")]
-        event_venue = next(x for x in test if len(x)>0)
+        venue = p_tags[p_tag_index]
+        test = [x.strip() for x in venue.get_text().split("\n")]
+        venue = next(x for x in test if len(x) > 0)
 
-    return event_venue
+    return venue
+
 
 def get_event_dates(event_time_div_text, event_website):
     '''
-    Given the text from the event time div (e.g. '3/06/2019 8:00 am to 3/06/2019 8:00 pm'),
+    Given a str like '3/06/2019 8:00 am to 3/06/2019 8:00 pm'),
     extract the event's start and end dates.
     
     Parameters:
-        event_time_div_text (str): the text from the event time div
-                                   (e.g. '3/06/2019 8:00 am to 3/06/2019 8:00 pm')
+        event_time_div_text (str): the text from the event time div, e.g.
+                                   '3/06/2019 8:00 am to 3/06/2019 8:00 pm'
                                    
     Returns:
         start_date (str): e.g. 3/06/2019
@@ -124,7 +126,8 @@ def get_event_dates(event_time_div_text, event_website):
     try:
         start_date = dates[0]
     except IndexError:
-        logger.error(f'Unable to grab start date from {event_website}', exc_info=True)
+        msg = f'Unable to grab start date from {event_website}'
+        logger.error(msg, exc_info=True)
         return None, None
     if len(dates) <= 1:
         end_date = start_date
@@ -133,15 +136,16 @@ def get_event_dates(event_time_div_text, event_website):
     
     return start_date, end_date
 
+
 def get_event_times(event_time_div_text):
     '''
-    Given the text from the event time div (e.g. '3/06/2019 8:00 am to 3/06/2019 8:00 pm'),
+    Given a str like '3/06/2019 8:00 am to 3/06/2019 8:00 pm',
     extract the event's start and end times.
     
     Parameters:
-        event_time_div_text (str): the text from the event time div
-                                   (e.g. '3/06/2019 8:00 am to 3/06/2019 8:00 pm')
-                                   
+        event_time_div_text (str): the text from the event time div, e.g.
+                                   '3/06/2019 8:00 am to 3/06/2019 8:00 pm'
+                           
     Returns:
         start_time (str): e.g. 8:00 am
         end_time (str): e.g. 8:00 pm
@@ -156,38 +160,38 @@ def get_event_times(event_time_div_text):
         
     return start_time, end_time
 
+
 def parse_event_website(event_website):
     try:
         r = requests.get(event_website)
     except Exception as e:
-        logger.critical(f'Exception makng GET to: {event_website}: {e}', 
-                        exc_info=True)
-        event_cost = None
-        event_description = None
-        event_venue = None
-        start_date = None
-        end_date = None
-        start_time = None
-        end_time = None
-        return event_cost, event_description, event_venue, start_date, end_date, start_time, end_time
+        msg = f'Exception makng GET to: {event_website}: {e}'
+        logger.critical(msg, exc_info=True)
+        return None, None, None, None, None, None, None
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
-    page_title_lowered = soup.find('div', {'class':'page-title'}).text.strip().lower()
+    page_title_lowered = soup.find(
+        'div',
+        {'class': 'page-title'}).text.strip().lower()
     if 'canceled' in page_title_lowered:
-        event_cost = None
-        event_description = None
-        event_venue = None
+        cost = None
+        e_desc = None
+        venue = None
         start_date = None
         end_date = None
         start_time = None
         end_time = None
     else:
-        event_cost = get_event_cost(soup)
-        event_description = get_event_description(soup)
-        event_venue = get_event_venue(soup)
-        start_date, end_date, start_time, end_time = get_event_date_times(soup, event_website)
+        cost = get_cost(soup)
+        e_desc = get_e_desc(soup)
+        venue = get_venue(soup)
+        start_date, end_date, start_time, end_time = get_event_date_times(
+            soup, 
+            event_website
+        )
 
-    return event_cost, event_description, event_venue, start_date, end_date, start_time, end_time
+    return cost, e_desc, venue, start_date, end_date, start_time, end_time
+
 
 def schematize_event_date(event_date):
     '''
@@ -199,15 +203,21 @@ def schematize_event_date(event_date):
     except ValueError:
         try:
             datetime_obj = datetime.strptime(event_date, "%m/%d/%Y")
-            schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
+            schematized_event_date = datetime.strftime(
+                datetime_obj,
+                "%Y-%m-%d"
+            )
         except ValueError:
-            #format might be like 012619
+            # format might be like 012619
             try:
                 datetime_obj = datetime.strptime(event_date, "%m%d%y")
-                schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
+                schematized_event_date = datetime.strftime(
+                    datetime_obj,
+                    "%Y-%m-%d"
+                )
             except ValueError:
-                logger.error(f'Exception schematzing this event date: {event_date}', 
-                               exc_info=True)
+                msg = f'Exception schematzing this event date: {event_date}'
+                logger.error(msg, exc_info=True)
                 schematized_event_date = ''
     
     return schematized_event_date
@@ -221,8 +231,8 @@ def schematize_event_time(event_time):
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
     except ValueError:
-        logger.error(f'Exception schematzing this event time: {event_time}', 
-                        exc_info=True)
+        msg = f'Exception schematzing this event time: {event_time}'
+        logger.error(msg, exc_info=True)
         schematized_event_time = ''
     
     return schematized_event_time
@@ -237,7 +247,7 @@ def main():
         return []
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
-    title_divs = soup.find_all('div', {'class':'calendar-title'})
+    title_divs = soup.find_all('div', {'class': 'calendar-title'})
     domain = 'https://www.fairfaxcounty.gov'
     events = []
     for title_div in title_divs:
@@ -245,13 +255,14 @@ def main():
         try:
             event_website = title_div.find('a', href=True)['href']
         except KeyError:
-            #if there's no event website, skip since we won't get needed info without it
+            # if there's no event website, skip
             continue
-        if not domain in event_website:
+        if domain not in event_website:
             event_website = domain + event_website
-        event_cost, event_description, event_venue, start_date, end_date, start_time, end_time = parse_event_website(event_website)
-        event_venue = event_venue if event_venue else "See event website"
-        if event_venue and start_date:
+        res = parse_event_website(event_website)
+        cost, e_desc, venue, start_date, end_date, start_time, end_time = res
+        venue = venue if venue else "See event website"
+        if venue and start_date:
             start_date = schematize_event_date(start_date)
             end_date = schematize_event_date(end_date)
             start_time = schematize_event_time(start_time)
@@ -262,19 +273,22 @@ def main():
                      'Event End Time': end_time,
                      'Event Website': event_website,
                      'Event Name': event_name,
-                     'Event Venue Name': event_venue,
-                     'Event Cost': event_cost,
-                     'Event Description': event_description,
-                     'Event Currency Symbol':'$',
-                     'Timezone':'America/New_York',
-                     'Event Organizers':'Fairfax Parks',
-                     'Event Category':'',
-                     'All Day Event':False} #doesn't seem like any events are all day
+                     'Event Venue Name': venue,
+                     'Event Cost': cost,
+                     'Event Description': e_desc,
+                     'Event Currency Symbol': '$',
+                     'Timezone': 'America/New_York',
+                     'Event Organizers': 'Fairfax Parks',
+                     'Event Category': '',
+                     'All Day Event': False}
             events.append(event)
 
     return events
 
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
+    print(len(events))
