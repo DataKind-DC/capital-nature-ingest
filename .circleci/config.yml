@@ -10,11 +10,9 @@ jobs:
     steps:
       - checkout
 
-      # Download and cache dependencies
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "requirements.txt" }}
-            # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
 
       - run:
@@ -30,14 +28,15 @@ jobs:
           key: v1-dependencies-{{ checksum "requirements.txt" }}
       
       - run:
-        name: run linter
-        command: |
-          . venv/bin/activate
-          circleci tests glob **/events/*.py | circleci tests split --split-by=timings --timings-type=classname | xargs flake8 --output-file test-reports
+          name: run linter
+          command: |
+            . venv/bin/activate
+            circleci tests glob **/events/*.py | circleci tests split --split-by=timings --timings-type=classname | xargs flake8 --output-file test-reports
       
       - store_artifacts:
           path: test-reports
           destination: test-reports
+  
   test:
     docker:
       - image: circleci/python:3.7.3
@@ -60,10 +59,10 @@ jobs:
             pip install -r requirements.txt
       
       - run:
-        name: run tests
-        command: |
-          . venv/bin/activate
-          circleci tests glob **/tests/*_test.py | circleci tests split --split-by=timings --timings-type=classname | xargs python3 -m unittest
+          name: run tests
+          command: |
+            . venv/bin/activate
+            circleci tests glob **/tests/*_test.py | circleci tests split --split-by=timings --timings-type=classname | xargs python3 -m unittest
 
 
 workflows:
