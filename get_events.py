@@ -4,6 +4,16 @@ import os
 
 #import boto3
 
+
+from events import ans, arlington, aws, casey_trees, city_blossoms, dc_audubon, \
+                   eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, \
+                   loudoun_wildlife_conservancy, montgomery, nova_parks, \
+                   nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md, sierra_club, \
+                   tnc, us_botanic_garden, vnps, nva_audubon_society
+from log import CsvFormatter
+from tests.utils import schema_test
+from utils import formatters, reports
+
 try:
     NPS_KEY = os.environ['NPS_KEY']
 except KeyError:
@@ -16,15 +26,6 @@ except KeyError:
     EVENTBRITE_TOKEN = input("Enter your Eventbrite API key:")
     os.environ["EVENTBRITE_TOKEN"] = EVENTBRITE_TOKEN
 
-from events import ans, arlington, aws, casey_trees, city_blossoms, dc_audubon, \
-                   eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, \
-                   loudoun_wildlife_conservancy, montgomery, nova_parks, \
-                   nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md, sierra_club, \
-                   tnc, us_botanic_garden, vnps, nva_audubon_society
-from log import CsvFormatter
-from tests.utils import schema_test
-from utils import formatters, reports
-
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +37,7 @@ def get_events():
         events (list): a list of dicts, with each dict representing a single event.
     '''
     event_sources = [ans, arlington, aws, casey_trees, city_blossoms, dc_audubon,
-                     eleventh_street, fairfax, fona, friends_of_kenilworth_gardens, 
+                     eleventh_street, fairfax, fona, friends_of_kenilworth_gardens,
                      loudoun_wildlife_conservancy, montgomery, nova_parks,
                      nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md, sierra_club, \
                      tnc, us_botanic_garden, vnps, nva_audubon_society]
@@ -48,7 +49,8 @@ def get_events():
             logger.critical(f'Exception getting events in {event_source.__name__}:  {e}',
                             exc_info=True)
             continue
-        unicoded_source_events = [{k: formatters.unicoder(v) for k,v in i.items()} for i in source_events]
+        unicoded_source_events = [{k: formatters.unicoder(v) for k, v in i.items()} \
+            for i in source_events]
         for i, event in enumerate(unicoded_source_events):
             try:
                 schema_test([event])
@@ -61,7 +63,7 @@ def get_events():
     return events
 
 def create_log_file():
-    log_dir = os.path.join(os.getcwd(),'logs')
+    log_dir = os.path.join(os.getcwd(), 'logs')
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
 
@@ -72,7 +74,7 @@ def create_log_file():
 
     return log_path
 
-def main(is_local = True, bucket = None):
+def main(is_local=True, bucket=None):
     events = get_events()
     events = formatters.tag_events_with_state(events)
     reports.make_reports(events, is_local, bucket)
