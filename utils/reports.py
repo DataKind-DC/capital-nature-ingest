@@ -5,6 +5,7 @@ import re
 
 import boto3
 import pandas as pd
+from pandas.errors import EmptyDataError
 
 from .event_source_map import event_source_map
 
@@ -13,53 +14,57 @@ def events_to_csv(events, is_local = True, bucket = None):
     Void function that writes events to csv, either locally or to an S3 bucket.
 
     Parameters:
-        events (list): a list of dicts, with each dict representing a single event.
-        is_local (bool): True if you want to write the csv locally. False if you want to
-                         write the csv to S3 (must supply a valid bucket name as well)
-        bucket (str or None): the name of the public S3 bucket. None by default.
+        events (list): a list of dicts, with each representing a single event.
+        is_local (bool): True to write the csv locally. False if you want to
+                         write the csv to S3 (must pass bucket name as well)
+        bucket (str or None): the name of the public S3 bucket. None by default
 
     Returns:
         None
     '''
     now = datetime.now().strftime("%m-%d-%Y")
     filename = f'cap-nature-events-scraped-{now}.csv'
-    fieldnames = {'Do Not Import','Event Name','Event Description','Event Excerpt',
-                  'Event Start Date','Event Start Time','Event End Date',
-                  'Event End Time','Timezone','All Day Event',
-                  'Hide Event From Event Listings','Event Sticky in Month View',
-                  'Feature Event','Event Venue Name',
-                  'Event Organizers','Event Show Map Link','Event Show Map',
-                  'Event Cost','Event Currency Symbol','Event Currency Position',
-                  'Event Category','Event Tags','Event Website',
-                  'Event Featured Image','Allow Comments',
-                  'Event Allow Trackbacks and Pingbacks'}
+    fieldnames = {
+        'Do Not Import','Event Name','Event Description','Event Excerpt',
+        'Event Start Date','Event Start Time','Event End Date',
+        'Event End Time','Timezone','All Day Event',
+        'Hide Event From Event Listings','Event Sticky in Month View',
+        'Feature Event','Event Venue Name',
+        'Event Organizers','Event Show Map Link','Event Show Map',
+        'Event Cost','Event Currency Symbol','Event Currency Position',
+        'Event Category','Event Tags','Event Website',
+        'Event Featured Image','Allow Comments',
+        'Event Allow Trackbacks and Pingbacks'
+    }
     out_path = os.path.join(os.getcwd(), 'data', filename)
     if not os.path.exists(os.path.join(os.getcwd(), 'data')):
         os.mkdir(os.path.join(os.getcwd(), 'data'))
-    with open(out_path, mode = 'w', encoding = 'utf-8', errors = 'ignore') as f:
+    with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
         writer = csv.DictWriter(f, fieldnames = fieldnames)
         writer.writeheader()
         for event in events:
             writer.writerow(event)
     if not is_local and bucket:
         s3 = boto3.resource('s3')
-        s3.meta.client.upload_file(out_path,
-                                   bucket,
-                                   'capital-nature/{0}'.format(filename))
+        s3.meta.client.upload_file(
+            out_path,
+            bucket,
+            'capital-nature/{0}'.format(filename)
+        )
     else:
         return out_path
 
 def get_past_venues():
     '''
-    Returns a set of event venues from current venue csv in temp/ (if it exists)
-    and then deletes that file (if it exists) as it will soon be replaced by a new,
-    more updated one.
+    Returns a set of event venues frm current venue csv in temp/ (if it exists)
+    and then deletes that file (if it exists) as it will soon be replaced by 
+    a new, more updated one.
 
     Parameters:
         None
 
     Returns:
-        past_venues (set): a set of event venues, or an empty set if there are none
+        past_venues (set): set of venues, or an empty set if there are none
     '''
     data_path = os.path.join(os.getcwd(), 'data')
     if not os.path.exists(data_path):
@@ -89,10 +94,10 @@ def venues_to_csv(events, is_local = True, bucket = None):
     an S3 bucket.
 
     Parameters:
-        events (list): a list of dicts, with each dict representing a single event.
-        is_local (bool): True if you want to write the csv locally. False if you want to
-                         write the csv to S3 (must supply a valid bucket name as well)
-        bucket (str or None): the name of the public S3 bucket. None by default.
+        events (list): a list of dicts, with each representing a single event.
+        is_local (bool): True to write the csv locally. False if you want to
+                         write the csv to S3 (must pass bucket name as well)
+        bucket (str or None): the name of the public S3 bucket. None by default
 
     Returns:
         None
@@ -109,9 +114,9 @@ def venues_to_csv(events, is_local = True, bucket = None):
     if not os.path.exists(os.path.join(os.getcwd(), 'data')):
         os.mkdir(os.path.join(os.getcwd(), 'data'))
     with open(out_path,
-              mode = 'w',
-              encoding = 'utf-8',
-              errors = 'ignore') as f:
+              mode='w',
+              encoding='utf-8',
+              errors='ignore') as f:
         writer = csv.writer(f)
         _venues = ['VENUE NAME']
         _venues.extend(list(unique_venues))
@@ -120,16 +125,17 @@ def venues_to_csv(events, is_local = True, bucket = None):
             writer.writerow([venue])
     if not is_local and bucket:
         s3 = boto3.resource('s3')
-        s3.meta.client.upload_file(out_path,
-                                   bucket,
-                                   'capital-nature/{0}'.format(filename)
-                                    )
+        s3.meta.client.upload_file(
+            out_path,
+            bucket,
+            'capital-nature/{0}'.format(filename)
+        )
 
 def get_past_organizers():
     '''
-    Returns a set of event organizers from current organizer csv in temp/ (if it exists)
-    and then deletes that file (if it exists) as it will soon be replaced by a new,
-    more updated one.
+    Returns a set of event organizers from current organizer csv in temp/ 
+    (if it exists) and then deletes that file (if it exists) as it will soon
+    be replaced by a new, more updated one.
 
     Parameters:
         None
@@ -206,7 +212,12 @@ class ScrapeReport():
     def __init__(self, scrape_file):
         self.scrape_file = scrape_file
         log_file = ScrapeReport.get_log_file(scrape_file)
-        self.log_df = pd.read_csv(log_file)
+        try:
+            self.log_df = pd.read_csv(log_file)
+        except EmptyDataError:
+            # there were no errors so the log file is empty
+            cols = ['Time', 'Level', 'Event Source', 'Message', 'Exc Info']
+            self.log_df = pd.DataFrame(columns=cols)
         self.scrape_df = pd.read_csv(scrape_file)
         reports_dir = os.path.join(os.getcwd(),'reports')
         if not os.path.exists(reports_dir):

@@ -52,11 +52,9 @@ jobs:
             - v1-dependencies-
 
       - run:
-          name: install dependencies
+          name: activate venv
           command: |
-            python3 -m venv venv
             . venv/bin/activate
-            pip install -r requirements.txt
       
       - run:
           name: run tests
