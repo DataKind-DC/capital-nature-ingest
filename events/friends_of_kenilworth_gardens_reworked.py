@@ -5,8 +5,10 @@ Created on Mon Jun 17 20:49:38 2019
 @author: Scott Mcallister
 @author: Francisco Vannini
 """
+import logging 
+from bs4 import BeautifulSoup
+import requests
 from datetime import datetime
-import json
 import logging
 import os
 import re
@@ -61,7 +63,7 @@ def scrape(event_id, event_cost):
             'All Day Event': "False",
             'Timezone': "America/New_York",
             'Event Venue Name': venue["name"],
-            'Event Organizers': 'Friends Of Kenilsworth Gardens',
+            'Event Organizers': 'Friends Of Kenilworth Aquatic Gardens',
             'Event Cost': event_cost,
             'Event Currency Symbol': "$",
             'Event Category': category,  # TODO: parse event data for optional category fields if present
@@ -70,25 +72,26 @@ def scrape(event_id, event_cost):
         }
 
     return event_data
+    # print(event_data)
+    # print(venue["address"]["latitude"])
+    # print(venue["address"]["longitude"])
+    # print(venue["address"]["localized_area_display"])
 
-def get(api_id, api_resource, params={'token': EVENTBRITE_TOKEN}):
-    url = f'https://www.eventbrite.com/o/{api_id}' if api_resource == 'o' \
-        else f'https://www.eventbriteapi.com/v3/{api_resource}/{api_id}'  
-    
+def get_url(url, org_id=None):
+    url = f'{url}{org_id}' if org_id else url    
     try:
-        r = requests.get(url, params=params) if api_resource != 'o' else requests.get(url)
+        r = requests.get(url)
     except Exception as e:
         logger.critical(f"Exception making GET request to {url}: {e}", exc_info=True)
         return
     if not r.ok:
-        logger.critical(f"Non-200 status code of {r.status_code} makign GET request to {url}")
-      
-    return r
+        logger.critical(f"Non-200 status code of {r.status} makign GET request to {url}")
+    soup = BeautifulSoup(r.content, 'html.parser')    
+    return soup
 
 def get_live_events(soup):
     live_events = soup.find("article", {"id": "live_events"})
     event_divs = live_events.find_all("div", {"class": "list-card-v2"})
-    
     return event_divs
 
 def get_cost_events(soup):
@@ -102,8 +105,7 @@ def get_cost_events(soup):
 
 def main():
     events_array = []
-    r = get(EVENTBRITE_ORG_ID, 'o')
-    soup = BeautifulSoup(r.content, 'html.parser')  
+    soup = get_url('https://www.eventbrite.com/o/', org_id=EVENTBRITE_ORG_ID)
     event_a_refs = get_live_events(soup)
 
     for events in event_a_refs:
@@ -114,7 +116,5 @@ def main():
     return events_array
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
     print(json.dumps(events,sort_keys=True,indent=4))
