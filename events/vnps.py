@@ -17,8 +17,10 @@ def parse_date_and_time(date_and_time):
 
     Returns:
         all_day (bool): True if the event is all-day
-        start_time (str or None): if str, the event's start time. If None, the event is an all-day event
-        end_time (str or None): if str, the event's end time. If None, the event is an all-day event
+        start_time (str or None): if str, the event's start time. 
+            If None, the event is an all-day event
+        end_time (str or None): if str, the event's end time. 
+            If None, the event is an all-day event
         start_date (str): event's start date
         end_date (str): event's end date
     '''
@@ -30,17 +32,17 @@ def parse_date_and_time(date_and_time):
         start_time = None
         end_time = None
         all_day = True
-    dates = date_and_time.text.replace(times,'').strip()
+    dates = date_and_time.text.replace(times, '').strip()
     if "-" in dates:
         start_date, end_date = [x.strip() for x in dates.split("-")]
     else:
         start_date = dates.strip()
         end_date = dates.strip()
     if start_time:
-        start_time_obj = datetime.strptime(start_time,'%I:%M %p')
+        start_time_obj = datetime.strptime(start_time, '%I:%M %p')
         start_time = datetime.strftime(start_time_obj, "%H:%M:%S")
     if end_time:
-        end_time_obj = datetime.strptime(end_time,'%I:%M %p')
+        end_time_obj = datetime.strptime(end_time, '%I:%M %p')
         end_time = datetime.strftime(end_time_obj, "%H:%M:%S")
     if start_date:
         start_date_obj = datetime.strptime(start_date, "%A, %B %d, %Y")
@@ -52,102 +54,103 @@ def parse_date_and_time(date_and_time):
     return all_day, start_time, end_time, start_date, end_date
 
 
-def soupify_event_website(event_website):
+def soupify_site(site):
     '''
     Given an event website, use bs4 to soupify it.
     
     Parameters:
-        event_website(str): the url for the website
+        site(str): the url for the website
         
     Returns:
-        event_website_soup: a bs4 soup object
+        site_soup: a bs4 soup object
     '''
     try:
-        r = requests.get(event_website)
+        r = requests.get(site)
     except Exception as e:
-        logger.critical(f"Exception making GET request to {event_website}: {e}", 
+        logger.critical(f"Exception making GET request to {site}: {e}", 
                         exc_info=True)
         return
     content = r.content
-    event_website_soup = BeautifulSoup(content, 'html.parser')
+    site_soup = BeautifulSoup(content, 'html.parser')
     
-    return event_website_soup
+    return site_soup
 
 
-def get_event_description(event_website_soup):
+def get_desc(site_soup):
     '''
-    Given the soup to an event's page, return the longest <p> element as the event's description.
+    Return the longest <p> element as the event's description.
     '''
-    paras = event_website_soup.find_all('p')
-    description = max([p.text for p in paras], key = len)
+    paras = site_soup.find_all('p')
+    description = max([p.text for p in paras], key=len)
     
     return description
 
 
-def get_event_venue_and_categories(event_website_soup):
+def get_venue_and_categories(site_soup):
     '''
     Gets the event's venue and tags from the event's wesbite
 
     Parameters:
-        event_website(str): the url for the website
+        site(str): the url for the website
 
     Returns:
-        event_venue (str): the event's venue
-        event_categories (str): a comma-delimited list of event categories
+        venue (str): the event's venue
+        cats (str): a comma-delimited list of event categories
     '''
-    paras = event_website_soup.find_all('p')
-    event_venue = ''
-    event_categories = ''
+    paras = site_soup.find_all('p')
+    venue = ''
+    cats = ''
     for p in paras:
         p_strong = p.find('strong')
         if p_strong:
             p_strong_text = p_strong.text
             if p_strong_text == 'Location':
-                event_venue += p.text.replace('Location','').strip()
+                venue += p.text.replace('Location', '').strip()
             elif p_strong_text == 'Categories':
                 a_tags = p.find_all('a')
                 if a_tags:
-                    event_categories += ", ".join([x.get_text() for x in a_tags])
+                    cats += ", ".join([x.get_text() for x in a_tags])
     
-    return event_venue, event_categories
+    return venue, cats
 
 
-def parse_description_and_location(description_and_location):
+def parse_desc_loc(desc_loc):
     '''
     Gets the event website, name and venue
 
     Parameters:
-        description_and_location (bs4 element tag): a <td> tag
+        desc_loc (bs4 element tag): a <td> tag
 
     Returns:
-        event_website (str): event's website
-        event_name (str): event's name
-        event_venue (str): event's venue
-        event_description (str): event's description
+        site (str): event's website
+        name (str): event's name
+        venue (str): event's venue
+        desc (str): event's description
     '''
-    a = description_and_location.find('a',href=True)
-    event_website = a['href']
+    a = desc_loc.find('a', href=True)
+    site = a['href']
     try:
-        event_name = a['title']
+        name = a['title']
     except KeyError:
-        event_name = a.get_text().strip()
-    event_website_soup = soupify_event_website(event_website)
-    if not event_website_soup:
+        name = a.get_text().strip()
+    site_soup = soupify_site(site)
+    if not site_soup:
         return None, None, None, None, None
-    event_venue, event_categories = get_event_venue_and_categories(event_website_soup)
-    if not event_venue:
-        event_description = ''
-        return event_website, event_name, event_venue, event_categories, event_description
+    venue, cats = get_venue_and_categories(site_soup)
+    if not venue:
+        desc = ''
+        return site, name, venue, cats, desc
     else:
-        event_description = get_event_description(event_website_soup)
-    event_description = normalize("NFKD", event_description)
+        desc = get_desc(site_soup)
+    desc = normalize("NFKD", desc)
 
-    return event_website, event_name, event_venue, event_categories, event_description
+    return site, name, venue, cats, desc
 
 
-def filter_events(events, categories = []):
+def filter_events(events, categories=[]):
     '''
-    Filters the events output of get_vnps_events() to only include select categories. Possible options are:
+    Filters the events output of get_vnps_events() to include some categories.
+    Possible options are:
         Blue Ridge Wildflower Society
         Chapter Events
         Extended Field Trip
@@ -172,19 +175,20 @@ def filter_events(events, categories = []):
         Workshop
 
     Parameters:
-        events (list): get_vnps_events() return object, which is a list of dicts, with each
-                       dictionary representing an event.
+        events (list): get_vnps_events() return object as a list of dicts, 
+                       with each dictionary representing an event.
         categories (list): a list of categories to filter out.
 
     Returns:
-        events (list): events that do not contain one of the categories within the categories param
+        events (list): events that do not contain one of the categories 
+                       within the categories param
     '''
     categories_lowered = [x.lower() for x in categories]
     filtered_events = []
     for event in events:
-        event_categories = event['Event Category']
-        event_categories = [x.strip().lower() for x in event_categories.split(",")]
-        if not any(x in event_categories for x in categories_lowered):
+        cats = event['Event Category']
+        cats = [x.strip().lower() for x in cats.split(",")]
+        if not any(x in cats for x in categories_lowered):
             filtered_events.append(event)
 
     return filtered_events
@@ -195,8 +199,7 @@ def main(categories=[]):
     Gets the event data in our wordpess schema
 
     Parameters:
-        categories (list): a list of categories to filter out. See filter_events docstring for
-                           possible values.
+        categories (list): a list of categories to filter out.
     Returns:
         events (list): a list of dicts, with each representing a vnps event
     '''
@@ -204,7 +207,8 @@ def main(categories=[]):
     try:
         r = requests.get(event_url)
     except Exception as e:
-        logger.critical(f"Exception making GET request to {event_url}: {e}", exc_info=True)
+        msg = f"{e} making GET request to {event_url}"
+        logger.critical(msg, exc_info=True)
         return []
     content = r.content
     soup = BeautifulSoup(content, 'html.parser')
@@ -220,35 +224,40 @@ def main(categories=[]):
             tds = row.find_all('td')
             try:
                 date_and_time = tds[0]
-                description_and_location = tds[2]
-            except IndexError:
-                logger.error(f"No table elements (td tags) found in {row}", exc_info=True)
+                desc_loc = tds[2]
+            except IndexError as e:
+                msg = f"{e} No table elements (td tags) found in {row}"
+                logger.error(msg, exc_info=True)
                 continue
-            all_day, start_time, end_time, start_date, end_date = parse_date_and_time(date_and_time)
-            event_website, event_name, event_venue, event_categories, event_description = parse_description_and_location(description_and_location)
-            event_venue = event_venue if event_venue else "See event website"
-            event_categories = event_categories if event_categories else ''
-            event_description = event_description if event_description else "See event website"
+            res = parse_date_and_time(date_and_time)
+            all_day, start_time, end_time, start_date, end_date = res
+            site, name, venue, cats, desc = parse_desc_loc(desc_loc)
+            venue = venue if venue else "See event website"
+            cats = cats if cats else ''
+            desc = desc if desc else "See event website"
             event = {'Event Start Date': start_date,
                      'Event End Date': end_date,
                      'Event Start Time': start_time,
                      'Event End Time': end_time,
-                     'Event Website': event_website,
-                     'Event Name': event_name,
-                     'Event Description': event_description,
-                     'Event Venue Name': event_venue,
+                     'Event Website': site,
+                     'Event Name': name,
+                     'Event Description': desc,
+                     'Event Venue Name': venue,
                      'All Day Event': all_day,
-                     'Event Category': event_categories,
-                     'Event Cost':'',
-                     'Event Currency Symbol':'$',
-                     'Timezone':'America/New_York',
+                     'Event Category': cats,
+                     'Event Cost': '',
+                     'Event Currency Symbol': '$',
+                     'Timezone': 'America/New_York',
                      'Event Organizers': 'Virginia Native Plant Society'}
             events.append(event)
     filtered_events = filter_events(events, categories)
 
     return filtered_events
 
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     events = main()
+    print(len(events))
