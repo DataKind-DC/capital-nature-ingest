@@ -14,7 +14,7 @@ except KeyError:
 
 logger = logging.getLogger(__name__)
 
-PARK_CODES = [
+PARK_CODES = {
     'afam', 'anac', 'anti', 'apco', 'appa', 'arho', 'asis', 'balt', 'bawa',
     'bepa', 'blri', 'bowa', 'cahi', 'cajo', 'came', 'cato', 'cawo', 'cbgn',
     'cbpo', 'cebe', 'choh', 'clba', 'coga', 'colo', 'cuga', 'cwdw', 'fodu',
@@ -24,7 +24,15 @@ PARK_CODES = [
     'mlkm', 'mono', 'nace', 'nama', 'ovvi', 'oxhi', 'paav', 'pete', 'pisc',
     'pohe', 'prwi', 'rich', 'rocr', 'shen', 'shvb', 'stsp', 'this', 'thje',
     'thst', 'vive', 'wamo', 'waro', 'whho', 'wotr', 'wwii', 'york'
-]
+}
+
+EXCLUDE = {
+    'anti', 'apco', 'asis', 'blri', 'bowa', 'came', 'cato', 'cebe', 'colo',
+    'cuga', 'fomr', 'frsp', 'hamp', 'hafe', 'hatu', 'jame', 'jthg', 'mawa',
+    'mono', 'ovvi', 'pete', 'rich', 'shen', 'shvb', 'waro', 'york'
+}
+
+PARK_CODES = PARK_CODES - EXCLUDE
 
 
 def get_park_events(park_code, limit=1000):
