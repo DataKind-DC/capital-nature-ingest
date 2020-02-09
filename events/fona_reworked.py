@@ -16,7 +16,7 @@ import json
 
 logger = logging.getLogger(__name__)
 
-FONA_EVENTBRITE_ORG_ID = 8632128868
+EVENTBRITE_ORG_ID = 13276552841
 # For a local run, be sure to create an env variable with your Eventbrite token
 # For example:
 # $ export EVENTBRITE_TOKEN=<EVENTBRITE TOKEN Key>
@@ -105,7 +105,7 @@ def get_cost_events(soup):
 
 def main():
     events_array = []
-    soup = get_url('https://www.eventbrite.com/o/', org_id=FONA_EVENTBRITE_ORG_ID)
+    soup = get_url('https://www.eventbrite.com/o/', org_id=EVENTBRITE_ORG_ID)
     event_a_refs = get_live_events(soup)
 
     for events in event_a_refs:

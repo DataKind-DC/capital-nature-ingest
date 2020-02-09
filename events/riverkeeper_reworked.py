@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Riverkeeper
+# FONA
+# Friends of Kenilworth
+# NOVA Parks
+# Sierra Club MD
+
 """
 Created on Mon Jun 17 20:49:38 2019
 @author: Scott Mcallister
@@ -16,13 +22,14 @@ import json
 
 logger = logging.getLogger(__name__)
 
-FONA_EVENTBRITE_ORG_ID = 8632128868
+EVENTBRITE_ORG_ID = 10605256752
 # For a local run, be sure to create an env variable with your Eventbrite token
 # For example:
 # $ export EVENTBRITE_TOKEN=<EVENTBRITE TOKEN Key>
 
 try:
-    EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
+    # EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
+    EVENTBRITE_TOKEN = "TBQNST6U37HN55FFCSQY"
 except KeyError:
     #if it's not an env var, then we might be testing
     EVENTBRITE_TOKEN = input("Enter your Eventbrite Token Key:")
@@ -105,7 +112,7 @@ def get_cost_events(soup):
 
 def main():
     events_array = []
-    soup = get_url('https://www.eventbrite.com/o/', org_id=FONA_EVENTBRITE_ORG_ID)
+    soup = get_url('https://www.eventbrite.com/o/', org_id=EVENTBRITE_ORG_ID)
     event_a_refs = get_live_events(soup)
 
     for events in event_a_refs:
