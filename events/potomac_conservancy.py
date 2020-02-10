@@ -74,7 +74,8 @@ def update_event_data(event_website, event_data):
         time_class = "event-time-24hr-start"
         event_start_time = time_span.find('time', {'class': time_class}).text
     except AttributeError as e:
-        logger.error(f"Unable to scrape event_start_time: {e}", exc_info=True)
+        msg = f"Unable to scrape start_time from {event_website}: {e}"
+        logger.error(msg, exc_info=True)
         return
     try:
         time_class = "event-time-12hr-end"
