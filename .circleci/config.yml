@@ -63,10 +63,6 @@ jobs:
           command: |
             . venv/bin/activate
             circleci tests glob **/tests/*_test.py | circleci tests split --split-by=timings | xargs python3 -m unittest
-      
-      - store_artifacts:
-          path: test-reports
-          destination: test-reports
 
 workflows:
   version: 2
