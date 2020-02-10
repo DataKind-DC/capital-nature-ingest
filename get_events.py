@@ -1,5 +1,7 @@
 from datetime import datetime
+from inspect import getmodule
 import logging
+import multiprocessing
 import os
 import sys
 
@@ -30,6 +32,31 @@ except KeyError:
 logger = logging.getLogger(__name__)
 
 
+def get_source_events(event_source_main):
+    f = getmodule(event_source_main).__name__.split('.')[-1]
+    try:
+        events = event_source_main()
+        n = len(events)
+        print(f"Found {n} events for {f}")
+    except Exception as e:
+        msg = f'Exception getting events in {f}: {e}'
+        logger.critical(msg, exc_info=True)
+        return []
+    events = [
+        {k: formatters.unicoder(v) for k, v in i.items()}
+        for i in events
+    ]
+    for i, event in enumerate(events):
+        try:
+            schema_test([event])
+        except Exception as e:
+            msg = f'Exception getting events in {f}: {e}'
+            logger.error(msg, exc_info=True)
+            events.pop(i)
+    events = formatters.tag_events_with_state(events)
+    
+    return events
+
 def get_events():
     '''
     Combines the events output of all the event scrapers.
@@ -44,32 +71,12 @@ def get_events():
         nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md,
         sierra_club, tnc, us_botanic_garden, vnps, nva_audubon_society
     ]
+    event_source_mains = [e.main for e in event_sources]
 
-    events = []
-    for event_source in event_sources:
-        f = event_source.__name__
-        try:
-            source_events = event_source.main()
-            n_events = len(source_events)
-            f_name = f.split(".")[-1]
-            print(f'Scraped {n_events} events for {f_name}')
-        except Exception as e:
-            msg = f'Exception getting events in {f}: {e}'
-            logger.critical(msg, exc_info=True)
-            continue
-        source_events = [
-            {k: formatters.unicoder(v) for k, v in i.items()}
-            for i in source_events
-        ]
-        for i, event in enumerate(source_events):
-            try:
-                schema_test([event])
-            except Exception as e:
-                msg = f'Exception getting events in {f}: {e}'
-                logger.error(msg, exc_info=True)
-                source_events.pop(i)
-        events.extend(source_events)
-
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+        events = pool.map(get_source_events, event_source_mains)    
+    events = [item for sublist in events for item in sublist]
+    
     return events
 
 
@@ -88,7 +95,6 @@ def create_log_file():
 
 def main(is_local=True, bucket=None):
     events = get_events()
-    events = formatters.tag_events_with_state(events)
     reports.make_reports(events, is_local, bucket)
 
     return events
