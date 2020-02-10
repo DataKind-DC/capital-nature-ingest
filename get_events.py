@@ -1,9 +1,8 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from inspect import getmodule
 import logging
-import multiprocessing
 import os
-import sys
 
 # import boto3
 
@@ -37,7 +36,7 @@ def get_source_events(event_source_main):
     try:
         events = event_source_main()
         n = len(events)
-        print(f"Found {n} events for {f}")
+        print(f"Scraped {n} event(s) for {f}")
     except Exception as e:
         msg = f'Exception getting events in {f}: {e}'
         logger.critical(msg, exc_info=True)
@@ -57,6 +56,7 @@ def get_source_events(event_source_main):
     
     return events
 
+
 def get_events():
     '''
     Combines the events output of all the event scrapers.
@@ -73,8 +73,9 @@ def get_events():
     ]
     event_source_mains = [e.main for e in event_sources]
 
-    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-        events = pool.map(get_source_events, event_source_mains)    
+    with ThreadPoolExecutor(max_workers=len(event_sources)) as executor:
+        events = executor.map(get_source_events, event_source_mains) 
+    
     events = [item for sublist in events for item in sublist]
     
     return events
