@@ -178,7 +178,7 @@ def get_request_result(url):
     try:
         r = requests_retry_session().get(url)
     except Exception as e:
-        msg = f"{e} getting making GET request to {url}"
+        msg = f"Exception making GET request to {url}: {e}"
         logger.critical(msg, exc_info=True)
         return
     
@@ -223,7 +223,7 @@ def get_event_info():
             clean_event_info(evt_info)
             all_event_info.append(evt_info)
         except Exception as e:
-            msg = f"{e}: failed to get event at index {idx}"
+            msg = f"Exception getting event at index {idx}: {e}"
             logger.error(msg, exc_info=True)
 
     return all_event_info
@@ -234,7 +234,7 @@ def main():
     try:
         event_info = get_event_info()
     except Exception as e:
-        msg = f"{e}: failed to get event IDs."
+        msg = f"Exception getting event IDs: {e}"
         logger.error(msg, exc_info=True)
     return event_info
 

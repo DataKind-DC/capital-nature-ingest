@@ -66,7 +66,7 @@ def schematize_event_time(event_time, event_website):
         schematized_event_time = ''
         if 'Day' in event_time:
             return None
-        msg = f'{e} parsing this event time: {event_time} for {event_website}'
+        msg = f'Exception parsing {event_time} for {event_website}: {e}'
         logger.error(msg, exc_info=True)
         return schematized_event_time
     

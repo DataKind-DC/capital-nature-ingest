@@ -44,8 +44,8 @@ def schematize_event_time(event_time):
     try:
         datetime_obj = datetime.strptime(event_time.lower(), "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
-    except ValueError:
-        msg = f"Exception schematizing this event time: {event_time}"
+    except ValueError as e:
+        msg = f"Exception schematizing {event_time}: {e}"
         logger.error(msg, exc_info=True)
         schematized_event_time = ''
 
@@ -70,7 +70,7 @@ def schematize_event_date(event_date):
         datetime_obj = datetime.strptime(event_date, "%Y-%m-%d")
         schematized_event_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
     except ValueError as e:
-        msg = f"{e} schematizing this event date: {event_date}"
+        msg = f"Exception schematizing this {event_date}: {e}"
         logger.error(msg, exc_info=True)
         schematized_event_date = ''
 
@@ -88,7 +88,7 @@ def handle_ans_page(event_list):
         start_time = schematize_event_time(e.get('startTime', ''))
         if not all([start_date, start_time]):
             # Can't save an event w/o these
-            msg = f"Couldn't get a start date/time for {event_website}"
+            msg = f"Couldn't get a start date/time for: {event_website}"
             logger.error(msg, exc_info=True)
             continue
         event['Event Start Date'] = start_date

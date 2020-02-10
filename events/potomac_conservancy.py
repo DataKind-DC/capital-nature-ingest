@@ -11,7 +11,8 @@ def soupify_event_page(url):
     try:
         r = requests.get(url)
     except Exception as e:
-        logger.critical(f"Exception {e} making GET request to", exc_info=True)
+        msg = f"Exception making GET request to {url}: {e}"
+        logger.critical(msg, exc_info=True)
         return
     soup = BeautifulSoup(r.content, 'html.parser')
 
@@ -35,7 +36,7 @@ def get_start_date(event_time, event_website):
         event_start_date = datetime.strftime(datetime_obj, "%Y-%m-%d")
         return event_start_date
     except ValueError as e:
-        msg = f"{e} parsing event time - {event_time} - from {event_website}"
+        msg = f"Exception parsing {event_time} from {event_website}: {e}"
         logger.error(msg, exc_info=True)
 
 

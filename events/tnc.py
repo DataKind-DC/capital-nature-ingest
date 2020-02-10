@@ -27,7 +27,7 @@ def get_api_events():
     try:
         r = requests.get(url)
     except Exception as e:
-        msg = f"{e} making GET request to {url}"
+        msg = f"Exception making GET request to {url}: {e}"
         logger.critical(msg, exc_info=True)
         return
     data = r.json() 
@@ -54,7 +54,7 @@ def main():
                 s_time_1 = datetime.strptime(time[:8], '%I:%M %p').time() 
                 e_time_1 = datetime.strptime(time[-8:], '%I:%M %p').time()
             except Exception as e:
-                msg = f"{e} extracting event times from {time}"
+                msg = f"Exception extracting event times from {time}: {e}"
                 logger.error(msg, exc_info=True)
                 continue
             # use .hour to enable datetime.time operations
@@ -71,7 +71,7 @@ def main():
             try:
                 html_doc = requests.get(event_website).content
             except Exception as e:
-                msg = f"{e} getting site content from {event_website}"
+                msg = f"Exception getting content from {event_website}: {e}"
                 logger.error(msg, exc_info=True)
                 continue
             soup = BeautifulSoup(html_doc, 'html.parser')

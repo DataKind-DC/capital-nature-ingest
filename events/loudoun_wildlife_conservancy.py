@@ -14,8 +14,8 @@ def bs4_page(url):
     """Scrapes url, returns soup"""
     try:
         r_val = requests.get(url)
-    except Exception as e_val:
-        msg = f'Exception making GET to {url}: {e_val}'
+    except Exception as e:
+        msg = f'Exception making GET to {url}: {e}'
         logger.critical(msg, exc_info=True)
         return None
     content = r_val.content

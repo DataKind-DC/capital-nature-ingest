@@ -56,7 +56,7 @@ def get_park_events(park_code, limit=1000):
     try:
         r = requests.get(url)
     except Exception as e:
-        msg = f"{e} making GET request to {url}"
+        msg = f"Exception making GET request to {url}: {e}"
         logger.critical(msg, exc_info=True)
         return []
     r_json = r.json()
@@ -90,7 +90,7 @@ def get_nps_events(park_codes=PARK_CODES):
                 for park_event in park_events:
                     nps_events.append(park_event)
         except Exception as e:
-            msg = f"{e} getting NPS events for this park code: {park_code}"
+            msg = f"Exception getting NPS events {park_code}: {e}"
             logger.error(msg, exc_info=True)
             pass
 
@@ -147,8 +147,8 @@ def schematize_event_time(event_time):
     try:
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
-    except ValueError:
-        msg = f"Exception schematizing this event time: {event_time}"
+    except ValueError as e:
+        msg = f"Exception schematizing {event_time}: {e}"
         logger.error(msg, exc_info=True)
         schematized_event_time = ''
     
@@ -305,7 +305,7 @@ def get_event_site(nps_event):
         try:
             r = requests.get(event_site)
         except Exception as e:
-            msg = f"{e} making GET request to {event_site}"
+            msg = f"Exception making GET request to {event_site}: {e}"
             logger.error(msg, exc_info=True)
         if r.status_code == 404:
             if len(portal_name) > 0:

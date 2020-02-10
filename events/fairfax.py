@@ -125,8 +125,8 @@ def get_event_dates(event_time_div_text, event_website):
     dates = re.findall(date_re, event_time_div_text)
     try:
         start_date = dates[0]
-    except IndexError:
-        msg = f'Unable to grab start date from {event_website}'
+    except IndexError as e:
+        msg = f'Unable to grab start date from {event_website}: {e}'
         logger.error(msg, exc_info=True)
         return None, None
     if len(dates) <= 1:
@@ -215,8 +215,8 @@ def schematize_event_date(event_date):
                     datetime_obj,
                     "%Y-%m-%d"
                 )
-            except ValueError:
-                msg = f'Exception schematzing this event date: {event_date}'
+            except ValueError as e:
+                msg = f'Exception schematzing {event_date}: {e}'
                 logger.error(msg, exc_info=True)
                 schematized_event_date = ''
     
@@ -230,8 +230,8 @@ def schematize_event_time(event_time):
     try:
         datetime_obj = datetime.strptime(event_time, "%I:%M %p")
         schematized_event_time = datetime.strftime(datetime_obj, "%H:%M:%S")
-    except ValueError:
-        msg = f'Exception schematzing this event time: {event_time}'
+    except ValueError as e:
+        msg = f'Exception schematzing {event_time}: {e}'
         logger.error(msg, exc_info=True)
         schematized_event_time = ''
     

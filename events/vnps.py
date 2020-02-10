@@ -67,8 +67,8 @@ def soupify_site(site):
     try:
         r = requests.get(site)
     except Exception as e:
-        logger.critical(f"Exception making GET request to {site}: {e}", 
-                        exc_info=True)
+        msg = f"Exception making GET request to {site}: {e}"
+        logger.critical(msg, exc_info=True)
         return
     content = r.content
     site_soup = BeautifulSoup(content, 'html.parser')
@@ -207,7 +207,7 @@ def main(categories=[]):
     try:
         r = requests.get(event_url)
     except Exception as e:
-        msg = f"{e} making GET request to {event_url}"
+        msg = f"Exception making GET request to {event_url}: {e}"
         logger.critical(msg, exc_info=True)
         return []
     content = r.content
@@ -226,7 +226,7 @@ def main(categories=[]):
                 date_and_time = tds[0]
                 desc_loc = tds[2]
             except IndexError as e:
-                msg = f"{e} No table elements (td tags) found in {row}"
+                msg = f"No table elements (td tags) found in {row}: {e}"
                 logger.error(msg, exc_info=True)
                 continue
             res = parse_date_and_time(date_and_time)

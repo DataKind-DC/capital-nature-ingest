@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 import os
+import sys
 
 # import boto3
 
@@ -49,9 +50,12 @@ def get_events():
         f = event_source.__name__
         try:
             source_events = event_source.main()
+            n_events = len(source_events)
+            f_name = f.split(".")[-1]
+            print(f'Scraped {n_events} events for {f_name}')
         except Exception as e:
-            logger.critical(f'Exception getting events in {f}:  {e}',
-                            exc_info=True)
+            msg = f'Exception getting events in {f}: {e}'
+            logger.critical(msg, exc_info=True)
             continue
         source_events = [
             {k: formatters.unicoder(v) for k, v in i.items()}
@@ -61,8 +65,8 @@ def get_events():
             try:
                 schema_test([event])
             except Exception as e:
-                logger.error(f'Exception getting events in {f}:  {e}',
-                             exc_info=True)
+                msg = f'Exception getting events in {f}: {e}'
+                logger.error(msg, exc_info=True)
                 source_events.pop(i)
         events.extend(source_events)
 

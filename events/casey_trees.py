@@ -80,7 +80,8 @@ def apply_ast(events_complete_data):
     except IndexError:
         return []
     except Exception as e:
-        logger.warning(e, exc_info=True)
+        msg = f"Exception applying ast: {e}"
+        logger.warning(msg, exc_info=True)
         return []
     
     return events_complete_data

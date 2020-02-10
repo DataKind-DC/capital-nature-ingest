@@ -194,7 +194,7 @@ def main():
     try:
         event_ids = get_event_ids(6)
     except Exception as e:
-        msg = f"{e}: failed to retrieve US Botanic Garden event IDs."
+        msg = f"Exception getting US Botanic Garden event IDs: {e}"
         logger.error(msg, exc_info=True)
 
     # retrieve event information

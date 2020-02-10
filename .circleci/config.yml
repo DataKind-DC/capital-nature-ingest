@@ -31,11 +31,11 @@ jobs:
           name: run linter
           command: |
             . venv/bin/activate
-            circleci tests glob **/events/*.py | circleci tests split --split-by=timings --timings-type=classname | xargs flake8 --output-file test-reports
+            circleci tests glob **/events/*.py | circleci tests split --split-by=timings | xargs flake8 --output-file lint-reports
       
       - store_artifacts:
-          path: test-reports
-          destination: test-reports
+          path: lint-reports
+          destination: lint-reports
   
   test:
     docker:
@@ -62,8 +62,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            circleci tests glob **/tests/*_test.py | circleci tests split --split-by=timings --timings-type=classname | xargs python3 -m unittest
-
+            circleci tests glob **/tests/*_test.py | circleci tests split --split-by=timings | xargs python3 -m unittest
 
 workflows:
   version: 2
