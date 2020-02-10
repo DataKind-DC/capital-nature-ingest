@@ -39,6 +39,7 @@ def scrape(event_id, event_cost):
         'Event Website': page['url'],
         'Event Featured Image': ""
     }
+    
     return event_data
 
 
@@ -55,10 +56,12 @@ def get(api_id, resource, params={'token': EVENTBRITE_TOKEN}):
         msg = f"Exception making GET request to {url}: {e}"
         logger.critical(msg, exc_info=True)
         return
+    
     if not r.ok:
         code = r.status_code
         msg = f"Non-200 status code of {code} making GET request to: {url}"
         logger.critical(msg, exc_info=True)
+        return
       
     return r
 
@@ -66,7 +69,7 @@ def get(api_id, resource, params={'token': EVENTBRITE_TOKEN}):
 def get_live_events(soup):
     live_events = soup.find("article", {"id": "live_events"})
     event_divs = live_events.find_all("div", {"class": "list-card-v2"})
-    
+
     return event_divs
  
 
@@ -77,12 +80,15 @@ def get_cost_events(soup):
     cost = re.sub(r'[^\d]+', '', cost)
     if cost == "":
         cost = "0"
+    
     return cost
 
 
 def main():
     events_array = []
-    r = get(1060525675, 'o')
+    r = get(10605256752, 'o')
+    if not r:
+        return []
     soup = BeautifulSoup(r.content, 'html.parser')  
     event_a_refs = get_live_events(soup)
     for events in event_a_refs:
