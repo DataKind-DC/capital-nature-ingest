@@ -8,8 +8,6 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-EVENTBRITE_ORG_ID = 10726377705
-
 try:
     EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
 except KeyError:
@@ -33,7 +31,7 @@ def scrape(event_id, event_cost):
         'All Day Event': "False",
         'Timezone': "America/New_York",
         'Event Venue Name': venue["name"],
-        'Event Organizers': 'Friends Of Kenilsworth Gardens',
+        'Event Organizers': 'DC Audubon',
         'Event Cost': event_cost,
         'Event Currency Symbol': "$",
         # TODO: parse event data for optional category fields if present
@@ -54,12 +52,12 @@ def get(api_id, resource, params={'token': EVENTBRITE_TOKEN}):
         else:
             r = requests.get(url)
     except Exception as e:
-        msg = f"{e} making GET request to {url}"
+        msg = f"Exception making GET request to {url}: {e}"
         logger.critical(msg, exc_info=True)
         return
     if not r.ok:
         code = r.status_code
-        msg = f"Non-200 status code of {code} makign GET request to {url}"
+        msg = f"Non-200 status code of {code} making GET request to: {url}"
         logger.critical(msg, exc_info=True)
       
     return r
@@ -84,7 +82,7 @@ def get_cost_events(soup):
 
 def main():
     events_array = []
-    r = get(EVENTBRITE_ORG_ID, 'o')
+    r = get(10726377705, 'o')
     soup = BeautifulSoup(r.content, 'html.parser')  
     event_a_refs = get_live_events(soup)
     for events in event_a_refs:

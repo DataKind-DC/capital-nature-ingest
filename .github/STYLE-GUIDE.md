@@ -30,6 +30,7 @@
   ```
 
 ### Commits
+
 In projects with lots of collaborators, it's helpful if commit messages are structured similarly.
 
 We suggest:
@@ -51,11 +52,13 @@ For the subject line, we'd prefer it if you prefixed the line with one of these 
  - FIX: Fixng small things like typos (similar to CLN)
 
 Here's an example with just a subject line:
+
 ```bash
-git commit -m "TST: add schema test cases for foo (#1)"
+git commit -m "TST: add schema test for foo (#1)"
 ```
 
 ## Merging
+
 You rebase and merge when you want to integrate changes from one branch into another branch. The difference
 between these two operations is that `git rebase` is destructive whereas `git merge` is not. There's
 a great tutorial on these two operations [here](https://www.atlassian.com/git/tutorials/merging-vs-rebasing).
@@ -63,13 +66,13 @@ a great tutorial on these two operations [here](https://www.atlassian.com/git/tu
 A common `git merge` use-case is when you want to integrate into your branch changes that have happened to master.
 
 To do this, you need to “merge upstream master” in your branch:
-  ```
-  git checkout shiny-new-feature
-  git fetch upstream
-  git merge upstream/master
-  ```
-## Rebasing  
-You might need to `git rebase` when you've made a pull request, received a review sometime later, and then had the PR
-approved. In this case, you might have a "stale" PR - changes could have happened to `master` that aren't reflected in 
-your approved branch. This [tutorial](https://github.com/edx/edx-platform/wiki/How-to-Rebase-a-Pull-Request) walks you 
-through rebasing.
+
+```bash
+git checkout shiny-new-feature
+git fetch upstream
+git merge upstream/master
+```
+
+## Rebasing
+
+You might need to `git rebase` when you've made a pull request, received a review sometime later, and then had the PR approved. In this case, you might have a "stale" PR - changes could have happened to `master` that aren't reflected in your approved branch. This [tutorial](https://github.com/edx/edx-platform/wiki/How-to-Rebase-a-Pull-Request) walks you through rebasing.

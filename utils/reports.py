@@ -9,7 +9,8 @@ from pandas.errors import EmptyDataError
 
 from .event_source_map import event_source_map
 
-def events_to_csv(events, is_local = True, bucket = None):
+
+def events_to_csv(events, is_local=True, bucket=None):
     '''
     Void function that writes events to csv, either locally or to an S3 bucket.
 
@@ -40,7 +41,7 @@ def events_to_csv(events, is_local = True, bucket = None):
     if not os.path.exists(os.path.join(os.getcwd(), 'data')):
         os.mkdir(os.path.join(os.getcwd(), 'data'))
     with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
-        writer = csv.DictWriter(f, fieldnames = fieldnames)
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for event in events:
             writer.writerow(event)
@@ -73,11 +74,11 @@ def get_past_venues():
     try:
         venue_file = [f for f in data_files if 'venues-' in f][0]
     except IndexError:
-        #IndexError because there's no past file
+        # IndexError because there's no past file
         return set()
     venue_file = os.path.join(data_path, venue_file)
     venues = []
-    with open(venue_file, errors = 'ignore') as f:
+    with open(venue_file, errors='ignore') as f:
         reader = csv.reader(f)
         for i in reader:
             venue = i[0]
@@ -88,7 +89,7 @@ def get_past_venues():
 
     return past_venues
 
-def venues_to_csv(events, is_local = True, bucket = None):
+def venues_to_csv(events, is_local=True, bucket=None):
     '''
     Void function that writes unique event venues to csv, either locally or to
     an S3 bucket.
@@ -113,10 +114,7 @@ def venues_to_csv(events, is_local = True, bucket = None):
     out_path = os.path.join(os.getcwd(), 'data', filename)
     if not os.path.exists(os.path.join(os.getcwd(), 'data')):
         os.mkdir(os.path.join(os.getcwd(), 'data'))
-    with open(out_path,
-              mode='w',
-              encoding='utf-8',
-              errors='ignore') as f:
+    with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
         writer = csv.writer(f)
         _venues = ['VENUE NAME']
         _venues.extend(list(unique_venues))

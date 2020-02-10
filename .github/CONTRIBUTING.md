@@ -11,11 +11,11 @@ We'd love your help! We want to make contributing to this project as easy and tr
 
 Our project backlog can be found on our [Issues Page](https://github.com/DataKind-DC/capital-nature-ingest/issues). If you find something that you'd like to work on, leave a comment to let us know! If you're a part of the DataKind GitHub org, you can even assign yourself an issue.
 
->Most issues are requests for new event sources to be scraped. If you want to work on a new event source, take note of how each current event source has its own `.py` file within the `events/` directory. Your code should also be placed within a single file within the `events/` directory. Additionally, be sure that your entire script can be run through the use of a single function named `main()`.
+>Most issues are requests for new event sources to be scraped. If you want to work on a new event source, take note of how each current event source has its own `.py` file within the `events/` directory. Your code should also be placed within a single file within the `events/` directory. Additionally, be sure that your entire script can be run through the use of a single function named `main()`. Finally, add a key:value pair to the dictionary in `utils/event_source_map.py`; the key should be the name of the `.py` file you made and the corresponding value should be the Event Organizer name you've used in that `.py` file.
 
 ## How to Contribute
 
-We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), so all code changes happen through pull requests. We use a **Fork and Pull Model**.
+We use [Github Flow](https://guides.github.com/introduction/flow/index.html), so all code changes happen through pull requests. We use a **Fork and Pull Model**.
 
 ### The Fork and Pull Model
 
@@ -243,6 +243,32 @@ git branch -d shiny-new-feature
 ```
 
 > Make sure you use a lower-case -d, or else git won’t warn you if your feature branch has not actually been merged.
+
+#### Syncing up with the Upstream Master
+
+If you want to continue to collaborate on the project, you'll need to make sure your forked repo is current with the official one at `https://github.com/DataKind-DC/capital-nature-ingest`. To do so, you need to "merge upstream master". First, checkout your master branch
+
+```bash
+git checkout master
+```
+
+Then use `git status` to make sure you don't have uncommitted changes at the moment you want to update the branch with the upstream master. If you do, which you shouldn't, you will need to [stash](https://git-scm.com/book/en/v2/Git-Tools-Stashing-and-Cleaning) them prior to updating. 
+
+If all's good, merge the upstream master:
+
+```bash
+git pull upstream master --ff-only
+```
+
+Read [this](https://docs.gitlab.com/ee/user/project/merge_requests/fast_forward_merge.html) to learn about the `--ff-only` argument.
+
+Another way of doing the above is:
+
+```bash
+git checkout master
+git fetch upstream
+git merge upstream/master  #git pull upstream/master could have replaced the last two lines
+```
 
 ## Reporting bugs or making feature requests
 

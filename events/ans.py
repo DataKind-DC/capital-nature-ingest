@@ -87,7 +87,8 @@ def schematize_event(event_data, event_websites):
                 event_venue = missing_locations[n_missing_locations]
                 n_missing_locations += 1
             else:
-                msg = f"Unable to extract required data for ANS event:\n{e}"
+                site = event_website
+                msg = f"Unable to extract required data for ANS event: {site}"
                 logger.error(msg, exc_info=True)
                 continue
 
@@ -121,16 +122,16 @@ def schematize_event_time(event_time):
     try:
         time_obj = datetime.strptime(time, "%H-%M-%S")
         schematized_event_time = datetime.strftime(time_obj, "%H:%M:%S")
-    except ValueError:
-        msg = f'Exception schematizing this time: {time}'
+    except ValueError as e:
+        msg = f'Exception schematizing {time}: {e}'
         logger.error(msg, exc_info=True)
         schematized_event_time = ''
         
     try:
         date_obj = datetime.strptime(date, "%Y-%m-%d")
         schematized_event_date = datetime.strftime(date_obj, "%Y-%m-%d")
-    except ValueError:
-        msg = f'Exception schematizing this time: {date}'
+    except ValueError as e:
+        msg = f'Exception schematizing this {date}: {e}'
         logger.error(msg, exc_info=True)
         schematized_event_date = ''
             
@@ -194,7 +195,7 @@ def post_outmonth(outmonth):
         r = requests.post(url, data=data)
         return r.json().get('content')
     except Exception as e:
-        msg = f"Error of {e} requesting outmonth events for {outmonth} for ANS"
+        msg = f"Error requesting outmonth events for {outmonth} for ANS: {e}"
         logger.error(msg, exc_info=True)
 
 

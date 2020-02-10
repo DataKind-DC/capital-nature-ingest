@@ -25,7 +25,7 @@ def get_category_id_map(url='https://www.montgomeryparks.org/calendar/'):
     try:
         r = requests.get(url)
     except Exception as e:
-        msg = f"{e} making GET request to {url}"
+        msg = f"Exception making GET request to {url}: {e}"
         logger.critical(msg, exc_info=True)
         return
     content = r.content
@@ -141,7 +141,7 @@ def parse_event_website(event_website):
     try:
         r = requests.get(event_website)
     except Exception as e:
-        msg = f"{e} making GET request to {event_website}"
+        msg = f"Exception making GET request to {event_website}: {e}"
         logger.critical(msg, exc_info=True)
         return None, None
     content = r.content
@@ -172,7 +172,7 @@ def schematize_event_date(split_date, event_website):
             dt_obj = datetime.strptime(event_date, "%B %d, %Y")
             schematized_event_date = datetime.strftime(dt_obj, "%Y-%m-%d")
         except ValueError as e:
-            msg = f"{e} parsing date - {event_date} - from {event_website}"
+            msg = f"Exception parsing {event_date} from {event_website}: {e}"
             logger.error(msg, exc_info=True)
             schematized_event_date = ''
 
@@ -189,11 +189,11 @@ def schematize_event_time(event_time, event_website):
         try:
             dt_obj = datetime.strptime(event_time, "%I%p")
         except ValueError as e:
-            msg = f"{e} parsing time - {event_time} - from {event_website}"
+            msg = f"Exception parsing {event_time} from {event_website}: {e}"
             logger.error(msg, exc_info=True)
             return
     except Exception as e:
-        msg = f"{e} parsing time - {event_time} - from {event_website}"
+        msg = f"Exception parsing {event_time} from {event_website}: {e}"
         logger.error(msg, exc_info=True)
         return
     schematized_event_time = datetime.strftime(dt_obj, "%H:%M:%S")
@@ -229,7 +229,7 @@ def parse_event_item(event_item, event_category):
                 .replace("to", '')\
                 .replace("Ocber", "October")
         except Exception as e:
-            msg = f"{e} parsing date from this event item: {event_item}"
+            msg = f"Exception parsing date from {event_item}: {e}"
             logger.error(msg, exc_info=True)
             return
         start_date, start_time, end_time = parse_event_date(

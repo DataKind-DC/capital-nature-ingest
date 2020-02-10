@@ -46,7 +46,8 @@ def get_event_categories(event_soup):
         except AttributeError:
             continue
         except Exception as e:
-            logger.warning(e, exc_info=True)
+            msg = f"Exception get event categories: {e}"
+            logger.warning(msg, exc_info=True)
     
     event_categories = ",".join(categories)
     
@@ -101,7 +102,8 @@ def get_event_venue(event_soup):
         except AttributeError:
             continue
         except Exception as e:
-            logger.warning(e, exc_info=True)
+            msg = f"Exception get event venue: {e}"
+            logger.warning(msg, exc_info=True)
     event_venue = ", ".join(venues)
     
     return event_venue
