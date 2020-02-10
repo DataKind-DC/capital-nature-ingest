@@ -13,6 +13,15 @@ try:
 except KeyError:
     EVENTBRITE_TOKEN = input("Enter your Eventbrite Token Key:")
 
+def get_category_name(page):
+    if page["category_id"] is None:
+        category = 'none'
+    else:
+        if page["subcategory_id"] is None:
+            category = get(page["category_id"],'categories/').json()["name"]
+        else:
+            category = get(page["category_id"],'categories/').json()["name"] + "::" + get(page["subcategory_id"],'subcategories/').json()["name"]
+    return category
 
 def scrape(event_id, event_cost):
     page = get(event_id, resource='events').json()
