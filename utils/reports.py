@@ -3,25 +3,29 @@ from datetime import datetime
 import os
 import re
 
-import boto3
 import pandas as pd
 from pandas.errors import EmptyDataError
 
 from .event_source_map import event_source_map
 
 
-def events_to_csv(events, is_local=True, bucket=None):
+BUCKET = os.getenv('BUCKET')
+if BUCKET:
+    import boto3
+    S3 = boto3.resource('s3')
+
+
+#TODO: refactor so that we don't write temp files if in Lambda
+
+
+def events_to_csv(events, out_dir='data', bucket=BUCKET):
     '''
     Void function that writes events to csv, either locally or to an S3 bucket.
 
     Parameters:
         events (list): a list of dicts, with each representing a single event.
-        is_local (bool): True to write the csv locally. False if you want to
-                         write the csv to S3 (must pass bucket name as well)
-        bucket (str or None): the name of the public S3 bucket. None by default
-
-    Returns:
-        None
+        out_dir (str): dir to write file.
+        bucket (str or None): the name of the S3 bucket. None by default
     '''
     now = datetime.now().strftime("%m-%d-%Y")
     filename = f'cap-nature-events-scraped-{now}.csv'
@@ -37,46 +41,57 @@ def events_to_csv(events, is_local=True, bucket=None):
         'Event Featured Image','Allow Comments',
         'Event Allow Trackbacks and Pingbacks'
     }
-    out_path = os.path.join(os.getcwd(), 'data', filename)
-    if not os.path.exists(os.path.join(os.getcwd(), 'data')):
-        os.mkdir(os.path.join(os.getcwd(), 'data'))
+    out_path = os.path.join(os.getcwd(), out_dir, filename)
+    if not os.path.exists(os.path.join(os.getcwd(), out_dir)):
+        os.mkdir(os.path.join(os.getcwd(), out_dir))
+    
     with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for event in events:
             writer.writerow(event)
-    if not is_local and bucket:
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file(
-            out_path,
-            bucket,
-            'capital-nature/{0}'.format(filename)
-        )
+    
+    if BUCKET:
+        S3.meta.client.upload_file(out_path, BUCKET, f'{out_dir}/{filename}')
+        os.remove(out_path)
     else:
         return out_path
 
-def get_past_venues():
+
+def get_past_venues(out_dir='data', bucket=BUCKET):
     '''
     Returns a set of event venues frm current venue csv in temp/ (if it exists)
     and then deletes that file (if it exists) as it will soon be replaced by 
     a new, more updated one.
 
     Parameters:
-        None
+        out_dir (str): dir to write file.
+        bucket (str or None): the name of the S3 bucket. None by default
 
     Returns:
         past_venues (set): set of venues, or an empty set if there are none
     '''
-    data_path = os.path.join(os.getcwd(), 'data')
-    if not os.path.exists(data_path):
-        os.mkdir(data_path)
-    data_files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, f))]
-    try:
-        venue_file = [f for f in data_files if 'venues-' in f][0]
-    except IndexError:
-        # IndexError because there's no past file
-        return set()
-    venue_file = os.path.join(data_path, venue_file)
+    if bucket:
+        # venue_file = 
+        # TODO: get venue file (match on key prefix) as io object
+        # if it doesn't exist return set()
+        pass
+    else:
+        data_path = os.path.join(os.getcwd(), out_dir)
+        if not os.path.exists(data_path):
+            os.mkdir(data_path)
+        
+        data_files = []
+        for f in os.listdir(data_path):
+            if os.path.isfile(os.path.join(data_path, f)) and 'venues-' in f:
+                data_files.append(os.path.join(data_path, f))
+        
+        try:
+            venue_file = data_files[0]
+        except IndexError:
+            # because there's no past file, so no past venues
+            return set()
+    
     venues = []
     with open(venue_file, errors='ignore') as f:
         reader = csv.reader(f)
@@ -89,19 +104,16 @@ def get_past_venues():
 
     return past_venues
 
-def venues_to_csv(events, is_local=True, bucket=None):
+
+def venues_to_csv(events, out_dir='data', bucket=BUCKET):
     '''
     Void function that writes unique event venues to csv, either locally or to
     an S3 bucket.
 
     Parameters:
         events (list): a list of dicts, with each representing a single event.
-        is_local (bool): True to write the csv locally. False if you want to
-                         write the csv to S3 (must pass bucket name as well)
-        bucket (str or None): the name of the public S3 bucket. None by default
-
-    Returns:
-        None
+        out_dir (str): dir to write file.
+        bucket (str or None): the name of the S3 bucket. None by default
     '''
     venues = []
     for event in events:
@@ -109,11 +121,13 @@ def venues_to_csv(events, is_local=True, bucket=None):
         venues.append(event_venue)
     past_venues = get_past_venues()
     unique_venues = set(venues) | past_venues
+    
     now = datetime.now().strftime("%m-%d-%Y")
     filename = f'cap-nature-venues-scraped-{now}.csv'
-    out_path = os.path.join(os.getcwd(), 'data', filename)
-    if not os.path.exists(os.path.join(os.getcwd(), 'data')):
-        os.mkdir(os.path.join(os.getcwd(), 'data'))
+    out_path = os.path.join(os.getcwd(), out_dir, filename)
+    if not os.path.exists(os.path.join(os.getcwd(), out_dir)):
+        os.mkdir(os.path.join(os.getcwd(), out_dir))
+    
     with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
         writer = csv.writer(f)
         _venues = ['VENUE NAME']
@@ -121,36 +135,46 @@ def venues_to_csv(events, is_local=True, bucket=None):
         venues_to_write = _venues
         for venue in venues_to_write:
             writer.writerow([venue])
-    if not is_local and bucket:
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file(
-            out_path,
-            bucket,
-            'capital-nature/{0}'.format(filename)
-        )
+    
+    if bucket:
+        S3.meta.client.upload_file(out_path, bucket, f'{out_dir}/{filename}')
+        os.remove(out_path)
 
-def get_past_organizers():
+
+def get_past_organizers(out_dir='data', bucket=BUCKET):
     '''
     Returns a set of event organizers from current organizer csv in temp/ 
     (if it exists) and then deletes that file (if it exists) as it will soon
     be replaced by a new, more updated one.
 
     Parameters:
-        None
+        out_dir (str): dir to write file.
+        bucket (str or None): the name of the S3 bucket. None by default
 
     Returns:
-        past_organizers (set): a set of event organizers, or an empty set if there are none
+        past_organizers (set): set of organizers, or an empty set if none
     '''
-    data_path = os.path.join(os.getcwd(), 'data')
-    if not os.path.exists(data_path):
-        os.mkdir(data_path)
-    data_files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path,f))]
-    try:
-        organizer_file = [f for f in data_files if 'organizers-' in f][0]
-    except IndexError:
-        #IndexError because there's no past file
-        return set()
-    organizer_file = os.path.join(data_path, organizer_file)
+    if bucket:
+        # organizer_file = 
+        # TODO: get organizer file (match on key prefix) as io object
+        # if it doesn't exist return set()
+        pass
+    else:
+
+        data_path = os.path.join(os.getcwd(), out_dir)
+        if not os.path.exists(data_path):
+            os.mkdir(data_path)
+
+        data_files = []
+        for f in os.listdir(data_path):
+            if 'organizers-' in f:
+                data_files.append(os.path.join(data_path, f))
+        try:
+            organizer_file = data_files[0]
+        except IndexError:
+            #IndexError because there's no past file
+            return set()
+    
     organizers = []
     with open(organizer_file) as f:
         reader = csv.reader(f)
@@ -163,19 +187,16 @@ def get_past_organizers():
 
     return past_organizers
 
-def organizers_to_csv(events, is_local = True, bucket = None):
+
+def organizers_to_csv(events, out_dir='data', bucket=BUCKET):
     '''
-    Void function that writes unique event organizers to csv, either locally or to
-    an S3 bucket.
+    Void function that writes unique event organizers to csv, either locally 
+    or to an S3 bucket.
 
     Parameters:
-        events (list): a list of dicts, with each dict representing a single event.
-        is_local (bool): True if you want to write the csv locally. False if you want to
-                         write the csv to S3 (must supply a valid bucket name as well)
-        bucket (str or None): the name of the public S3 bucket. None by default.
-
-    Returns:
-        None
+        events (list): a list of dicts, with each representing a single event.
+        out_dir (str): dir to write file.
+        bucket (str or None): the name of the S3 bucket. None by default.
     '''
     organizers = []
     for event in events:
@@ -183,27 +204,25 @@ def organizers_to_csv(events, is_local = True, bucket = None):
         organizers.append(event_organizer)
     past_organizers = get_past_organizers()
     unique_organizers = set(organizers) | past_organizers
+    
     now = datetime.now().strftime("%m-%d-%Y")
     filename = f'cap-nature-organizers-scraped-{now}.csv'
-    out_path = os.path.join(os.getcwd(), 'data', filename)
-    if not os.path.exists(os.path.join(os.getcwd(), 'data')):
-        os.mkdir(os.path.join(os.getcwd(), 'data'))
-    with open(out_path,
-              mode = 'w',
-              encoding = 'utf-8',
-              errors = 'ignore') as f:
+    out_path = os.path.join(os.getcwd(), out_dir, filename)
+    if not os.path.exists(os.path.join(os.getcwd(), out_dir)):
+        os.mkdir(os.path.join(os.getcwd(), out_dir))
+    
+    with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
         writer = csv.writer(f)
         _organizers = ['Event Organizer Name(s) or ID(s)']
         _organizers.extend(list(unique_organizers))
         organizers_to_write = _organizers
         for org in organizers_to_write:
             writer.writerow([org])
-    if not is_local and bucket:
-        s3 = boto3.resource('s3')
-        s3.meta.client.upload_file(out_path,
-                                   bucket,
-                                   'capital-nature/{0}'.format(filename)
-                                    )
+    
+    if bucket:
+        S3.meta.client.upload_file(out_path, bucket, f'{out_dir}/{filename}')
+        os.remove(out_path)
+
 
 class ScrapeReport():
     
@@ -223,6 +242,7 @@ class ScrapeReport():
         now = datetime.now().strftime("%m-%d-%Y")
         self.report_path= os.path.join(reports_dir, f'scrape-report-{now}.csv')
 
+    
     @staticmethod
     def get_log_file(scrape_file):
         base = os.path.basename(scrape_file)
@@ -236,15 +256,24 @@ class ScrapeReport():
                 if log_date == scrape_date:
                     return os.path.join(os.getcwd(), 'logs', f)
 
+    
     @staticmethod
     def prep_log_df(log_df):
-        err_type_count_by_source = pd.DataFrame(log_df.groupby(
-            by=['Event Source', 'Level'])['Time'].count()).reset_index()
-        err_type_count_by_source.columns = ['Event Organizers', 'Error Level', 'Number of Errors']
+        err_type_count_by_source = pd.DataFrame(
+            log_df.groupby(
+                by=['Event Source', 'Level']
+            )['Time'].count()
+        ).reset_index()
+        cols = ['Event Organizers', 'Error Level', 'Number of Errors']
+        err_type_count_by_source.columns = cols
         err_df = err_type_count_by_source.pivot(
-            index='Event Organizers',columns='Error Level', values='Number of Errors').reset_index()
+            index='Event Organizers',
+            columns='Error Level',
+            values='Number of Errors'
+        ).reset_index()
         
         return err_df   
+    
     
     @staticmethod
     def prep_scrape_df(scrape_df):
@@ -254,6 +283,7 @@ class ScrapeReport():
     
         return source_count
 
+    
     @staticmethod
     def get_status(row):
         '''statuses can include
@@ -284,6 +314,7 @@ class ScrapeReport():
         else:
             raise Exception ("this shouldn't happen!")
     
+    
     @staticmethod
     def append_nonevents(report_df):
         event_organizers = report_df['Event Organizers'].tolist()
@@ -304,12 +335,14 @@ class ScrapeReport():
 
         return df
 
+    
     def make_scrape_report(self):
         '''Create an excel report based on data scraped and the logs'''
         err_df = ScrapeReport.prep_log_df(self.log_df)
         source_count = ScrapeReport.prep_scrape_df(self.scrape_df)
         report_df = pd.merge(source_count, err_df, how='outer')
-        err_cols = [x for x in report_df.columns if x in ['CRITICAL', 'ERROR', 'WARNING']]
+        log_levels = ['CRITICAL', 'ERROR', 'WARNING']
+        err_cols = [x for x in report_df.columns if x in log_levels]
         if not err_cols:
             report_df['Number of Errors'] = 0
         else:
@@ -320,10 +353,10 @@ class ScrapeReport():
 
         return df
 
+
 def make_reports(events, is_local, bucket):
     scrape_file = events_to_csv(events, is_local, bucket)
     organizers_to_csv(events, is_local, bucket)
     venues_to_csv(events, is_local, bucket)
     sr = ScrapeReport(scrape_file)
     sr.make_scrape_report()
-    

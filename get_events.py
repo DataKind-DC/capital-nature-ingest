@@ -4,8 +4,6 @@ from inspect import getmodule
 import logging
 import os
 
-# import boto3
-
 from events import ans, arlington, aws, casey_trees, city_blossoms, \
     dc_audubon, eleventh_street, fairfax, fona, \
     friends_of_kenilworth_gardens, loudoun_wildlife_conservancy, \
