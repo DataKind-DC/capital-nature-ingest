@@ -53,10 +53,10 @@ def get_missing_locations(event_website, event_venue):
         ps_with_location = soup.find_all('p', {"style": "padding-left: 40px;"})
         missing_locations = []
         for p in ps_with_location:
-            p_text = p.find("em").text
-            location = p_text.replace("Location:", "").split("–")[0].strip()
-            missing_locations.append(location)
-
+            if p.find("em") is not None:
+                p_text = p.find("em").text
+                location = p_text.replace("Location:", "").split("–")[0].strip()
+                missing_locations.append(location)
         return missing_locations
 
 
