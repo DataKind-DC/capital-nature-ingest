@@ -55,7 +55,8 @@ def get_missing_locations(event_website, event_venue):
         for p in ps_with_location:
             if p.find("em") is not None:
                 p_text = p.find("em").text
-                location = p_text.replace("Location:", "").split("–")[0].strip()
+                location = p_text.replace("Location:", "").split("–")[0]
+                location = location.strip()
                 missing_locations.append(location)
         return missing_locations
 
