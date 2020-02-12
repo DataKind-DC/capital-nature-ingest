@@ -14,6 +14,21 @@ except KeyError:
     EVENTBRITE_TOKEN = input("Enter your Eventbrite Token Key:")
 
 
+def get_category_name(page):
+    if page["category_id"] is None:
+        category = 'none'
+    else:
+        if page["subcategory_id"] is None:
+            category = get(page["category_id"], 'categories/').json()["name"]
+        else:
+            category_name = get(page["category_id"], 'categories/')
+            category_name = category_name.json()["name"]
+            subcategory_name = get(page["subcategory_id"], 'subcategories/')
+            subcategory_name = subcategory_name.json()["name"]
+            category = category_name + "::" + subcategory_name
+    return category
+
+
 def scrape(event_id, event_cost):
     page = get(event_id, resource='events').json()
     venue = get(page["venue_id"], resource='venues').json()
@@ -35,7 +50,7 @@ def scrape(event_id, event_cost):
         'Event Cost': event_cost,
         'Event Currency Symbol': "$",
         # TODO: parse event data for optional category fields if present
-        'Event Category': "",  
+        'Event Category': get_category_name(page),  
         'Event Website': page['url'],
         'Event Featured Image': ""
     }
