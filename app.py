@@ -33,7 +33,7 @@ class CapitalNatureStack(core.Stack):
         lambda_scrapers = lambda_.Function(
             self, "scrapers",
             code=lambda_.Code.from_asset('lambda-releases/scrapers.zip'),
-            handler="handler.main",
+            handler="get_events.main",
             timeout=core.Duration.seconds(900),
             runtime=lambda_.Runtime.PYTHON_3_7,
             memory_size=1000
