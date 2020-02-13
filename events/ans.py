@@ -55,7 +55,8 @@ def get_missing_locations(event_website, event_venue):
         for p in ps_with_location:
             try:
                 p_text = p.find("em").text
-                location = p_text.replace("Location:", "").split("–")[0].strip()
+                location = p_text.replace("Location:", "")
+                location = location.split("–")[0].strip()
             except AttributeError:
                 # no location, but there's an event so we need to record 
                 # something even if we dump the event for not having a venue  
