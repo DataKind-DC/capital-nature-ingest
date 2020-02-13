@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from inspect import getmodule
+from io import StringIO
 import logging
 import os
 
@@ -10,9 +11,9 @@ from events import ans, arlington, aws, casey_trees, city_blossoms, \
     montgomery, nova_parks, nps, potomac_conservancy, rcc, riverkeeper, \
     sierra_club_md, sierra_club, tnc, us_botanic_garden, vnps, \
     nva_audubon_society
-from log import CsvFormatter
+from log import CsvFormatter, create_log_file
 from tests.utils import schema_test
-from utils import formatters, reports
+from utils import formatters, reports, s3_utils
 
 try:
     NPS_KEY = os.environ['NPS_KEY']
@@ -26,7 +27,9 @@ except KeyError:
     EVENTBRITE_TOKEN = input("Enter your Eventbrite API key:")
     os.environ["EVENTBRITE_TOKEN"] = EVENTBRITE_TOKEN
 
-logger = logging.getLogger(__name__)
+BUCKET = os.getenv('BUCKET_NAME')
+
+log_path, logger, log_file_name = create_log_file(BUCKET)
 
 
 def get_source_events(event_source_main):
@@ -79,33 +82,28 @@ def get_events():
     return events
 
 
-def create_log_file():
-    log_dir = os.path.join(os.getcwd(), 'logs')
-    if not os.path.exists(log_dir):
-        os.mkdir(log_dir)
-
-    now = datetime.now().strftime("%m-%d-%Y")
-    log_path = os.path.join(log_dir, f'log_{now}.csv')
-    if os.path.exists(log_path):
-        os.remove(log_path)
-
-    return log_path
-
-
-def main(is_local=True, bucket=None):
-    events = get_events()
-    reports.make_reports(events, is_local, bucket)
-
-    return events
+def main(event={}, context={}):
+    try:
+        events = get_events()
+        reports.make_reports(events)
+        if not BUCKET:
+            return events
+    except Exception as e:
+        logger.critical(f"Critical error: {e}")
+    finally:
+        if BUCKET:
+            logging.shutdown()
+            log_data = log_path.getvalue()
+            s3_utils.put_object(log_data, log_file_name)
 
 
 if __name__ == '__main__':
-    log_file = create_log_file()
-    logging.basicConfig(level=logging.WARNING, filename=log_file)
+    # only happens locally
+    logging.basicConfig(level=logging.WARNING, filename=log_path)
     logging.root.handlers[0].setFormatter(CsvFormatter())
 
     events = main()
 
     print(f"Done scraping {len(events)} events!")
-    print(f"You can find the logs here:  {log_file}")
+    print(f"You can find the logs here:  {log_path}")
     print("You can find the reports in ./data/ and ./reports/, respectively.")

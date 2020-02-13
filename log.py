@@ -1,7 +1,8 @@
 import csv
 from datetime import datetime
-import io
+from io import StringIO
 import logging
+import os
 import traceback
 
 from utils.event_source_map import event_source_map
@@ -10,7 +11,7 @@ from utils.event_source_map import event_source_map
 class CsvFormatter(logging.Formatter):
     
     def __init__(self):
-        self.output = io.StringIO()
+        self.output = StringIO()
         self.writer = csv.writer(self.output, quoting=csv.QUOTE_ALL)
         cols = ["Time", "Level", "Event Source", "Message", "Exc Info"]
         self.writer.writerow(cols)
@@ -48,3 +49,28 @@ class CsvFormatter(logging.Formatter):
         self.output.seek(0)
         
         return data.strip()
+
+
+def create_log_file(bucket):
+    now = datetime.now().strftime("%m-%d-%Y")
+    if bucket:
+        log_file_name = f'logs/log_{now}.csv'
+        log_path = StringIO()
+        handler = logging.StreamHandler(log_path)
+        logger = logging.getLogger(__file__)
+        logger.setLevel(logging.WARNING)
+        for handler in logger.handlers:
+            logger.removeHandler(handler)
+        logger.addHandler(logging.FileHandler('/dev/null/'))
+        logger.addHandler(handler)
+    else:
+        log_file_name = f'log_{now}.csv'
+        logger = logging.getLogger(__name__)
+        log_dir = os.path.join(os.getcwd(), 'logs')
+        if not os.path.exists(log_dir):
+            os.mkdir(log_dir)
+        log_path = os.path.join(log_dir, log_file_name)
+        if os.path.exists(log_path):
+            os.remove(log_path)
+
+    return log_path, logger, log_file_name

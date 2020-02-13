@@ -43,7 +43,7 @@ def get_matching_s3_objects(bucket=BUCKET, prefix='', suffix='.csv'):
 
 
 def get_matching_s3_keys(bucket=BUCKET, prefix="",  suffix='.csv'):
-    """Generate the keys in an S3 bucket.
+    """Generate the keys in an S3 bucket that match a prex and suffix
     
     Keyword Arguments:
         bucket {str} -- Name of the S3 bucket. (default: {BUCKET})
