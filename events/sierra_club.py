@@ -1,11 +1,14 @@
 from datetime import datetime
 import logging
+import os
 import re
 import unicodedata
 
 import requests
 
-logger = logging.getLogger(__name__)
+from .utils.log import get_logger
+
+logger = get_logger(os.path.basename(__file__))
 
 
 def fetch_page(url):

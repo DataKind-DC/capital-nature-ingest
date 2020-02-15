@@ -1,11 +1,5 @@
 from datetime import datetime
-import logging
-import os
 import re
-
-import requests
-
-logger = logging.getLogger(__name__)
 
 url_regex = re.compile(
             r'^(?:http|ftp)s?://' # http:// or https://

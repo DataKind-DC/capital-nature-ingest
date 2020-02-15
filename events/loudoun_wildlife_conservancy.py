@@ -1,13 +1,16 @@
 from datetime import date
 import json
 import logging
+import os
 import re
 
 import bs4
 from dateutil.relativedelta import relativedelta
 import requests
 
-logger = logging.getLogger(__name__)
+from .utils.log import get_logger
+
+logger = get_logger(os.path.basename(__file__))
 
 
 def bs4_page(url):

@@ -29,13 +29,20 @@ class CapitalNatureStack(core.Stack):
             )
         )
 
+        # lambda layer with AWS Linux compatible pandas and numpy
+        #layer = lambda_.LayerVersion(
+            #self, 'aws-lambda-py3.6-pandas-numpy',
+            #code=lambda_.Code.asset('layer/aws-lambda-py3.6-pandas-numpy.zip'),
+            #compatible_runtimes=[lambda_.Runtime.PYTHON_3_6],
+            #description='A layer with numpy and pandas')
+
         # create lambda to gather domains
         lambda_scrapers = lambda_.Function(
             self, "scrapers",
             code=lambda_.Code.from_asset('lambda-releases/scrapers.zip'),
             handler="get_events.main",
-            timeout=core.Duration.seconds(900),
-            runtime=lambda_.Runtime.PYTHON_3_7,
+            timeout=core.Duration.seconds(600),
+            runtime=lambda_.Runtime.PYTHON_3_6,
             memory_size=1000
         )
         

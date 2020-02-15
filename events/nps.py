@@ -12,7 +12,9 @@ try:
 except KeyError:
     NPS_KEY = input("Enter your NPS API key:")
 
-logger = logging.getLogger(__name__)
+from .utils.log import get_logger
+
+logger = get_logger(os.path.basename(__file__))
 
 PARK_CODES = {
     'afam', 'anac', 'anti', 'apco', 'appa', 'arho', 'asis', 'balt', 'bawa',

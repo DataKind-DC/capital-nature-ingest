@@ -6,6 +6,8 @@ import string
 import geocoder
 
 logging.getLogger("geocoder").setLevel(logging.CRITICAL)
+logging.getLogger("requests").setLevel(logging.CRITICAL)
+logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
 # defined globally for unicoder function
 chars_to_keep = ' '

@@ -2,12 +2,15 @@ from io import StringIO
 import logging
 import os
 
-import boto3
+from .log import get_logger
 
-logger = logging.getLogger(__name__)
-S3 = boto3.client("s3")
+logger = get_logger(os.path.basename(__file__))
 
 BUCKET = os.getenv('BUCKET_NAME')
+
+if BUCKET:
+    import boto3
+    S3 = boto3.client("s3")
 
 
 def get_matching_s3_objects(bucket=BUCKET, prefix='', suffix='.csv'):

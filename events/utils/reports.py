@@ -8,10 +8,10 @@ import pandas as pd
 from pandas.errors import EmptyDataError
 
 from .event_source_map import event_source_map
-from .s3_utils import get_matching_s3_keys, read_object, put_object
+from .aws_utils import get_matching_s3_keys, read_object, put_object
 
 
-BUCKET = os.getenv('BUCKET')
+BUCKET = os.getenv('BUCKET_NAME')
 if BUCKET:
     import boto3
     S3 = boto3.resource('s3')
@@ -29,8 +29,8 @@ def events_to_csv(events, out_dir='data', bucket=BUCKET):
     Returns:
         scrape_file: location of file written to.
     '''
-    now = datetime.now().strftime("%m-%d-%Y")
-    filename = f'cap-nature-events-scraped-{now}.csv'
+    scrape_date = datetime.now().strftime("%m-%d-%Y")
+    filename = f'cap-nature-events-scraped-{scrape_date}.csv'
     fieldnames = {
         'Do Not Import', 'Event Name', 'Event Description', 'Event Excerpt',
         'Event Start Date', 'Event Start Time', 'Event End Date',
@@ -46,16 +46,14 @@ def events_to_csv(events, out_dir='data', bucket=BUCKET):
 
     if bucket:
         key = f'{out_dir}/{filename}'
-        csv_buff = StringIO
-        with open(csv_buff, mode='w', encoding='utf-8', errors='ignore') as f:
+        with StringIO() as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             for event in events:
                 writer.writerow(event)
-        data = csv_buff.getvalue()
-        put_object(data, key)
-        csv_buff.seek(0)
-        return csv_buff, now
+            data = f.getvalue()
+            put_object(data, key)
+        return scrape_date
     else:
         out_path = os.path.join(os.getcwd(), out_dir, filename)
         if not os.path.exists(os.path.join(os.getcwd(), out_dir)):
@@ -65,7 +63,7 @@ def events_to_csv(events, out_dir='data', bucket=BUCKET):
             writer.writeheader()
             for event in events:
                 writer.writerow(event)
-        return out_path, now
+        return scrape_date
 
 
 def get_past_venues(out_dir='data', bucket=BUCKET):
@@ -144,24 +142,27 @@ def venues_to_csv(events, out_dir='data', bucket=BUCKET):
     filename = f'cap-nature-venues-scraped-{now}.csv'
     
     if bucket:
-        out_path = StringIO()
+        with StringIO() as f:
+            writer = csv.writer(f)
+            venues_to_write = list(unique_venues)
+            venues_to_write.insert(0, 'VENUE NAME')
+            for venue in venues_to_write:
+                writer.writerow([venue])
+            data = f.getvalue()
+            key = f'{out_dir}/{filename}'
+            put_object(data, key)
+
     else:
         out_path = os.path.join(os.getcwd(), out_dir, filename)
         if not os.path.exists(os.path.join(os.getcwd(), out_dir)):
             os.mkdir(os.path.join(os.getcwd(), out_dir))
+        with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
+            writer = csv.writer(f)
+            venues_to_write = list(unique_venues)
+            venues_to_write.insert(0, 'VENUE NAME')
+            for venue in venues_to_write:
+                writer.writerow([venue])
     
-    with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
-        writer = csv.writer(f)
-        venues_to_write = list(unique_venues)
-        venues_to_write.insert(0, 'VENUE NAME')
-        for venue in venues_to_write:
-            writer.writerow([venue])
-    
-    if bucket:
-        data = out_path.getvalue()
-        key = f'{out_dir}/{filename}'
-        put_object(data, key)
-
 
 def get_past_organizers(out_dir='data', bucket=BUCKET):
     '''
@@ -176,38 +177,42 @@ def get_past_organizers(out_dir='data', bucket=BUCKET):
     Returns:
         past_organizers (set): set of organizers, or an empty set if none
     '''
+    organizers = []
     if bucket:
         try:
             org_key = next(get_matching_s3_keys(prefix='cap-nature-organizer'))
         except StopIteration:
             return set()
         organizer_file = read_object(org_key)
+        with organizer_file as f:
+            reader = csv.reader(f)
+            for i in reader:
+                organizer = i[0]
+                organizers.append(organizer)
+        S3.delete_object(Bucket=bucket, Key=org_key)
     else:
         data_path = os.path.join(os.getcwd(), out_dir)
         if not os.path.exists(data_path):
             os.mkdir(data_path)
-
         data_files = []
         for f in os.listdir(data_path):
             if 'organizers-' in f:
                 data_files.append(os.path.join(data_path, f))
-        
         try:
             organizer_file = data_files[0]
         except IndexError:
             # IndexError because there's no past file
             return set()
+        with open(organizer_file) as f:
+            reader = csv.reader(f)
+            for i in reader:
+                organizer = i[0]
+                organizers.append(organizer)
+        os.remove(organizer_file)
     
-    organizers = []
-    with open(organizer_file) as f:
-        reader = csv.reader(f)
-        for i in reader:
-            organizer = i[0]
-            organizers.append(organizer)
     past_organizers = set(organizers)
     past_organizers.remove('Event Organizer Name(s) or ID(s)')
-    os.remove(organizer_file)
-
+    
     return past_organizers
 
 
@@ -232,75 +237,78 @@ def organizers_to_csv(events, out_dir='data', bucket=BUCKET):
     filename = f'cap-nature-organizers-scraped-{now}.csv'
     
     if bucket:
-        out_path = StringIO()
+        with StringIO() as f:
+            writer = csv.writer(f)
+            orgs_to_write = list(unique_organizers)
+            orgs_to_write.insert(0, 'Event Organizer Name(s) or ID(s)')
+            for org in orgs_to_write:
+                writer.writerow([org])
+            data = f.getvalue()
+            key = f'{out_dir}/{filename}'
+            put_object(data, key)
+
     else:
         out_path = os.path.join(os.getcwd(), out_dir, filename) 
         if not os.path.exists(os.path.join(os.getcwd(), out_dir)):
             os.mkdir(os.path.join(os.getcwd(), out_dir))
     
-    with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
-        writer = csv.writer(f)
-        orgs_to_write = list(unique_organizers)
-        orgs_to_write.insert(0, 'Event Organizer Name(s) or ID(s)')
-        for org in orgs_to_write:
-            writer.writerow([org])
-    
-    if bucket:  
-        data = out_path.getvalue()
-        key = f'{out_dir}/{filename}'
-        put_object(data, key)
+        with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
+            writer = csv.writer(f)
+            orgs_to_write = list(unique_organizers)
+            orgs_to_write.insert(0, 'Event Organizer Name(s) or ID(s)')
+            for org in orgs_to_write:
+                writer.writerow([org])
             
 
 class ScrapeReport():
     
-    def __init__(self, scrape_file, scrape_date, bucket=BUCKET):
-        self.scrape_file = scrape_file
-        self.scrape_date = scrape_date
+    def __init__(self, events, scrape_date, bucket=BUCKET):
         self.bucket = bucket
-        log_file = ScrapeReport.get_log_file(scrape_file, scrape_date)
-        
-        try:
-            self.log_df = pd.read_csv(log_file)
-        except (EmptyDataError, ValueError):
-            # there were no errors logged, so the log file is empty
-            cols = ['Time', 'Level', 'Event Source', 'Message', 'Exc Info']
-            self.log_df = pd.DataFrame(columns=cols)
-        
-        self.scrape_df = pd.read_csv(scrape_file)
-        
-        now = datetime.now().strftime("%m-%d-%Y")
+        self.scrape_df = pd.DataFrame(events)
         if bucket:
-            self.report_path = f'reports/scrape-report-{now}.csv'
+            self.report_path = f'reports/scrape-report-{scrape_date}.csv'
         else:
             reports_dir = os.path.join(os.getcwd(), 'reports')
             if not os.path.exists(reports_dir):
                 os.mkdir(reports_dir)
             self.report_path = os.path.join(
                 reports_dir, 
-                f'scrape-report-{now}.csv'
+                f'scrape-report-{scrape_date}.csv'
             )
 
+        self.log_df  = ScrapeReport.get_log_df(scrape_date)
+        
     @staticmethod
-    def get_log_file(scrape_file, scrape_date):
+    def get_log_df(scrape_date):
         log_file = None
         global BUCKET
-        if BUCKET:
-            for f in get_matching_s3_keys(prefix="logs",  suffix='.csv'):
-                date_index = re.search(r'\d', f).start()
-                log_date = f[date_index:]
-                if log_date == scrape_date:
-                    log_file = read_object(f, bucket=BUCKET)
-        else:
-            for f in os.listdir(os.path.join(os.getcwd(), 'logs')):
-                if not f.endswith('.csv'):
-                    continue
-                f_base = os.path.basename(f)
-                date_index = re.search(r'\d', f_base).start()
-                log_date = f_base[date_index:]
-                if log_date == scrape_date:
-                    log_file = os.path.join(os.getcwd(), 'logs', f)
+        root_dir = '/tmp' if BUCKET else os.getcwd()
+        log_dir = os.path.join(root_dir, 'logs')
         
-        return log_file
+        log_dfs = []
+        for f in os.listdir(log_dir):
+            if not f.endswith('.csv'):
+                continue
+            f_base = os.path.basename(f)
+            date_index = re.search(r'\d', f_base).start()
+            log_date = f_base[date_index:].replace(".csv",'')
+            if log_date == scrape_date:
+                log_file = os.path.join(log_dir, f)
+                try:
+                    _log_df = pd.read_csv(log_file)
+                except EmptyDataError:
+                    # no errors logged in the file so delete it
+                    os.remove(log_file)
+                    continue
+                log_dfs.append(_log_df)
+        if log_dfs:
+            log_df = pd.concat(log_dfs)
+        else:
+            # no errors logged in any files
+            cols = ['Time', 'Level', 'Event Source', 'Message', 'Exc Info']
+            log_df = pd.DataFrame(columns=cols)
+        
+        return log_df
 
     @staticmethod
     def prep_log_df(log_df):
@@ -340,11 +348,17 @@ class ScrapeReport():
             # - operational but no events found
             #   - no errors and no events for the event source
         '''
-        is_logged = row['Number of Errors']
-        n_events = row['Number of Events Scraped']
         try:
-            n_crit = row['CRITICAL']
-        except KeyError:
+            is_logged = int(row['Number of Errors'])
+        except ValueError:
+            is_logged = 0
+        try:
+            n_events = int(row['Number of Events Scraped'])
+        except ValueError:
+            n_events = 0
+        try:
+            n_crit = int(row['CRITICAL'])
+        except (KeyError, ValueError):
             n_crit = 0
         if n_crit >= 1:
             return 'Broken'
@@ -355,7 +369,7 @@ class ScrapeReport():
         elif is_logged and n_events:
             return 'Operational, but with errors'
         else:
-            raise Exception("this shouldn't happen!")
+            return 'Status-determiner is broken'
     
     @staticmethod
     def append_nonevents(report_df):
@@ -368,7 +382,6 @@ class ScrapeReport():
                 for _ in range(n_err_cols):
                     new_row.append(0)
                 new_row.extend([0, 'Operational, but no events found'])
-                
                 _df = pd.DataFrame(new_row).transpose()
                 _df.columns = report_df.columns
                 data.append(_df)
@@ -400,11 +413,14 @@ class ScrapeReport():
         else:
             df.to_csv(self.report_path, index=False)
 
+        return self.log_df
+
 
 def make_reports(events, bucket=BUCKET):
-    #if local, scrape_file is abs path to file; otherwise it's a S3 key
-    scrape_file, scrape_date = events_to_csv(events)
+    scrape_date = events_to_csv(events)
     organizers_to_csv(events)
     venues_to_csv(events)
-    sr = ScrapeReport(scrape_file, scrape_date)
-    sr.make_scrape_report()
+    sr = ScrapeReport(events, scrape_date)
+    log_df = sr.make_scrape_report()
+    
+    return log_df

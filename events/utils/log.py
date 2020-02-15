@@ -5,8 +5,9 @@ import logging
 import os
 import traceback
 
-from utils.event_source_map import event_source_map
+from .event_source_map import event_source_map
 
+BUCKET = os.getenv('BUCKET_NAME')
 
 class CsvFormatter(logging.Formatter):
     
@@ -27,15 +28,11 @@ class CsvFormatter(logging.Formatter):
         except (AttributeError, TypeError) as e:
             msg = f"{e} in log formatter, likely b/c exc_info!=True"
             raise ValueError(msg)
-        record_name = record.name
         record_message = record.msg
-        if record_name == '__main__':
-            try:
-                record_name = record_message[35:record_message.index(":")]
-            except ValueError:
-                # when the error message from __main__ doesn't have a colon
-                record_name = "unknown"
-        record_name = record_name.replace("events.", "")
+        record_name = record.name
+        if record_name == 'get_events.py':
+            record_name = record_message[28:record_message.index(":")]
+        record_name = record_name.replace(".py","")
         event_source = self.event_source_map.get(record_name, record_name)
         self.writer.writerow([
             self.now,
@@ -51,26 +48,24 @@ class CsvFormatter(logging.Formatter):
         return data.strip()
 
 
-def create_log_file(bucket):
+def get_logger(event_source, bucket=BUCKET):
+    logger = logging.getLogger(event_source)
     now = datetime.now().strftime("%m-%d-%Y")
+    
     if bucket:
-        log_file_name = f'logs/log_{now}.csv'
-        log_path = StringIO()
-        handler = logging.StreamHandler(log_path)
-        logger = logging.getLogger(__file__)
-        logger.setLevel(logging.WARNING)
-        for handler in logger.handlers:
-            logger.removeHandler(handler)
-        logger.addHandler(logging.FileHandler('/dev/null/'))
-        logger.addHandler(handler)
-    else:
-        log_file_name = f'log_{now}.csv'
-        logger = logging.getLogger(__name__)
-        log_dir = os.path.join(os.getcwd(), 'logs')
+        log_dir = os.path.join("/tmp", "logs")
         if not os.path.exists(log_dir):
             os.mkdir(log_dir)
-        log_path = os.path.join(log_dir, log_file_name)
-        if os.path.exists(log_path):
-            os.remove(log_path)
+    else:
+        log_dir = os.path.join(os.getcwd(), "logs")
+        if not os.path.exists(log_dir):
+            os.mkdir(log_dir)
+    
+    log_file = os.path.join(log_dir, f'{event_source}_{now}.csv')   
+    log_file = log_file.replace(".py", "")
+    f_handler = logging.FileHandler(log_file)
+    f_handler.setLevel(logging.WARNING)
+    f_handler.setFormatter(CsvFormatter())
+    logger.addHandler(f_handler)
 
-    return log_path, logger, log_file_name
+    return logger
