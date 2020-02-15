@@ -29,13 +29,6 @@ class CapitalNatureStack(core.Stack):
             )
         )
 
-        # lambda layer with AWS Linux compatible pandas and numpy
-        #layer = lambda_.LayerVersion(
-            #self, 'aws-lambda-py3.6-pandas-numpy',
-            #code=lambda_.Code.asset('layer/aws-lambda-py3.6-pandas-numpy.zip'),
-            #compatible_runtimes=[lambda_.Runtime.PYTHON_3_6],
-            #description='A layer with numpy and pandas')
-
         # create lambda to gather domains
         lambda_scrapers = lambda_.Function(
             self, "scrapers",
@@ -51,14 +44,14 @@ class CapitalNatureStack(core.Stack):
         lambda_scrapers.add_environment('EVENTBRITE_TOKEN', EVENTBRITE_TOKEN)
         lambda_scrapers.add_environment('BUCKET_NAME', bucket.bucket_name)
         
-        # create rule to run the lambda every Friday at 18:00 UTC (1pm EST)
+        # trigger every 1st and 15th of the month at 18:00 UTC (1pm EST)
         rule = events.Rule(
             self, "Rule",
             schedule=events.Schedule.cron(
                 minute='0',
                 hour='18',
+                day="1,15",
                 month='*',
-                week_day='FRI',
                 year='*'),
         )
         rule.add_target(targets.LambdaFunction(lambda_scrapers))
