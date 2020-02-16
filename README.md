@@ -134,7 +134,7 @@ This should show `1.18.0`.
 Now we can deploy/redeploy the app:
 
 ```bash
-`cdk deploy --profile <your profile name>`
+cdk deploy --profile <your profile name>
 ```
 
 After that command has finished, the resources specified in `app.py` have been deployed to the AWS account you configured with the CDK. You can now log into your AWS Console and check out all the stuff.
