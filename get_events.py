@@ -99,8 +99,8 @@ def main(event={}, context={}):
         if BUCKET:
             log_data = StringIO()
             log_df.to_csv(log_data, index=False)
-            now = datetime.now().strftime("%m-%d-%Y-%H-%M")
-            aws_utils.put_object(log_data.getvalue(), f'logs/{now}.csv')
+            now = datetime.now().strftime("%m-%d-%Y")
+            aws_utils.put_object(log_data.getvalue(), f'logs/log-{now}.csv')
 
 
 if __name__ == '__main__':
