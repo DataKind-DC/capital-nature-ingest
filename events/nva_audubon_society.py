@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import unicodedata
 from urllib3.util.retry import Retry
@@ -8,11 +9,13 @@ from dateutil import parser
 import requests
 from requests.adapters import HTTPAdapter
 
-logger = logging.getLogger(__name__)
+from .utils.log import get_logger
+
+logger = get_logger(os.path.basename(__file__))
 
 
 def requests_retry_session(retries=3, 
-                           backoff_factor=0.3, 
+                           backoff_factor=0.5, 
                            status_forcelist=(429, 500, 502, 503, 504), 
                            session=None):
     '''
@@ -179,7 +182,10 @@ def get_request_result(url):
         r = requests_retry_session().get(url)
     except Exception as e:
         msg = f"Exception making GET request to {url}: {e}"
-        logger.critical(msg, exc_info=True)
+        if url == "http://audubonva.org/calendar-view":
+            logger.critical(msg, exc_info=True)
+        else:
+            logger.error(msg, exc_info=True)
         return
     
     return r
@@ -193,6 +199,8 @@ def get_event_info():
     url = "http://audubonva.org/calendar-view"
     org = "Audubon Society of Northern Virginia"
     r = get_request_result(url)
+    if not r:
+        return []
     soup = BeautifulSoup(r.content, "html.parser")
     all_event_info = []
     summary_divs = soup.find_all("div", {"class": "summary-content"})

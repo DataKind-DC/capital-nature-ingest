@@ -1,12 +1,15 @@
 from datetime import datetime
 import logging
 import math
+import os
 import re
 
 from bs4 import BeautifulSoup
 import requests
 
-logger = logging.getLogger(__name__)
+from .utils.log import get_logger
+
+logger = get_logger(os.path.basename(__file__))
 
 
 def soupify_event_page(url='https://bbardc.org/events/'):
@@ -48,11 +51,13 @@ def get_event_timing(event_soup):
             '%I:%M %p')
         start_time = datetime.strftime(start_time, '%H:%M:%S')
         end_time = datetime.strptime(
-            soup_time.split(' - ', 1)[1].strip(),
-            '%I:%M %p')
+            soup_time.split(' - ', 1)[1].strip(), '%I:%M %p')
         end_time = datetime.strftime(end_time, '%H:%M:%S')
     except AttributeError:
         all_day_event = True
+    except ValueError as e:
+        msg = f'Exception parsing {soup_time}: {e}'
+        logger.error(msg, exc_info=True)
     
     return start_time, end_time, all_day_event
 
@@ -192,6 +197,7 @@ def main():
 if __name__ == '__main__':
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    )
     events = main()
     print(len(events))

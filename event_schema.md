@@ -21,7 +21,7 @@
 |**Timezone**|America/New_York|String|This should be a valid Timezone string. Timezones can be represented in numerous acceptable ways. You can find a list of acceptable timezones sorted by continent here.|
 |Hide from Event Listings|FALSE|Boolean|When true, the event will appear in Month View, but in "List" views like the outright List View, the Photo View, etc.|
 |Sticky in Month View|TRUE|Boolean|When true, the event will appear at the top of its corresponding "day" square in the Month View, regardless of other events that day at other times.|
-|**Event Venue Name**|Archer's Penthouse|Comma Separated|Must match exactly the Venue Name of a preexisting Venue (see note about multiple venues).|
+|**Event Venue Name**|Archer's Penthouse|String|Shouldn't be an address but rather the name of a place.|
 |**Event Organizers**|Montgomery County|String|Must be the event source. Hardcode this.|
 |Event Show Map Link|TRUE|Boolean||
 |Event Show Map|TRUE|Boolean||

@@ -9,13 +9,21 @@ We'd love your help! We want to make contributing to this project as easy and tr
 
 ## What to Contribute?!
 
-Our project backlog can be found on our [Issues Page](https://github.com/DataKind-DC/capital-nature-ingest/issues). If you find something that you'd like to work on, leave a comment to let us know! If you're a part of the DataKind GitHub org, you can even assign yourself an issue.
+Our [Issues Page](https://github.com/DataKind-DC/capital-nature-ingest/issues) has our backlog. If you find something that you'd like to work on, leave a comment to let us know! If you're a part of the DataKind GitHub org, you can even assign yourself an issue.
 
->Most issues are requests for new event sources to be scraped. If you want to work on a new event source, take note of how each current event source has its own `.py` file within the `events/` directory. Your code should also be placed within a single file within the `events/` directory. Additionally, be sure that your entire script can be run through the use of a single function named `main()`. Finally, add a key:value pair to the dictionary in `utils/event_source_map.py`; the key should be the name of the `.py` file you made and the corresponding value should be the Event Organizer name you've used in that `.py` file.
+Most issues are requests for new event sources to be scraped. **If you want to work on a new event source**, you'll need to do the following:
+
+- create a single `.py` file within the `events/` directory for your event source.
+- make sure that your entire script can be run through the use of a single function named `main()`.
+- add a key:value pair to the dictionary in `events/utils/event_source_map.py`; the key should be the name of the `.py` file you made and the corresponding value should be the Event Organizer name you've used in that `.py` file. 
+- write a test for your script
+- lint your script with `flake8`
+
+>You can find more details on each of these requirements by reading on.
 
 ## How to Contribute
 
-We use [Github Flow](https://guides.github.com/introduction/flow/index.html), so all code changes happen through pull requests. We use a **Fork and Pull Model**.
+We use [Github Flow](https://guides.github.com/introduction/flow/index.html), so all code changes happen through pull requests. We use a **Fork and Pull Model**, so go ahead and fork this repo if you haven't done so already.
 
 ### The Fork and Pull Model
 

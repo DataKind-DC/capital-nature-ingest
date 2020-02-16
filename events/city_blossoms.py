@@ -1,12 +1,15 @@
 from datetime import datetime, timedelta
 from dateutil import tz
 import logging
+import os
 import re
 
 from bs4 import BeautifulSoup
 import requests
 
-logger = logging.getLogger(__name__)
+from .utils.log import get_logger
+
+logger = get_logger(os.path.basename(__file__))
 
 
 def filter_events(events_data):

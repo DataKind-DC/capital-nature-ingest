@@ -1,9 +1,13 @@
 from datetime import datetime, timedelta
+import logging
 import re
 import string
 
 import geocoder
 
+logging.getLogger("geocoder").setLevel(logging.CRITICAL)
+logging.getLogger("requests").setLevel(logging.CRITICAL)
+logging.getLogger("urllib3").setLevel(logging.CRITICAL)
 
 # defined globally for unicoder function
 chars_to_keep = ' '
@@ -121,7 +125,10 @@ def tag_events_with_state(events):
                     else:
                         # split at comma in case there are multiple locations
                         venue = event_venue.split(",")[0]
-                        g = geocoder.osm(venue)
+                        try:
+                            g = geocoder.osm(venue)
+                        except Exception:
+                            pass
                         try:
                             event_state = g.json['raw']['address']['state']
                             event_state = f'({event_state})'

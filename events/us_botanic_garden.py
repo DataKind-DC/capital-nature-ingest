@@ -2,12 +2,15 @@ import copy
 import datetime
 import json
 import logging
+import os
 import re
 
 from bs4 import BeautifulSoup
 import requests
 
-logger = logging.getLogger(__name__)
+from .utils.log import get_logger
+
+logger = get_logger(os.path.basename(__file__))
 
 
 def get_event_ids(num_months):

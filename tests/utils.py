@@ -1,11 +1,5 @@
 from datetime import datetime
-import logging
-import os
 import re
-
-import requests
-
-logger = logging.getLogger(__name__)
 
 url_regex = re.compile(
             r'^(?:http|ftp)s?://' # http:// or https://
@@ -88,8 +82,13 @@ def schema_test_types(events):
     booleans = {'All Day Event','Hide from Event Listings','Sticky in Month View',
                 'Event Show Map Link','Event Show Map','Allow Comments',
                 'Allow Trackbacks and Pingbacks'}
-    comma_delimited = {'Event Venue Name','Event Organizers','Event Category','Event Tags'}
-    string = {'Event Description','Event Excerpt','Event Name'}
+    comma_delimited = {'Event Category','Event Tags'}
+    string = {
+        'Event Description',
+        'Event Excerpt',
+        'Event Name', 
+        'Event Venue Name',
+        'Event Organizers'}
     date = {'Event Start Date', 'Event End Date'}
     time = {'Event Start Time','Event End Time'}
     url = {'Event Website', 'Event Featured Image'}
@@ -104,6 +103,7 @@ def schema_test_types(events):
                     raise Exception (msg)
             # Tests if the str and comma delim event field types are strings
             elif k in string or k in comma_delimited:
+                # TODO: check if it's actually comma delimited
                 val = event[k]
                 is_str = isinstance(val, str)
                 if not is_str:

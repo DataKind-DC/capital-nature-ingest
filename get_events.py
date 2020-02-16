@@ -1,10 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from inspect import getmodule
+from io import StringIO
 import logging
+from math import ceil
 import os
-
-# import boto3
 
 from events import ans, arlington, aws, casey_trees, city_blossoms, \
     dc_audubon, eleventh_street, fairfax, fona, \
@@ -12,9 +12,9 @@ from events import ans, arlington, aws, casey_trees, city_blossoms, \
     montgomery, nova_parks, nps, potomac_conservancy, rcc, riverkeeper, \
     sierra_club_md, sierra_club, tnc, us_botanic_garden, vnps, \
     nva_audubon_society
-from log import CsvFormatter
+from events.utils.log import get_logger
 from tests.utils import schema_test
-from utils import formatters, reports
+from events.utils import formatters, reports, aws_utils
 
 try:
     NPS_KEY = os.environ['NPS_KEY']
@@ -28,15 +28,18 @@ except KeyError:
     EVENTBRITE_TOKEN = input("Enter your Eventbrite API key:")
     os.environ["EVENTBRITE_TOKEN"] = EVENTBRITE_TOKEN
 
-logger = logging.getLogger(__name__)
+BUCKET = os.getenv('BUCKET_NAME')
+
+logger = get_logger(os.path.basename(__file__))
 
 
 def get_source_events(event_source_main):
     f = getmodule(event_source_main).__name__.split('.')[-1]
     try:
         events = event_source_main()
-        n = len(events)
-        print(f"Scraped {n} event(s) for {f}")
+        if not BUCKET:
+            n = len(events)
+            print(f"Scraped {n} event(s) for {f}")
     except Exception as e:
         msg = f'Exception getting events in {f}: {e}'
         logger.critical(msg, exc_info=True)
@@ -73,7 +76,9 @@ def get_events():
     ]
     event_source_mains = [e.main for e in event_sources]
 
-    with ThreadPoolExecutor(max_workers=len(event_sources)) as executor:
+    n_workers = ceil(len(event_sources) / 2)
+
+    with ThreadPoolExecutor(max_workers=n_workers) as executor:
         events = executor.map(get_source_events, event_source_mains) 
     
     events = [item for sublist in events for item in sublist]
@@ -81,33 +86,25 @@ def get_events():
     return events
 
 
-def create_log_file():
-    log_dir = os.path.join(os.getcwd(), 'logs')
-    if not os.path.exists(log_dir):
-        os.mkdir(log_dir)
-
-    now = datetime.now().strftime("%m-%d-%Y")
-    log_path = os.path.join(log_dir, f'log_{now}.csv')
-    if os.path.exists(log_path):
-        os.remove(log_path)
-
-    return log_path
-
-
-def main(is_local=True, bucket=None):
-    events = get_events()
-    reports.make_reports(events, is_local, bucket)
-
-    return events
+def main(event={}, context={}):
+    try:
+        events = get_events()
+        if not BUCKET:
+            return events
+    except Exception as e:
+        events = []
+        logger.critical(f"Critical error: {e}")
+    finally:
+        log_df = reports.make_reports(events)
+        if BUCKET:
+            log_data = StringIO()
+            log_df.to_csv(log_data, index=False)
+            now = datetime.now().strftime("%m-%d-%Y-%H-%M")
+            aws_utils.put_object(log_data.getvalue(), f'logs/{now}.csv')
 
 
 if __name__ == '__main__':
-    log_file = create_log_file()
-    logging.basicConfig(level=logging.WARNING, filename=log_file)
-    logging.root.handlers[0].setFormatter(CsvFormatter())
-
     events = main()
-
     print(f"Done scraping {len(events)} events!")
-    print(f"You can find the logs here:  {log_file}")
+    print(f"You can find the logs in ./logs")
     print("You can find the reports in ./data/ and ./reports/, respectively.")

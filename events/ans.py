@@ -1,12 +1,15 @@
 from datetime import datetime, timedelta
 import json
 import logging
+import os
 import re
 
 import bs4
 import requests
 
-logger = logging.getLogger(__name__)
+from .utils.log import get_logger
+
+logger = get_logger(os.path.basename(__file__))
 
 
 def soupify_page(url='https://anshome.org/events-calendar/'):

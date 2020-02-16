@@ -3,7 +3,7 @@ from os import path
 import sys
 import unittest
 sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
-from utils.formatters import unicoder, date_filter
+from events.utils.formatters import unicoder, date_filter
 
 class FormattersTestCase(unittest.TestCase):
     
