@@ -81,10 +81,13 @@ def get_past_venues(out_dir='data', bucket=BUCKET):
     '''
     if bucket:
         try:
-            venue_key = next(get_matching_s3_keys(prefix='cap-nature-venues'))
+            venue_key = next(get_matching_s3_keys(
+                prefix='data/cap-nature-venues')
+            )
         except StopIteration:
             return set()
         venue_file = read_object(venue_key)
+        S3.delete_object(Bucket=bucket, Key=venue_key)
     else:
         data_path = os.path.join(os.getcwd(), out_dir)
         if not os.path.exists(data_path):
@@ -180,7 +183,9 @@ def get_past_organizers(out_dir='data', bucket=BUCKET):
     organizers = []
     if bucket:
         try:
-            org_key = next(get_matching_s3_keys(prefix='cap-nature-organizer'))
+            org_key = next(get_matching_s3_keys(
+                prefix='data/cap-nature-organizer')
+            )
         except StopIteration:
             return set()
         organizer_file = read_object(org_key)

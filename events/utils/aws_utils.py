@@ -13,15 +13,13 @@ if BUCKET:
     S3 = boto3.client("s3")
 
 
-def get_matching_s3_objects(bucket=BUCKET, prefix='', suffix='.csv'):
+def get_matching_s3_objects(bucket, prefix, suffix):
     """Generate objects in an S3 bucket.
     
     Keyword Arguments:
-        bucket {str} -- Name of the S3 bucket. (default: {BUCKET})
-        prefix {str} -- Only fetch objects whose key starts with
-                        this prefix (optional) (default: {''})
-        suffix {str} -- Only fetch objects whose keys end with
-                        this suffix (optional) (default: {'.csv'})
+        bucket {str} -- Name of the S3 bucket. 
+        prefix {str} -- Only fetch objects whose key starts with this prefix 
+        suffix {str} -- Only fetch objects whose keys end with this suffix
     Yields:
         [str] -- key to an s3 object
     """    
@@ -31,7 +29,7 @@ def get_matching_s3_objects(bucket=BUCKET, prefix='', suffix='.csv'):
     prefixes = (prefix, ) if isinstance(prefix, str) else prefix
 
     for p in prefixes:
-        kwargs["Prefix"] = f'{p}/'
+        kwargs["Prefix"] = p
 
         for page in paginator.paginate(**kwargs):
             try:
