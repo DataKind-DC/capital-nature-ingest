@@ -116,7 +116,6 @@ def get_past_venues(out_dir='data', bucket=BUCKET):
     past_venues = set(venues)
     past_venues.remove('VENUE NAME')
     
-
     return past_venues
 
 
