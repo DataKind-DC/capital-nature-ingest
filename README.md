@@ -18,7 +18,7 @@ You can run the scrapers three different ways:
 1. [Locally](#Local-Setup)
     - csv reports are written to `./data`, `./logs` and `./reports`
 2. [Locally, with Docker](#Local-Setup-(Docker))
-    - no output, but good for local testing using an environment that mimics AWS Lambda
+    - good for local testing using an environment that mimics AWS Lambda with option to write results locally
 3. [In AWS](#AWS-Setup)
     - csv reports are written to S3
 
@@ -78,19 +78,13 @@ docker build -t scrapers ./lambda-releases
 docker run --rm -e EVENTBRITE_TOKEN=$EVENTBRITE_TOKEN -e NPS_KEY=$NPS_KEY scrapers
 ```
 
-After some time, you'll see some output like:
+If you want to write the results locally, you can mount any combination of `/data`, `/logs`, and `/results` directories to your local filesystem:
 
 ```bash
-...
-Scraped 149 event(s) for arlington
-Scraped 18 event(s) for friends_of_kenilworth_gardens
-...
-Scraped 469 event(s) for montgomery
-Done scraping 1334 events!
-...
+docker run --rm -e EVENTBRITE_TOKEN=$EVENTBRITE_TOKEN -e NPS_KEY=$NPS_KEY -v `pwd`:/var/task/data -v `pwd`:/var/task/logs -v `pwd`:/var/task/reports scrapers
 ```
 
-Note that the data actually hasn't been written to your local file system.
+The above will write the three data spreadsheets, all of the log files for broken scrapers, and a results spreadsheet to your current working directory.
 
 ### AWS Setup
 
@@ -155,13 +149,18 @@ You can destroy the AWS resources created by this app with `cdk destroy --profil
 
 ## The Data
 
-After running the scrapers locally (without Docker), you'll have three csv files in a new `data/` dir of the project (unless you used the Docker approach):
+After running the scrapers locally, you'll have three csv files in a new `data/` directory (unless you used the Docker approach, in which they'll be wherever you chose to mount the volume):
 
 - `cap-nature-events-<date>.csv` (all of the events)
 - `cap-nature-organizers-<date>.csv` (a list of the event sources, which builds off the previous list each successive time you run this)
 - `cap-nature-venues-<date>.csv` (a list of the event venues, which builds off the previous list each successive time you run this)
 
-These files are used by the Capital Nature team to update their website. Two other directories are also created in the process:  `/reports` and `/logs`.
+These files are used by the Capital Nature team to update their website.
+
+Two other directories are also created in the process:
+
+- `/reports`
+- `/logs`
 
 The `/reports` directory holds spreadsheets that summarize the results of `get_events.py`. There's a row for each event source and columns with data on the number of events scraped, the number of errors encountered, and the event source's status (e.g. "operational") given the presence of errors and/or data. A single report is generated each time you run `get_events.py` and includes the date in the filename to let you connect it to the data files in the `/data` directory. Because of this, if you run `get_events.py` more than once in one day, the previous report is overwritten.
 
