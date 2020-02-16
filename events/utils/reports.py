@@ -8,7 +8,7 @@ import pandas as pd
 from pandas.errors import EmptyDataError
 
 from .event_source_map import event_source_map
-from .aws_utils import get_matching_s3_keys, read_object, put_object
+from .aws_utils import get_matching_s3_keys, read_and_delete_object, put_object
 
 
 BUCKET = os.getenv('BUCKET_NAME')
@@ -79,6 +79,7 @@ def get_past_venues(out_dir='data', bucket=BUCKET):
     Returns:
         past_venues (set): set of venues, or an empty set if there are none
     '''
+    venues = []
     if bucket:
         try:
             venue_key = next(get_matching_s3_keys(
@@ -86,40 +87,35 @@ def get_past_venues(out_dir='data', bucket=BUCKET):
             )
         except StopIteration:
             return set()
-        venue_file = read_object(venue_key)
-        S3.delete_object(Bucket=bucket, Key=venue_key)
+        venue_file = read_and_delete_object(venue_key)
+        with venue_file as f:
+            reader = csv.reader(f)
+            for i in reader:
+                venue = i[0]
+                venues.append(venue)
     else:
         data_path = os.path.join(os.getcwd(), out_dir)
         if not os.path.exists(data_path):
             os.mkdir(data_path)
-        
         data_files = []
         for f in os.listdir(data_path):
             if os.path.isfile(os.path.join(data_path, f)) and 'venues-' in f:
                 data_files.append(os.path.join(data_path, f))
-
         try:
             venue_file = data_files[0]
         except IndexError:
             # because there's no past file, so no past venues
             return set()
-    
-    venues = []
-    try:
-        # dealing with StringIO obj
-        data = venue_file.getvalue().split()
-        venues.extend([d.split(',')[0] for d in data])
-    except AttributeError:
-        # must be local file
         with open(venue_file, errors='ignore') as f:
             reader = csv.reader(f)
             for i in reader:
                 venue = i[0]
                 venues.append(venue)
+        os.remove(venue_file)
     
     past_venues = set(venues)
     past_venues.remove('VENUE NAME')
-    os.remove(venue_file)
+    
 
     return past_venues
 
@@ -188,13 +184,12 @@ def get_past_organizers(out_dir='data', bucket=BUCKET):
             )
         except StopIteration:
             return set()
-        organizer_file = read_object(org_key)
+        organizer_file = read_and_delete_object(org_key)
         with organizer_file as f:
             reader = csv.reader(f)
             for i in reader:
                 organizer = i[0]
                 organizers.append(organizer)
-        S3.delete_object(Bucket=bucket, Key=org_key)
     else:
         data_path = os.path.join(os.getcwd(), out_dir)
         if not os.path.exists(data_path):

@@ -60,7 +60,7 @@ def get_matching_s3_keys(bucket=BUCKET, prefix="",  suffix='.csv'):
         yield obj["Key"]
 
 
-def read_object(key, bucket=BUCKET):
+def read_and_delete_object(key, bucket=BUCKET):
     """Reads an s3 object and returns contents
     
     Arguments:
@@ -74,6 +74,7 @@ def read_object(key, bucket=BUCKET):
     """    
     obj = S3.get_object(Bucket=bucket, Key=key)
     data = StringIO(obj.get('Body').read().decode('utf-8'))
+    S3.delete_object(Bucket=bucket, Key=key)
     
     return data
 
