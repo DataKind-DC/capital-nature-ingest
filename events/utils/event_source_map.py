@@ -9,6 +9,7 @@ event_source_map = {
     'fairfax': "Fairfax Parks",
     'fona': "Friends of the National Arboretum",
     'friends_of_kenilworth_gardens': "Friends of Kenilworth Gardens",
+    'lfwa': "Little Falls Watershed Alliance",
     'montgomery': "Montgomery Parks",
     'nova_parks': "NOVA Parks",
     'nps': "National Park Service",

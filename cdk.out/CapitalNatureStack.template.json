@@ -1,0 +1,234 @@
+{
+  "Resources": {
+    "resultsbucket23CE2CF5": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": false,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": false,
+          "RestrictPublicBuckets": true
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "CapitalNatureStack/results-bucket/Resource"
+      }
+    },
+    "scrapersServiceRoleFA411D2E": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "CapitalNatureStack/scrapers/ServiceRole/Resource"
+      }
+    },
+    "scrapersServiceRoleDefaultPolicy8242BF69": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject*",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "resultsbucket23CE2CF5",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "resultsbucket23CE2CF5",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "scrapersServiceRoleDefaultPolicy8242BF69",
+        "Roles": [
+          {
+            "Ref": "scrapersServiceRoleFA411D2E"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "CapitalNatureStack/scrapers/ServiceRole/DefaultPolicy/Resource"
+      }
+    },
+    "scrapersD00F7A98": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "AssetParametersd0a999080830fdd60c98c0b6b1f0d40de84f1bfa3286c1a83239e8d22a9cca11S3BucketC1BF7C10"
+          },
+          "S3Key": {
+            "Fn::Join": [
+              "",
+              [
+                {
+                  "Fn::Select": [
+                    0,
+                    {
+                      "Fn::Split": [
+                        "||",
+                        {
+                          "Ref": "AssetParametersd0a999080830fdd60c98c0b6b1f0d40de84f1bfa3286c1a83239e8d22a9cca11S3VersionKeyD9FA5AC7"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "Fn::Select": [
+                    1,
+                    {
+                      "Fn::Split": [
+                        "||",
+                        {
+                          "Ref": "AssetParametersd0a999080830fdd60c98c0b6b1f0d40de84f1bfa3286c1a83239e8d22a9cca11S3VersionKeyD9FA5AC7"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            ]
+          }
+        },
+        "Handler": "get_events.main",
+        "Role": {
+          "Fn::GetAtt": [
+            "scrapersServiceRoleFA411D2E",
+            "Arn"
+          ]
+        },
+        "Runtime": "python3.6",
+        "Environment": {
+          "Variables": {
+            "NPS_KEY": "Ze3JxflqidXTIGZKXwUdKseT2vsPcauY4kWtG5bI",
+            "EVENTBRITE_TOKEN": "TBQNST6U37HN55FFCSQY",
+            "BUCKET_NAME": {
+              "Ref": "resultsbucket23CE2CF5"
+            }
+          }
+        },
+        "MemorySize": 1000,
+        "Timeout": 600
+      },
+      "DependsOn": [
+        "scrapersServiceRoleDefaultPolicy8242BF69",
+        "scrapersServiceRoleFA411D2E"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "CapitalNatureStack/scrapers/Resource",
+        "aws:asset:path": "asset.d0a999080830fdd60c98c0b6b1f0d40de84f1bfa3286c1a83239e8d22a9cca11.zip",
+        "aws:asset:property": "Code"
+      }
+    },
+    "scrapersAllowEventRuleCapitalNatureStackRule897E995AE06A75D7": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "scrapersD00F7A98",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "Rule4C995B7F",
+            "Arn"
+          ]
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "CapitalNatureStack/scrapers/AllowEventRuleCapitalNatureStackRule897E995A"
+      }
+    },
+    "Rule4C995B7F": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 18 1,15 * ? *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "scrapersD00F7A98",
+                "Arn"
+              ]
+            },
+            "Id": "Target0"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "CapitalNatureStack/Rule/Resource"
+      }
+    }
+  },
+  "Parameters": {
+    "AssetParametersd0a999080830fdd60c98c0b6b1f0d40de84f1bfa3286c1a83239e8d22a9cca11S3BucketC1BF7C10": {
+      "Type": "String",
+      "Description": "S3 bucket for asset \"d0a999080830fdd60c98c0b6b1f0d40de84f1bfa3286c1a83239e8d22a9cca11\""
+    },
+    "AssetParametersd0a999080830fdd60c98c0b6b1f0d40de84f1bfa3286c1a83239e8d22a9cca11S3VersionKeyD9FA5AC7": {
+      "Type": "String",
+      "Description": "S3 key for asset version \"d0a999080830fdd60c98c0b6b1f0d40de84f1bfa3286c1a83239e8d22a9cca11\""
+    },
+    "AssetParametersd0a999080830fdd60c98c0b6b1f0d40de84f1bfa3286c1a83239e8d22a9cca11ArtifactHash8ED63B5E": {
+      "Type": "String",
+      "Description": "Artifact hash for asset \"d0a999080830fdd60c98c0b6b1f0d40de84f1bfa3286c1a83239e8d22a9cca11\""
+    }
+  }
+}
