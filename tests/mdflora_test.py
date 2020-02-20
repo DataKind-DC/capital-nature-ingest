@@ -1,15 +1,13 @@
 from os import path
-from utils import schema_test_required, schema_test_all, schema_test_types
-
 import sys
 import unittest
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-from events.eleventh_street import main
+from events.mdflora import main
+from utils import schema_test_required, schema_test_all, schema_test_types
 
-
-class EleventhStreetTestCase(unittest.TestCase):
+class MDFloraTestCase(unittest.TestCase):
     '''
-    Test cases for Eleventh Street events.
+    Test cases for ANS events.
     '''
 
     def setUp(self):

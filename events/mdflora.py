@@ -13,7 +13,7 @@ from .utils.log import get_logger
 logger = get_logger(os.path.basename(__file__))
 
 
-def soupify_event_page(url='https://bbardc.org/events/'):
+def soupify_event_page(url='https://mdflora.org/calendar'):
     try:
         r = requests.get(url)
     except Exception as e:
@@ -44,19 +44,13 @@ def get_event_timing(event_soup):
     end_time = ''
     try:
         soup_time = event_soup.find(
-            'div',
-            class_='tribe-events-start-time')
-        print(soup_time)
-        soup_time = soup_time.find('div')
-        print(soup_time)
-        soup_time = soup_time.text
+            'li',
+            class_='eventInfoStartTime')
+        soup_time = soup_time.find('div', class_='eventInfoBoxValue').text
 
         start_time = datetime.strptime(
             soup_time.split(' - ', 1)[0].strip(),
             '%I:%M %p')
-        print(soup_time)
-        print(soup_time.split(' - ', 1)[0].strip())
-        print(soup_time.split(' - ', 1)[1])
         start_time = datetime.strftime(start_time, '%H:%M:%S')
         end_time = datetime.strptime(
             soup_time.split(' - ', 1)[1].strip(), '%I:%M %p')
@@ -73,24 +67,19 @@ def get_event_timing(event_soup):
 def get_event_dates(event_soup):
     start_date = ''
     end_date = ''
-    multi_day_event = False
-    start_date = event_soup.find('abbr', class_='tribe-events-start-date')
+    # '%Y-%m-%d'
     try:
-        if 'title' in start_date.attrs:
-            start_date = start_date['title']
+        start_date = event_soup.find('li', class_='eventInfoStartDate')
+        start_date = start_date.find('div', class_='eventInfoBoxValue').text
+
     except AttributeError:
         start_date = ''
     try:
-        end_date = event_soup.find('abbr', class_='tribe-events-end-date')
-        if'title' in end_date.attrs:
-            end_date = end_date['title']
+        end_date = event_soup.find('li', class_='eventInfoStartDate')
+        end_date = end_date.find('div', class_='eventInfoBoxValue').text
     except AttributeError:
         end_date = ''
-    if end_date != '':
-        multi_day_event = True
-    elif end_date == '':
-        end_date = start_date
-    return start_date, end_date, multi_day_event
+    return start_date, end_date
 
 
 def get_event_description(event_site_soup, event_name):
@@ -98,7 +87,7 @@ def get_event_description(event_site_soup, event_name):
     try:
         soup_paragraphs = event_site_soup.find(
             'div',
-            'tribe-events-single-event-description').find_all('p')
+            'gadgetEventEditableArea').find_all('p')
         soup_paragraphs = [i.text for i in soup_paragraphs]
         description = ''.join(soup_paragraphs)
     except Exception as e:
@@ -110,15 +99,8 @@ def get_event_description(event_site_soup, event_name):
 def get_event_venue(event_site_soup, event_name):
     venue = ''
     try:
-        venue = event_site_soup.find('dd', class_='tribe-venue').text
-    except AttributeError:
-        # try to look in dd tag for the dl tag
-        dls = event_site_soup.find_all('dl')
-        for dl in dls:
-            _venue = dl.find('dd', {'class': 'tribe-venue'})
-            if _venue:
-                venue += _venue.get_text()
-                break
+        venue_soup = event_site_soup.find('li', class_='eventInfoLocation')
+        venue = venue_soup.find("span").text
     except Exception as e:
         msg = f'Exception finding the event venue for {event_name}: {e}'  
         logger.error(msg, exc_info=True)
@@ -160,45 +142,45 @@ def get_event_cost(event_site_soup, event_name):
 
 def main():
     soup = soupify_event_page()
-    events = soup.find_all('div', class_='tribe_events')
+    events = soup.find_all('td', class_='EventListCalendarItemDefault')
     events_out = []
 
     for e in events:
-        event_name = e.select('h3 > a')[0].text
-        event_website = e.select('h3 > a')[0].get("href")
-        event_site_soup = soupify_event_website(event_website)
-        event_venue = get_event_venue(event_site_soup, event_name)
-        if not event_venue:
-            continue
-        timing = get_event_timing(event_site_soup)
-        dates = get_event_dates(event_site_soup)
-        event_description = get_event_description(event_site_soup, event_name)
-        event_organizers = 'Building Bridges Across the River'
-        
-        event_category = get_event_category(event_site_soup, event_name)
-        event_cost = get_event_cost(event_site_soup, event_name)
-        start_time = timing[0]
-        all_day = dates[2]
-        if not start_time and not all_day:
-            continue
-        event = {
-            'Event Name': event_name,
-            'Event Website': event_website,
-            'Event Start Date': dates[0],
-            'Event Start Time': start_time,
-            'Event End Date': dates[1],
-            'Event End Time': timing[1],
-            'Event Venue Name': event_venue,
-            'Timezone': 'America/New_York',
-            'Event Cost': event_cost,
-            'Event Description': event_description,
-            'Event Category': event_category,
-            'Event Organizers': event_organizers,
-            'Event Currency Symbol': '$',
-            'All Day Event': all_day
-        }
-        events_out.append(event)
+        try:
+            event_name = e.select('div > a')[0].text
+            event_website = e.select('div > a')[0].get("href")
+            event_site_soup = soupify_event_website(event_website)
+            event_venue = get_event_venue(event_site_soup, event_name)
+            timing = get_event_timing(event_site_soup)
+            dates = get_event_dates(event_site_soup)
+            dates = datetime.strptime(dates, '%m/%d/%Y')
+            dates = dates.strftime('%Y-%m-%d')
+            event_description = get_event_description(
+                event_site_soup, event_name)
+            event_organizers = 'Maryland Native Plant Society'
+            event = {
+                'Event Name': event_name,
+                'Event Website': event_website,
+                'Event Start Date': dates[0],
+                'Event Start Time': timing[0],
+                'Event End Date': dates[1],
+                'Event End Time': timing[1],
+                'Event Venue Name': event_venue,
+                'Timezone': 'America/New_York',
+                'Event Cost': "",
+                'Event Description': event_description,
+                'Event Category': "",
+                'Event Organizers': event_organizers,
+                'Event Currency Symbol': '$',
+                'All Day Event': False
+            }
+            events_out.append(event)
 
+        except AttributeError:
+            continue
+        except Exception:
+            continue
+      
     return events_out
 
 
