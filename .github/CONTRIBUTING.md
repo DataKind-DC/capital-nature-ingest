@@ -16,6 +16,7 @@ Most issues are requests for new event sources to be scraped. **If you want to w
 - create a single `.py` file within the `events/` directory for your event source.
 - make sure that your entire script can be run through the use of a single function named `main()`.
 - add a key:value pair to the dictionary in `events/utils/event_source_map.py`; the key should be the name of the `.py` file you made and the corresponding value should be the Event Organizer name you've used in that `.py` file. 
+- import your event source in `get_events.py` and add it to the `event_sources` list later on in the file. See lines 9 and 70, respectively. Please add alphabetically.
 - write a test for your script
 - lint your script with `flake8`
 
