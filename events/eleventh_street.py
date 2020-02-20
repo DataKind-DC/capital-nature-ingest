@@ -46,17 +46,11 @@ def get_event_timing(event_soup):
         soup_time = event_soup.find(
             'div',
             class_='tribe-events-start-time')
-        print(soup_time)
         soup_time = soup_time.find('div')
-        print(soup_time)
         soup_time = soup_time.text
-
         start_time = datetime.strptime(
             soup_time.split(' - ', 1)[0].strip(),
             '%I:%M %p')
-        print(soup_time)
-        print(soup_time.split(' - ', 1)[0].strip())
-        print(soup_time.split(' - ', 1)[1])
         start_time = datetime.strftime(start_time, '%H:%M:%S')
         end_time = datetime.strptime(
             soup_time.split(' - ', 1)[1].strip(), '%I:%M %p')
