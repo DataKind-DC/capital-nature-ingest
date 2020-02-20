@@ -24,6 +24,8 @@ You can run the scrapers three different ways:
 
 ### Local Setup
 
+After cloning the repo, consider downloading and configuring [Git Large File Storage](https://git-lfs.github.com./).
+
 1. Navigate into the repository:
 
 ```bash
