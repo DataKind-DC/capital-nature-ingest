@@ -60,8 +60,7 @@ def parse_event_date(event_date, event_website):
         start_time (str): the event's start time
         end_time (str): the event's end time
     '''
-    date_times = re.sub('  +', ' ', event_date)
-    split_date = date_times.split()
+    split_date = event_date.split()
     start_date = schematize_event_date(split_date, event_website)
     
     filtered_split_date = list(filter(lambda x: x != "-", split_date))
@@ -76,7 +75,7 @@ def parse_event_date(event_date, event_website):
         )
     except ValueError:
         # occurs for multi-day events, with some days being all-day.
-        #  We can't support this now
+        # We can't support this now
         start_time = None
         end_time = None
 
@@ -204,6 +203,24 @@ def schematize_event_time(event_time, event_website):
     return schematized_event_time
 
 
+def get_time(event_item):
+    event_date = event_item.find('span', {'class': 'time'}).text.strip()
+    event_date = event_date.replace("Ocber", "October")
+    event_date = re.sub('  +', ' ', event_date)
+                
+    try:
+        to_ix = event_date.index('to')
+    except ValueError:
+        return event_date
+    if event_date[to_ix + 3].isdigit():
+        return event_date.replace("to", '')
+    else:
+        # if there's no digit after "to", then it's a multi-day event
+        # e.g. https://www.montgomeryparks.org/events/wings-of-fancy-live
+        # butterfly-caterpillar-exhibit/
+        return
+    
+
 def parse_event_item(event_item, event_category):
     '''
     Schematizes the event data
@@ -225,12 +242,9 @@ def parse_event_item(event_item, event_category):
         return
     else:
         try:
-            event_date = event_item.find(
-                'span',
-                {'class': 'time'})\
-                .text.strip()\
-                .replace("to", '')\
-                .replace("Ocber", "October")
+            event_date = get_time(event_item)
+            if not event_date:
+                return
         except Exception as e:
             msg = f"Exception parsing date from {event_item}: {e}"
             logger.error(msg, exc_info=True)
