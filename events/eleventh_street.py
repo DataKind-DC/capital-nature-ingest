@@ -37,7 +37,7 @@ def soupify_event_website(event_website):
     return soup
 
 
-def get_event_timing(event_soup):
+def get_event_timing(event_soup, event_website):
     all_day_event = False
     start_time = ''
     end_time = ''
@@ -45,6 +45,21 @@ def get_event_timing(event_soup):
         soup_time = event_soup.find(
             'div',
             class_='tribe-events-start-time').text
+
+        sub_divs = event_soup.find_all(
+            'div',
+            class_='tribe-recurring-event-time'
+        )
+
+        if len(sub_divs) >= 2:
+            # indicates a recurring event, but they list recurring events
+            # multiple times, so don't need to capture all of the extra dates!
+            # just need to catch the date that matches the index of the url
+            # e.g https://bbardc.org/event/rise-2020/2020-02-15/2/ ends with a
+            # 2, so we'd capture the second div from sub-divs
+            ix = event_website.rsplit('/')[-2]
+            ix = 0 if "-" in ix else int(ix) - 1
+            soup_time = [div.text for div in sub_divs][ix]
 
         start_time = datetime.strptime(
             soup_time.split(' - ', 1)[0].strip(),
@@ -54,9 +69,10 @@ def get_event_timing(event_soup):
             soup_time.split(' - ', 1)[1].strip(), '%I:%M %p')
         end_time = datetime.strftime(end_time, '%H:%M:%S')
     except AttributeError:
+        print("!")
         all_day_event = True
     except ValueError as e:
-        msg = f'Exception parsing {soup_time}: {e}'
+        msg = f'Exception parsing {soup_time} from {event_website}: {e}'
         logger.error(msg, exc_info=True)
     
     return start_time, end_time, all_day_event
@@ -162,7 +178,7 @@ def main():
         event_venue = get_event_venue(event_site_soup, event_name)
         if not event_venue:
             continue
-        timing = get_event_timing(event_site_soup)
+        timing = get_event_timing(event_site_soup, event_website)
         dates = get_event_dates(event_site_soup)
         event_description = get_event_description(event_site_soup, event_name)
         event_organizers = 'Building Bridges Across the River'
