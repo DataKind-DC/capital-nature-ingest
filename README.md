@@ -22,9 +22,9 @@ You can run the scrapers three different ways:
 3. [In AWS](#AWS-Setup)
     - csv reports are written to S3
 
-### Local Setup
+Regardless of how you choose to get going, install [Git Large File Storage](https://git-lfs.github.com./) before proceeding. We use it to help manage the lamdba deployment and dependencies, which are ~ 50 MB.
 
-After cloning the repo, consider downloading and configuring [Git Large File Storage](https://git-lfs.github.com./).
+### Local Setup
 
 1. Navigate into the repository:
 
