@@ -57,7 +57,7 @@ def get_event_timing(event_soup, event_website):
             # just need to catch the date that matches the index of the url
             # e.g https://bbardc.org/event/rise-2020/2020-02-15/2/ ends with a
             # 2, so we'd capture the second div from sub-divs
-            ix = event_website.rsplit('/')[-2]
+            ix = event_website.rsplit('/', 2)[-2]
             ix = 0 if "-" in ix else int(ix) - 1
             soup_time = [div.text for div in sub_divs][ix]
 
