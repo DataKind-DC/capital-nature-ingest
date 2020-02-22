@@ -7,7 +7,7 @@ from .utils import schema_test_required, schema_test_all, schema_test_types
 
 class MDFloraTestCase(unittest.TestCase):
     '''
-    Test cases for ANS events.
+    Test cases for Maryland Native Plant Society events.
     '''
 
     def setUp(self):

@@ -156,7 +156,7 @@ def main():
             date_start = datetime.strptime(dates[0], '%m/%d/%Y')
             date_start = date_start.strftime('%Y-%m-%d')
             date_end = datetime.strptime(dates[1], '%m/%d/%Y')
-            date_end = date_end.strftime("%m/%d/%Y")
+            date_end = date_end.strftime('%Y-%m-%d')
             event_description = get_event_description(
                 event_site_soup, event_name)
             event_organizers = 'Maryland Native Plant Society'
