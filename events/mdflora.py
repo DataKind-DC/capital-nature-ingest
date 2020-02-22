@@ -174,7 +174,7 @@ def main():
                 'Event Category': "",
                 'Event Organizers': event_organizers,
                 'Event Currency Symbol': '$',
-                'All Day Event': "FALSE"
+                'All Day Event': False
             }
             events_out.append(event)
 
