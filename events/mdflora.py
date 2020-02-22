@@ -153,17 +153,19 @@ def main():
             event_venue = get_event_venue(event_site_soup, event_name)
             timing = get_event_timing(event_site_soup)
             dates = get_event_dates(event_site_soup)
-            dates = datetime.strptime(dates, '%m/%d/%Y')
-            dates = dates.strftime('%Y-%m-%d')
+            date_start = datetime.strptime(dates[0], '%m/%d/%Y')
+            date_start = date_start.strftime('%Y-%m-%d')
+            date_end = datetime.strptime(dates[1], '%m/%d/%Y')
+            date_end = date_end.strftime('%Y-%m-%d')
             event_description = get_event_description(
                 event_site_soup, event_name)
             event_organizers = 'Maryland Native Plant Society'
             event = {
                 'Event Name': event_name,
                 'Event Website': event_website,
-                'Event Start Date': dates[0],
+                'Event Start Date': date_start,
                 'Event Start Time': timing[0],
-                'Event End Date': dates[1],
+                'Event End Date': date_end,
                 'Event End Time': timing[1],
                 'Event Venue Name': event_venue,
                 'Timezone': 'America/New_York',
