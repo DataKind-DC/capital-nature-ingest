@@ -27,7 +27,7 @@ def get_url(url, org_id=None):
         return
     if not r.ok:
         logger.critical(
-            f"Non-200 status code of {r.status} makign GET request to {url}")
+            f"Non-200 status of {r.status_code} makign GET request to {url}")
     soup = BeautifulSoup(r.content, 'html.parser')    
     return soup
 
@@ -58,19 +58,7 @@ def handle_date(event_soup):
     date = date.replace(" ", "")
     date_formatted = datetime.strptime(date, "%a%b%d,%Y")
     date = date_formatted.strftime('%Y-%m-%d')
-    # print(date)
     return date
-    # time_interval = time_all[1].contents[0].split("–")
-    # time_start = datetime.strptime(
-    # time_interval[0].replace(" ",""), 
-    # "%I:%M%p"
-    # )
-    # time_end = datetime.strptime(
-    # time_interval[1].replace(" ","")[:-3],
-    # "%I:%M%p"
-    # )
-    # return date_formatted,time_start,time_end
-    # return date
 
 
 def handle_start_time(event_soup):
@@ -98,16 +86,6 @@ def handle_location(event_soup):
 
 
 def handle_cost(event_soup):
-    # cost = event_soup.find(
-    # "div", 
-    # {"data-automation": "micro-ticket-box-price"}
-    # )
-    # cost_string = cost.find(
-    # "div", 
-    # {"class": "js-display-price"}
-    # ).contents[0].strip()
-    # cost_string = "0.00" if cost_string.lower() == 'free' else cost_string
-    # return cost_string
     return "0.00"
 
 
@@ -129,43 +107,43 @@ def parse_event_divs(event_divs):
             "a", 
             {"class": "eventlist-button"}
         ).get("href")
-        # print(event_website)
-        # event_img = event_div.find(
-        # "img", 
-        # {"class": "eventlist-thumbnail loaded"}
-        # ).get("data-src")
         event_img = event_div.find("img").get("data-src")
-        # print(event_website)
-        # print(event_img)
         soup_level_two = get_url(ORG_URL + event_website)
-        event_registration_website = soup_level_two.find(
-            "a",
+        soup_loop = soup_level_two.find("article", {"class": "eventitem"})       
+        event_registration_websites = soup_loop.find_all(
+            "a", 
             {"class": "sqs-block-button-element"}
-        ).get("href")
-        # print(event_registration_website)
-        soup_level_three = get_url(event_registration_website)
-        # TAKE A LOOK AT THIS PRINT GENE
-        # print("Soup Level Three")
+        )
+        # TODO: Some events DO NOT have a registration link and this
+        # link is used to fill out the event information below. It
+        # might be the case that the event is valid BUT does not have
+        # a registration link. For an example please see :
+        # www.lfwa.org/events/free-trees-from-strangling-vines-7kfa7-ws676-7zf9e-nklh7-bst6e
+        for a_tag in event_registration_websites:
+            soup_level_three = get_url(a_tag.get("href"))
+            event_data = {
+                'Event Name': handle_event_name(event_div),
+                # TODO: Some HTML tags are falling through the cracks
+                # in our description string. Eliminate HTML tags
+                # without losing the fidelity of the description message.
+                'Event Description': handle_description(soup_level_three),
+                'Event Start Date': handle_date(soup_level_three),
+                'Event Start Time': handle_start_time(soup_level_three),
+                'Event End Date': handle_date(soup_level_three),
+                'Event End Time': handle_end_time(soup_level_three),
+                'All Day Event': "False",
+                'Timezone': "America/New_York",
+                'Event Venue Name': handle_location(soup_level_three),
+                'Event Organizers': 'Little Falls Watershed Alliance',
+                'Event Cost': "0.00",
+                'Event Currency Symbol': "$",
+                # TODO: Get event category from divs with class "eventlist-cats"
+                'Event Category': "",
+                'Event Website': ORG_URL + event_website,
+                'Event Featured Image': event_img
+            }
+            events.append(event_data)
 
-        event_data = {
-            'Event Name': handle_event_name(event_div),
-            'Event Description': handle_description(soup_level_three),
-            #  TODO: replace newlines with double for WP formatting
-            'Event Start Date': handle_date(soup_level_three),
-            'Event Start Time': handle_start_time(soup_level_three),
-            'Event End Date': handle_date(soup_level_three),
-            'Event End Time': handle_end_time(soup_level_three),
-            'All Day Event': "False",
-            'Timezone': "America/New_York",
-            'Event Venue Name': handle_location(soup_level_three),
-            'Event Organizers': 'Little Falls Watershed Alliance',
-            'Event Cost': "0.00",
-            'Event Currency Symbol': "$",
-            'Event Category': "",
-            'Event Website': ORG_URL + event_website,
-            'Event Featured Image': event_img
-        }
-        events.append(event_data)
     return events
 
 
