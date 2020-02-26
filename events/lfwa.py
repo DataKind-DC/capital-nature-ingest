@@ -137,7 +137,8 @@ def parse_event_divs(event_divs):
                 'Event Organizers': 'Little Falls Watershed Alliance',
                 'Event Cost': "0.00",
                 'Event Currency Symbol': "$",
-                # TODO: Get event category from divs with class "eventlist-cats"
+                # TODO: Get event category from divs with class 
+                # "eventlist-cats"
                 'Event Category': "",
                 'Event Website': ORG_URL + event_website,
                 'Event Featured Image': event_img
