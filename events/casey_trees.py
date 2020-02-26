@@ -112,7 +112,7 @@ def handle_ans_page(soup):
         events_data['Event Name'] = events_name_data.get_text()
         events_data['Event Website'] = con.get('url', '')
         _site = events_data['Event Website'], ''
-        events_data['Event Category'] = category_classes.get(_site)
+        events_data['Event Category'] = category_classes.get(_site, '')
         start = datetime.strptime(con['startDate'][:-6], "%Y-%m-%dT%H:%M:%S")
         end = datetime.strptime(con['endDate'][:-6], "%Y-%m-%dT%H:%M:%S")
         events_data['Event Start Date'] = start.strftime('%Y-%m-%d')
