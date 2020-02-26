@@ -70,7 +70,7 @@ def get_events():
     event_sources = [
         ans, arlington, aws, casey_trees, city_blossoms, dc_audubon,
         eleventh_street, fairfax, fona, friends_of_kenilworth_gardens,
-        loudoun_wildlife_conservancy, lfwa, montgomery, nova_parks,
+        loudoun_wildlife_conservancy, lfwa, mdflora, montgomery, nova_parks,
         nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md,
         sierra_club, tnc, us_botanic_garden, vnps, nva_audubon_society
     ]
