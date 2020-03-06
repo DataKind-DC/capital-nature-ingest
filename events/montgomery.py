@@ -181,6 +181,24 @@ def schematize_event_date(split_date, event_website):
     return schematized_event_date
 
 
+def parse_odd_time(time_split, hour, is_pm, event_time):
+    if len(time_split) > 1:
+        minute = time_split[1]
+        if is_pm:
+            event_time = str(int(hour) + 12)
+        event_time = f"{hour}:{minute}"
+        dt_obj = datetime.strptime(event_time, "%H:%M")
+    else:
+        if is_pm:
+            event_time = str(int(hour) + 12)
+        try:
+            dt_obj = datetime.strptime(event_time, "%H")
+        except ValueError:
+            dt_obj = datetime.strptime(event_time, "%H%M")
+
+    return dt_obj
+
+
 def schematize_event_time(event_time, event_website):
     '''
     Converts an event time like '9:00am' to 24hr time like '09:00:00'
@@ -189,9 +207,15 @@ def schematize_event_time(event_time, event_website):
         dt_obj = datetime.strptime(event_time, "%I:%M%p")
     except ValueError:
         try:
-            dt_obj = datetime.strptime(event_time, "%I%p")
+            if event_time.startswith("0"):
+                event_time = event_time[1:] 
+            is_pm = "p" in event_time.lower()
+            event_time = "".join(s for s in event_time if s.isdigit())
+            time_split = event_time.split(":")
+            hour = time_split[0]
+            dt_obj = parse_odd_time(time_split, hour, is_pm, event_time)
         except ValueError as e:
-            msg = f"Exception parsing {event_time} from {event_website}: {e}"
+            msg = f"Exc parsing {event_time} from {event_website}: {e}"
             logger.error(msg, exc_info=True)
             return
     except Exception as e:
