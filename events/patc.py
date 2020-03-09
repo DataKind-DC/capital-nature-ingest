@@ -54,7 +54,6 @@ def get_event_cost(event_cost_description):
     lowered = event_cost_description.lower()
     currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
     event_costs = re.findall(currency_re, event_cost_description)
-    print(event_costs)
     n = len(event_costs)
     if n > 0:
         for a in event_costs:
