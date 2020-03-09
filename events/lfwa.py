@@ -148,7 +148,10 @@ def parse_event_divs(event_divs):
             events.append(event_data)
         if not event_registration_websites:
             events.append(event_data)
-            ics_url = ORG_URL + soup_level_two.find("a", {"class" : "eventitem-meta-export-ical"}).get("href")
+            ext = soup_level_two.find(
+                "a", 
+                {"class": "eventitem-meta-export-ical"}).get("href")
+            ics_url = ORG_URL + ext
             c = Calendar(requests.get(ics_url).text)
             e = list(c.timeline)[0]
             date_begin = datetime.fromisoformat(str(e.begin))
