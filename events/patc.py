@@ -98,7 +98,6 @@ def find_event_data(link):
                 "ascii", "ignore").decode().strip()
         else:
             desc = "See event website"
-        print(get_event_cost(desc))        
         results = {
             "Event Name": res.findAll("th")[-1].getText().strip(),
             # "Description": res.findAll("p")[-1].getText().strip(),
