@@ -11,6 +11,8 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
 import json
+from ics import Calendar
+import pytz
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +146,39 @@ def parse_event_divs(event_divs):
                 'Event Featured Image': event_img
             }
             events.append(event_data)
-
+        if not event_registration_websites:
+            events.append(event_data)
+            ics_url = ORG_URL + soup_level_two.find("a", {"class" : "eventitem-meta-export-ical"}).get("href")
+            c = Calendar(requests.get(ics_url).text)
+            e = list(c.timeline)[0]
+            date_begin = datetime.fromisoformat(str(e.begin))
+            date_end = datetime.fromisoformat(str(e.end))
+            est = pytz.timezone('US/Eastern')
+            date_begin = date_begin.astimezone(est)
+            date_end = date_end.astimezone(est)
+            event_data = {
+                'Event Name': str(e.name),
+                # TODO: Some HTML tags are falling through the cracks
+                # in our description string. Eliminate HTML tags
+                # without losing the fidelity of the description message.
+                'Event Description': str(e.name),
+                'Event Start Date': str(datetime.date(date_begin)),
+                'Event Start Time': str(datetime.time(date_begin)),
+                'Event End Date': str(datetime.date(date_end)),
+                'Event End Time': str(datetime.time(date_end)),
+                'All Day Event': "False",
+                'Timezone': "America/New_York",
+                'Event Venue Name': "See event website",
+                'Event Organizers': 'Little Falls Watershed Alliance',
+                'Event Cost': "0.00",
+                'Event Currency Symbol': "$",
+                # TODO: Get event category from divs with class 
+                # "eventlist-cats"
+                'Event Category': "",
+                'Event Website': ORG_URL + event_website,
+                'Event Featured Image': event_img
+            }
+            events.append(event_data)
     return events
 
 
