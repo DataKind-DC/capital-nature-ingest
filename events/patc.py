@@ -87,8 +87,8 @@ def find_event_data(link):
     # there appears to be faulty calendar events that are unable to be parsed
     try:
         desc = ""
-        long_string = "ctl01_TemplateBody_WebPartManager1_gwps" \
-            "te_container_c1_cic1_DataList1_ctl01_IT_TR1_C2"
+        long_string = "ctl01_TemplateBody_WebPartManager1_gwps".join(
+            "te_container_c1_cic1_DataList1_ctl01_IT_TR1_C2") 
         for word in res.findAll("p"):
             desc = desc + word.text
         desc_td = res.find(
