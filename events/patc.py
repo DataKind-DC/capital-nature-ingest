@@ -6,7 +6,8 @@ from bs4 import BeautifulSoup
 from dateutil.parser import parse
 import more_itertools as mi
 import pandas as pd
-import json 
+import json
+import re
 
 URL_BASE = "https://www.patc.net/PATC/Calendar/PATC/"
 CALENDAR_BASE_URL = ("Custom/Calendar.aspx?hkey" 
@@ -25,6 +26,7 @@ RENAME_MAP = {
     "time_zone": "Timezone",
     "venue": "Event Venue Name",
     "www": "Event Website",
+    "cost": "Event Cost"
 }
 
 
@@ -43,8 +45,30 @@ def make_request_content(url_subpath):
     parse_link = posixpath.join(URL_BASE, url_subpath)
     res = requests.get(parse_link)
     res.raise_for_status()
-    soup = BeautifulSoup(res.content, features="lxml")
+    soup = BeautifulSoup(res.content, features="html.parser")
     return soup
+
+
+def get_event_cost(event_cost_description):
+    mulla = []
+    lowered = event_cost_description.lower()
+    currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
+    event_costs = re.findall(currency_re, event_cost_description)
+    print(event_costs)
+    n = len(event_costs)
+    if n > 0:
+        for a in event_costs:
+            if "donation" not in lowered and "voluntary" not in lowered:
+                event_cost = a.split(".")[0].replace("$", '')
+                event_cost = ''.join(s for s in a if s.isdigit())
+                mulla.append(event_cost)
+            else:
+                event_cost = ''
+    if len(mulla) > 0:
+        event_cost = max(mulla)
+    else: 
+        event_cost = ''
+    return event_cost
 
 
 def find_event_data(link):
@@ -63,9 +87,25 @@ def find_event_data(link):
 
     # there appears to be faulty calendar events that are unable to be parsed
     try:
+        desc = ""
+        long_string = "ctl01_TemplateBody_WebPartManager1_gwps" \
+            "te_container_c1_cic1_DataList1_ctl01_IT_TR1_C2"
+        for word in res.findAll("p"):
+            desc = desc + word.text
+        desc_td = res.find(
+            "td", {"id": long_string})
+        if desc_td is not None:
+            desc = desc_td.getText().encode(
+                "ascii", "ignore").decode().strip()
+        else:
+            desc = "See event website"
+        print(get_event_cost(desc))        
         results = {
             "Event Name": res.findAll("th")[-1].getText().strip(),
-            "Description": res.findAll("p")[-1].getText().strip(),
+            # "Description": res.findAll("p")[-1].getText().strip(),
+            "Description": desc,
+            "Event Cost": get_event_cost(desc),
+
         }
     except IndexError:
         return
@@ -135,10 +175,10 @@ def main():
     data = pd.DataFrame.from_records(records)
     data = (
         data.assign(
-            all_day_event=False,
+            all_day_event=True,
             time_zone="America/New_York",
             end_time="23:59:59",
-            event_cost="0",
+            # event_cost="Please refer to website",
             currency="$",
             venue="Please refer to website",
             event_organizers="Potomac Appalachian Trail Club",
