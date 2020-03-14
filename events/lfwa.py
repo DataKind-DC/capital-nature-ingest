@@ -7,7 +7,7 @@ Created on Mon Jun 17 20:49:38 2019
 """
 
 from datetime import datetime
-import logging
+import os
 from urllib3.util.retry import Retry
 
 from bs4 import BeautifulSoup
