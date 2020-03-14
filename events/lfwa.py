@@ -6,28 +6,57 @@ Created on Mon Jun 17 20:49:38 2019
 @author: Francisco Vannini
 """
 
-import logging
-from bs4 import BeautifulSoup
-import requests
 from datetime import datetime
-import json
+import logging
+from urllib3.util.retry import Retry
+
+from bs4 import BeautifulSoup
+from ics import Calendar
+import pytz
+import requests
+from requests.adapters import HTTPAdapter
+
 
 logger = logging.getLogger(__name__)
 
 ORG_URL = 'https://www.lfwa.org'
 
 
+def requests_retry_session(retries=3, 
+                           backoff_factor=0.5, 
+                           status_forcelist=(429, 500, 502, 503, 504), 
+                           session=None):
+    '''
+    Use to create an http(s) requests session that will retry a request.
+    '''
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries, 
+        read=retries, 
+        connect=retries, 
+        backoff_factor=backoff_factor, 
+        status_forcelist=status_forcelist
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    
+    return session
+
+
 def get_url(url, org_id=None):
     url = f'{url}{org_id}' if org_id else url    
     try:
-        r = requests.get(url)
+        with requests_retry_session() as session:
+            r = session.get(url)
     except Exception as e:
         logger.critical(
             f"Exception making GET request to {url}: {e}", exc_info=True)
         return
     if not r.ok:
         logger.critical(
-            f"Non-200 status code of {r.status} makign GET request to {url}")
+            f"Non-200 status of {r.status_code} makign GET request to {url}")
+        return
     soup = BeautifulSoup(r.content, 'html.parser')    
     return soup
 
@@ -58,19 +87,7 @@ def handle_date(event_soup):
     date = date.replace(" ", "")
     date_formatted = datetime.strptime(date, "%a%b%d,%Y")
     date = date_formatted.strftime('%Y-%m-%d')
-    # print(date)
     return date
-    # time_interval = time_all[1].contents[0].split("–")
-    # time_start = datetime.strptime(
-    # time_interval[0].replace(" ",""), 
-    # "%I:%M%p"
-    # )
-    # time_end = datetime.strptime(
-    # time_interval[1].replace(" ","")[:-3],
-    # "%I:%M%p"
-    # )
-    # return date_formatted,time_start,time_end
-    # return date
 
 
 def handle_start_time(event_soup):
@@ -98,28 +115,18 @@ def handle_location(event_soup):
 
 
 def handle_cost(event_soup):
-    # cost = event_soup.find(
-    # "div", 
-    # {"data-automation": "micro-ticket-box-price"}
-    # )
-    # cost_string = cost.find(
-    # "div", 
-    # {"class": "js-display-price"}
-    # ).contents[0].strip()
-    # cost_string = "0.00" if cost_string.lower() == 'free' else cost_string
-    # return cost_string
     return "0.00"
 
 
 def handle_description(event_soup):
-    description = str(event_soup.find("span", {"id": "Test2:j_id5:j_id47"}))
-    return(description)
+    description = event_soup.find("span", {"id": "Test2:j_id5:j_id47"}).text
+    return description
 
 
 def handle_event_name(event_soup):
     event_name = event_soup.find("h1", {"class": "eventlist-title"})
     event_name_string = event_name.text
-    return(event_name_string)
+    return event_name_string
 
 
 def parse_event_divs(event_divs):
@@ -129,48 +136,91 @@ def parse_event_divs(event_divs):
             "a", 
             {"class": "eventlist-button"}
         ).get("href")
-        # print(event_website)
-        # event_img = event_div.find(
-        # "img", 
-        # {"class": "eventlist-thumbnail loaded"}
-        # ).get("data-src")
         event_img = event_div.find("img").get("data-src")
-        # print(event_website)
-        # print(event_img)
         soup_level_two = get_url(ORG_URL + event_website)
-        event_registration_website = soup_level_two.find(
-            "a",
+        if not soup_level_two:
+            continue
+        soup_loop = soup_level_two.find("article", {"class": "eventitem"})       
+        event_registration_websites = soup_loop.find_all(
+            "a", 
             {"class": "sqs-block-button-element"}
-        ).get("href")
-        # print(event_registration_website)
-        soup_level_three = get_url(event_registration_website)
-        # TAKE A LOOK AT THIS PRINT GENE
-        # print("Soup Level Three")
-
-        event_data = {
-            'Event Name': handle_event_name(event_div),
-            'Event Description': handle_description(soup_level_three),
-            #  TODO: replace newlines with double for WP formatting
-            'Event Start Date': handle_date(soup_level_three),
-            'Event Start Time': handle_start_time(soup_level_three),
-            'Event End Date': handle_date(soup_level_three),
-            'Event End Time': handle_end_time(soup_level_three),
-            'All Day Event': "False",
-            'Timezone': "America/New_York",
-            'Event Venue Name': handle_location(soup_level_three),
-            'Event Organizers': 'Little Falls Watershed Alliance',
-            'Event Cost': "0.00",
-            'Event Currency Symbol': "$",
-            'Event Category': "",
-            'Event Website': ORG_URL + event_website,
-            'Event Featured Image': event_img
-        }
-        events.append(event_data)
+        )
+        # TODO: Some events DO NOT have a registration link and this
+        # link is used to fill out the event information below. It
+        # might be the case that the event is valid BUT does not have
+        # a registration link. For an example please see :
+        # www.lfwa.org/events/free-trees-from-strangling-vines-7kfa7-ws676-7zf9e-nklh7-bst6e
+        for a_tag in event_registration_websites:
+            soup_level_three = get_url(a_tag.get("href"))
+            if not soup_level_three:
+                continue
+            event_data = {
+                'Event Name': handle_event_name(event_div),
+                # TODO: Some HTML tags are falling through the cracks
+                # in our description string. Eliminate HTML tags
+                # without losing the fidelity of the description message.
+                'Event Description': handle_description(soup_level_three),
+                'Event Start Date': handle_date(soup_level_three),
+                'Event Start Time': handle_start_time(soup_level_three),
+                'Event End Date': handle_date(soup_level_three),
+                'Event End Time': handle_end_time(soup_level_three),
+                'All Day Event': "False",
+                'Timezone': "America/New_York",
+                'Event Venue Name': handle_location(soup_level_three),
+                'Event Organizers': 'Little Falls Watershed Alliance',
+                'Event Cost': "0.00",
+                'Event Currency Symbol': "$",
+                # TODO: Get event category from divs with class 
+                # "eventlist-cats"
+                'Event Category': "",
+                'Event Website': ORG_URL + event_website,
+                'Event Featured Image': event_img
+            }
+            events.append(event_data)
+        if not event_registration_websites:
+            events.append(event_data)
+            ext = soup_level_two.find(
+                "a", 
+                {"class": "eventitem-meta-export-ical"}).get("href")
+            ics_url = ORG_URL + ext
+            with requests_retry_session() as session:
+                c = Calendar(session.get(ics_url).text)
+            e = list(c.timeline)[0]
+            date_begin = datetime.fromisoformat(str(e.begin))
+            date_end = datetime.fromisoformat(str(e.end))
+            est = pytz.timezone('US/Eastern')
+            date_begin = date_begin.astimezone(est)
+            date_end = date_end.astimezone(est)
+            event_data = {
+                'Event Name': str(e.name),
+                # TODO: Some HTML tags are falling through the cracks
+                # in our description string. Eliminate HTML tags
+                # without losing the fidelity of the description message.
+                'Event Description': str(e.name),
+                'Event Start Date': str(datetime.date(date_begin)),
+                'Event Start Time': str(datetime.time(date_begin)),
+                'Event End Date': str(datetime.date(date_end)),
+                'Event End Time': str(datetime.time(date_end)),
+                'All Day Event': "False",
+                'Timezone': "America/New_York",
+                'Event Venue Name': "See event website",
+                'Event Organizers': 'Little Falls Watershed Alliance',
+                'Event Cost': "0.00",
+                'Event Currency Symbol': "$",
+                # TODO: Get event category from divs with class 
+                # "eventlist-cats"
+                'Event Category': "",
+                'Event Website': ORG_URL + event_website,
+                'Event Featured Image': event_img
+            }
+            events.append(event_data)
     return events
 
 
 def main():
     soup = get_url(ORG_URL + '/events/')
+    if not soup:
+        return []
     event_divs = get_live_events(soup)
     events = parse_event_divs(event_divs)
     return events
@@ -178,4 +228,4 @@ def main():
 
 if __name__ == '__main__':
     events = main()
-    print(json.dumps(events, indent=4, sort_keys=True))
+    print(len(events))
