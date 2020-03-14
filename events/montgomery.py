@@ -171,6 +171,9 @@ def schematize_event_date(split_date, event_website):
         # See GH #179
         event_date = event_date.replace(" -", "")
         try:
+            if event_date.split(",")[0].lower().endswith('s'):
+                # occurs when event recurs, e.g. on Wednesday"s"
+                return ''
             dt_obj = datetime.strptime(event_date, "%B %d, %Y")
             schematized_event_date = datetime.strftime(dt_obj, "%Y-%m-%d")
         except ValueError as e:
