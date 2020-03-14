@@ -35,7 +35,12 @@ def handle_ans_page(soup):
                 continue
         desc = e.find('div', {'class': 'timely-excerpt'}).text.strip()
         desc = desc.replace("\n", '').replace("\t", "")
-        venue = e.find('span', {'class': 'timely-venue'}).text.strip()[2:]
+        try:
+            venue = e.find('span', {'class': 'timely-venue'}).text.strip()[2:]
+        except AttributeError as e:
+            # No venue listed
+            logger.warning(f"{e} scraping {event_website}", exc_info=True)
+            continue
         e_name = e.find('div', {'class': 'timely-title'}).find('span').text
         event_data = {
             'Event Name': e_name,
