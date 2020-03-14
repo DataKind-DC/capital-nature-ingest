@@ -16,8 +16,9 @@ import pytz
 import requests
 from requests.adapters import HTTPAdapter
 
+from .utils.log import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(os.path.basename(__file__))
 
 ORG_URL = 'https://www.lfwa.org'
 
