@@ -47,7 +47,8 @@ def requests_retry_session(retries=3,
 def get_url(url, org_id=None):
     url = f'{url}{org_id}' if org_id else url    
     try:
-        r = requests_retry_session().get(url)
+        with requests_retry_session() as session:
+            r = session.get(url)
     except Exception as e:
         logger.critical(
             f"Exception making GET request to {url}: {e}", exc_info=True)
@@ -182,7 +183,8 @@ def parse_event_divs(event_divs):
                 "a", 
                 {"class": "eventitem-meta-export-ical"}).get("href")
             ics_url = ORG_URL + ext
-            c = Calendar(requests_retry_session().get(ics_url).text)
+            with requests_retry_session() as session:
+                c = Calendar(session.get(ics_url).text)
             e = list(c.timeline)[0]
             date_begin = datetime.fromisoformat(str(e.begin))
             date_end = datetime.fromisoformat(str(e.end))
