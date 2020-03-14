@@ -7,7 +7,7 @@ Created on Mon Jun 17 20:49:38 2019
 """
 
 from datetime import datetime
-import logging
+import os
 from urllib3.util.retry import Retry
 
 from bs4 import BeautifulSoup
@@ -16,8 +16,9 @@ import pytz
 import requests
 from requests.adapters import HTTPAdapter
 
+from .utils.log import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(os.path.basename(__file__))
 
 ORG_URL = 'https://www.lfwa.org'
 

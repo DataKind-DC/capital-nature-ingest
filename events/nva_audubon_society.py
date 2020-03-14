@@ -179,7 +179,8 @@ def get_request_result(url):
     :return: the request result
     '''
     try:
-        r = requests_retry_session().get(url)
+        with requests_retry_session() as session:
+            r = session.get(url)
     except Exception as e:
         msg = f"Exception making GET request to {url}: {e}"
         if url == "http://audubonva.org/calendar-view":
