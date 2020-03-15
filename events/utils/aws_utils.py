@@ -109,6 +109,6 @@ def object_key_exists(key, bucket=BUCKET):
         Prefix=key,
     )
     for obj in response.get('Contents', []):
-        if obj['Key'] == key:
+        if key in obj['Key']:
             return True
     return False
