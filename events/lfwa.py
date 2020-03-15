@@ -11,6 +11,7 @@ import os
 from urllib3.util.retry import Retry
 
 from bs4 import BeautifulSoup
+from dateutil.parser import isoparse
 from ics import Calendar
 import pytz
 import requests
@@ -187,8 +188,9 @@ def parse_event_divs(event_divs):
             with requests_retry_session() as session:
                 c = Calendar(session.get(ics_url).text)
             e = list(c.timeline)[0]
-            date_begin = datetime.fromisoformat(str(e.begin))
-            date_end = datetime.fromisoformat(str(e.end))
+            # replace fromisoformat, which is not available in python 3.6
+            date_begin = isoparse(str(e.begin))
+            date_end = isoparse(str(e.end))
             est = pytz.timezone('US/Eastern')
             date_begin = date_begin.astimezone(est)
             date_end = date_end.astimezone(est)
