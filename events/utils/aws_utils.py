@@ -103,11 +103,8 @@ def put_object(data, key, bucket=BUCKET):
 
 
 def object_key_exists(key, bucket=BUCKET):
-    """returns True if an object with the key exists, else False"""
-    response = S3.list_objects_v2(
-        Bucket=bucket,
-        Prefix=key,
-    )
+    """returns True if an object with the partial key exists, else False"""
+    response = S3.list_objects_v2(Bucket=bucket, Prefix=key)
     for obj in response.get('Contents', []):
         if key in obj['Key']:
             return True
