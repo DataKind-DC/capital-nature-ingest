@@ -413,7 +413,7 @@ class ScrapeReport():
                 # Don't put the report if it already exists.
                 # This makes the lambda idempotent for the lambda listening
                 # for this PUT:object S3 event.
-                return
+                pass
             else:
                 put_object(data, self.report_path)
         else:
