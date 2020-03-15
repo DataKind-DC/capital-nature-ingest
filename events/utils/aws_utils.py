@@ -100,3 +100,15 @@ def put_object(data, key, bucket=BUCKET):
         S3.put_object(**params)
     except Exception as e:
         logger.error(e, exc_info=True)
+
+
+def object_key_exists(key, bucket=BUCKET):
+    """returns True if an object with the key exists, else False"""
+    response = S3.list_objects_v2(
+        Bucket=bucket,
+        Prefix=key,
+    )
+    for obj in response.get('Contents', []):
+        if obj['Key'] == key:
+            return True
+    return False

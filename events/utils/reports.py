@@ -8,7 +8,8 @@ import pandas as pd
 from pandas.errors import EmptyDataError
 
 from .event_source_map import event_source_map
-from .aws_utils import get_matching_s3_keys, read_and_delete_object, put_object
+from .aws_utils import get_matching_s3_keys, object_key_exists, \
+    read_and_delete_object, put_object
 
 
 BUCKET = os.getenv('BUCKET_NAME')
@@ -408,7 +409,13 @@ class ScrapeReport():
             csv_buffer = StringIO()
             df.to_csv(csv_buffer, index=False)
             data = csv_buffer.getvalue()
-            put_object(data, self.report_path)
+            if object_key_exists(self.report_path):
+                # Don't put the report if it already exists.
+                # This makes the lambda idempotent for the lambda listening
+                # for this PUT:object S3 event.
+                return
+            else:
+                put_object(data, self.report_path)
         else:
             df.to_csv(self.report_path, index=False)
 
