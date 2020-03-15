@@ -29,7 +29,7 @@ class CapitalNatureStack(core.Stack):
             )
         )
 
-        # create lambda to gather domains
+        # create lambda to scrape events
         lambda_scrapers = lambda_.Function(
             self, "scrapers",
             code=lambda_.Code.from_asset('lambda-releases/scrapers.zip'),
