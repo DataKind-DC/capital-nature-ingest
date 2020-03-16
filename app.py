@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_events_targets as targets,
     aws_lambda as lambda_,
     aws_s3 as s3,
+    aws_s3_notifications,
     core
 )
 
@@ -39,12 +40,12 @@ class CapitalNatureStack(core.Stack):
             memory_size=1000
         )
         
-        # set env vars
+        # set env vars in lambda scraper
         lambda_scrapers.add_environment('NPS_KEY', NPS_KEY)
         lambda_scrapers.add_environment('EVENTBRITE_TOKEN', EVENTBRITE_TOKEN)
         lambda_scrapers.add_environment('BUCKET_NAME', bucket.bucket_name)
         
-        # trigger every 1st and 15th of the month at 18:00 UTC (1pm EST)
+        # trigger scraper for 1st and 15th of the month at 18:00 UTC (1pm EST)
         rule = events.Rule(
             self, "Rule",
             schedule=events.Schedule.cron(
@@ -58,7 +59,25 @@ class CapitalNatureStack(core.Stack):
 
         # grant permissions to lambda to use bucket
         bucket.grant_read_write(lambda_scrapers)
-        
+
+        # create lambda to send emails
+        lambda_email = lambda_.Function(
+            self, "email",
+            code=lambda_.Code.from_asset('email'),
+            handler="handler.main",
+            timeout=core.Duration.seconds(60),
+            runtime=lambda_.Runtime.PYTHON_3_7,
+            memory_size=128
+        )
+        lambda_email.add_environment('BUCKET_NAME', bucket.bucket_name)
+        bucket.grant_read(lambda_email)
+        notification = aws_s3_notifications.LambdaDestination(lambda_email)
+        bucket.add_event_notification(
+            s3.EventType.OBJECT_CREATED,
+            notification
+        )
+        #TODO: add SES to this app
+    
 
 app = core.App()
 CapitalNatureStack(app, "CapitalNatureStack")
