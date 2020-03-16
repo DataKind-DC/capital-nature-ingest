@@ -1,6 +1,7 @@
 import logging
 import posixpath
 import requests
+import os
 
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
@@ -8,6 +9,11 @@ import more_itertools as mi
 import pandas as pd
 import json
 import re
+
+from .utils.log import get_logger
+
+logger = get_logger(os.path.basename(__file__))
+
 
 URL_BASE = "https://www.patc.net/PATC/Calendar/PATC/"
 CALENDAR_BASE_URL = ("Custom/Calendar.aspx?hkey" 
@@ -87,10 +93,12 @@ def find_event_data(link):
     # there appears to be faulty calendar events that are unable to be parsed
     try:
         desc = ""
-        long_string = "ctl01_TemplateBody_WebPartManager1_gwps".join(
-            "te_container_c1_cic1_DataList1_ctl01_IT_TR1_C2") 
+        long_string = "ctl01_TemplateBody_WebPartManager1_gwps" \
+            "te_container_c1_cic1_DataList1_ctl01_IT_TR1_C2"
+        print(long_string)
         for word in res.findAll("p"):
             desc = desc + word.text
+        # print(desc)
         desc_td = res.find(
             "td", {"id": long_string})
         if desc_td is not None:
