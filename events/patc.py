@@ -48,10 +48,17 @@ def make_request_content(url_subpath):
     :rtype:
         bs4.BeautifulSoup
     """
-    parse_link = posixpath.join(URL_BASE, url_subpath)
-    res = requests.get(parse_link)
-    res.raise_for_status()
-    soup = BeautifulSoup(res.content, features="html.parser")
+
+    try:
+        parse_link = posixpath.join(URL_BASE, url_subpath)
+        r = requests.get(parse_link)
+    except Exception as e:
+        logger.critical(f'Exception making GET to {parse_link}: {e}', 
+                        exc_info=True)
+        return
+    content = r.content
+    soup = BeautifulSoup(content, 'html.parser')
+
     return soup
 
 
@@ -73,7 +80,7 @@ def get_event_cost(event_cost_description):
         event_cost = max(mulla)
     else: 
         event_cost = ''
-    return event_cost
+    return event_cost  
 
 
 def find_event_data(link):
@@ -111,7 +118,6 @@ def find_event_data(link):
             # "Description": res.findAll("p")[-1].getText().strip(),
             "Description": desc,
             "Event Cost": get_event_cost(desc),
-
         }
     except IndexError:
         return
@@ -183,10 +189,10 @@ def main():
         data.assign(
             all_day_event=True,
             time_zone="America/New_York",
-            end_time="23:59:59",
+            end_time="",
             # event_cost="Please refer to website",
             currency="$",
-            venue="Please refer to website",
+            venue="Please see event name or event description",
             event_organizers="Potomac Appalachian Trail Club",
         )
         .pipe(format_df_time_columns)
