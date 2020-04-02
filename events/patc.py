@@ -115,7 +115,7 @@ def find_event_data(link):
             desc = "See event website"
         results = {
             "Event Name": res.findAll("th")[-1].getText().strip(),
-            # "Description": res.findAll("p")[-1].getText().strip(),
+            "Event Venue Name": res.findAll("th")[-1].getText().strip(),
             "Description": desc,
             "Event Cost": get_event_cost(desc),
         }
@@ -192,7 +192,7 @@ def main():
             end_time="",
             # event_cost="Please refer to website",
             currency="$",
-            venue="Please see event name or event description",
+            # venue="Please see event name or event description",
             event_organizers="Potomac Appalachian Trail Club",
         )
         .pipe(format_df_time_columns)
