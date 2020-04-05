@@ -11,7 +11,7 @@ from events import ans, arlington, aws, casey_trees, city_blossoms, \
     friends_of_kenilworth_gardens, loudoun_wildlife_conservancy, lfwa, \
     montgomery, nova_parks, nps, potomac_conservancy, rcc, riverkeeper, \
     sierra_club_md, sierra_club, tnc, us_botanic_garden, vnps, \
-    nva_audubon_society, mdflora
+    nva_audubon_society, mdflora, us_arboretum
 from events.utils.log import get_logger
 from tests.utils import schema_test
 from events.utils import formatters, reports, aws_utils
@@ -72,7 +72,7 @@ def get_events():
         eleventh_street, fairfax, fona, friends_of_kenilworth_gardens,
         loudoun_wildlife_conservancy, lfwa, mdflora, montgomery, nova_parks,
         nps, potomac_conservancy, rcc, riverkeeper, sierra_club_md,
-        sierra_club, tnc, us_botanic_garden, vnps, nva_audubon_society
+        sierra_club, tnc, us_botanic_garden, vnps, nva_audubon_society, us_arboretum
     ]
     event_source_mains = [e.main for e in event_sources]
 

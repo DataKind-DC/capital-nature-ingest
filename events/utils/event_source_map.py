@@ -22,5 +22,6 @@ event_source_map = {
     'sierra_club': "Sierra Club DC",
     'tnc': "The Nature Conservancy (Virginia)",
     'us_botanic_garden': "United States Botanic Garden",
-    'vnps': "Virginia Native Plant Society"
+    'vnps': "Virginia Native Plant Society",
+    'us_arboretum': "US National Arboretum"
 }
