@@ -228,6 +228,7 @@ def get_event(article):
                           'Event Start Date': dates[idx],
                           'Event End Date': dates[idx],
                           'All Day Event': False,
+                          'Event Venue Name': 'US National Arboretum',
                           'Timezone': 'America/New_York',
                           'Event Organizers': 'US National Arboretum'}
             event = get_more_info(event_website, event_data)
@@ -241,6 +242,7 @@ def get_event(article):
                       'Event Start Date': dates,
                       'Event End Date': dates,
                       'All Day Event': False,
+                      'Event Venue Name': 'US National Arboretum',
                       'Timezone': 'America/New_York',
                       'Event Organizers': 'US National Arboretum'}
 
