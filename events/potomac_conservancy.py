@@ -87,7 +87,13 @@ def update_event_data(event_website, event_data):
         logger.error(f"Unable to scrape event_end_time: {e}", exc_info=True)
         return
     span_class = "eventitem-meta-address-line"
-    event_venue = soup.find('span', {'class': span_class}).get_text()
+    try:
+        event_venue = soup.find('span', {'class': span_class}).get_text()
+    except AttributeError:
+        # Catch cases where there is not venue, but log in case
+        # this error exists for all events.
+        logger.warning(f"Cannot find venue for {event_website}", exc_info=True)
+        event_venue = ''
     try:
         li_class = "eventitem-meta-item eventitem-meta-tags event-meta-item"
         cat = soup.find('li', {'class': li_class}).text.replace("Tagged", "")
