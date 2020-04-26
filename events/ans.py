@@ -94,14 +94,20 @@ def schematize_event(event_data, event_websites):
             # might be a place with different venues at different times
             # although the times are updated by api, venues need to be scraped
             if not event_venue:
-                event_venue = missing_locations[n_missing_locations]
-                n_missing_locations += 1
+                try:
+                    event_venue = missing_locations[n_missing_locations]
+                except IndexError:
+                    msg = f"No venue for {event_website}"
+                    logger.warning(msg, exc_info=True)
+                finally:
+                    n_missing_locations += 1
             else:
                 site = event_website
                 msg = f"Unable to extract required data for ANS event: {site}"
                 logger.error(msg, exc_info=True)
                 continue
-
+        if not event_venue:
+            continue
         event = {'Event Name': event_name,
                  'Event Website': event_website,
                  'Event Start Date': start_date,
