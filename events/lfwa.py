@@ -180,7 +180,6 @@ def parse_event_divs(event_divs):
             }
             events.append(event_data)
         if not event_registration_websites:
-            events.append(event_data)
             ext = soup_level_two.find(
                 "a", 
                 {"class": "eventitem-meta-export-ical"}).get("href")
