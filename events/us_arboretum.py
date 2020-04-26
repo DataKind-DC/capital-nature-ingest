@@ -11,10 +11,13 @@ from requests.packages.urllib3.util.retry import Retry
 from dateutil import parser
 import urllib3
 import sys
+import os
+from .utils.log import get_logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 sys.setrecursionlimit(30000)
-logger = logging.getLogger(__name__)
+
+logger = get_logger(os.path.basename(__file__))
 
 
 def retry_session(max_retries=3, backoff_factor=0.5):
@@ -41,104 +44,185 @@ def get_request(url):
 
 
 def get_date(dates_text):
-    dates_text = [i for i in dates_text if i != ' ']
-    new_list = []
-    for i in dates_text:
-        i = i.replace('th', '').replace('rd', '').replace('st', '')
-        i = i.lower()
-        i = i.replace('sunday', '').replace('monday', '').replace('tuesday', '').replace(
-            'wednesday', '').replace('thursday', '').replace('friday', '')
-        i = i.strip()
-        new_list.append(i)
-    dates_text = new_list
-
-    dates = []
-    for i in dates_text:
-        date = datetime.strptime(i, '%B %d %Y').strftime('%Y-%m-%d')
-        dates.append(date)
-
-    if len(dates) > 1:
-        start_dt = dates[0]
-        end_dt = dates[1]
-        full_dates = pd.date_range(start_dt, end_dt).tolist()
-        date_list = []
-        for date in full_dates:
-            date = date.strftime('%Y-%m-%d')
-            date_list.append(date)
-        return date_list
+    dates = ''
+    if dates_text is not None:
+        sw = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+        dates_text = [i for i in dates_text if i != ' ']
+        dates_text = [i for i in dates_text if i.lower() not in sw]
+        new_list = []
+        for i in dates_text:
+            i = i.replace('th', '').replace('rd', '').replace('st', '')
+            i = i.lower()
+            i = i.strip()
+            new_list.append(i)
+        dates_text = new_list
+        dates = []
+        for i in dates_text:
+            date = datetime.strptime(i, '%B %d %Y').strftime('%Y-%m-%d')
+            dates.append(date)
+        if len(dates) > 1:
+            start_dt = dates[0]
+            end_dt = dates[1]
+            full_dates = pd.date_range(start_dt, end_dt).tolist()
+            date_list = []
+            for date in full_dates:
+                date = date.strftime('%Y-%m-%d')
+                date_list.append(date)
+            return date_list
+        else:
+            return dates
     else:
         return dates
 
 
-def get_events():
-    url = "https://www.usna.usda.gov/visit/calendar-of-events"
-    r = get_request(url)
-    soup = BeautifulSoup(r.content, 'html.parser')
+def get_events(soup):
     articles = soup.find_all('article', {'class': 'cal-brief'})
     events = []
     for article in articles:
         event_item = get_event(article)
         for item in event_item:
-            if item is not None:
-                if item.get('Event Start Time') != '':
-                    events.append(item)
+            if len(item) != 0:
+                if isinstance(item, dict):
+                    if item.get('Event Start Time') != 0:
+                        events.append(item)
     return events
 
 
+def get_event_name(div):
+    try:
+        event_name = div.find('h2').get_text()
+    except AttributeError:
+        event_name = ''
+    return event_name
+
+
+def find_times_text(div):
+    wlst = ['p']
+    try:
+        txt = div.find('p', {'class': 'time'}).get_text()
+        return txt
+    except Exception:
+        try:
+            txt = [t for t in div.find_all(text=True) if t.parent.name in wlst]
+            txt = " ".join(txt)
+            return txt
+        except Exception:
+            txt = ''
+            return txt
+
+
+def get_description(div):
+    try:
+        event_description = div.find('p').get_text()
+    except Exception:
+        event_description = 'No Description Found'
+    return event_description
+
+
+def find_dates_text(div):
+    try:
+        dates_text = div.find('p', {'class': 'full-date'}).get_text()
+        dates_text = dates_text.split('-')
+        return dates_text
+    except Exception:
+        try:
+            dates_with_text = div.find('b', text='Date:').next_sibling
+            dates_text = str(dates_with_text.encode('utf-8'))
+            return dates_text
+        except Exception:
+            try:
+                dates_text = div.find('h3', {'class': 'date'}).get_text()
+                dates_text = dates_text.split('-')
+                return dates_text
+            except Exception:
+                pass
+
+
+def find_event_cost(text_with_time):
+    event_cost = ''
+    try:
+        event_cost_list = re.findall(r'\$(\d+)', text_with_time)
+        if event_cost_list == []:
+            event_cost = 'Free'
+            return event_cost
+        else:
+            event_cost = event_cost_list[0]
+            return event_cost
+    except Exception:
+        return event_cost
+            
+            
+def get_start_time(text_for_time):
+    time = 0
+    if text_for_time != '':
+        try:
+            text_for_time = ''.join(text_for_time)
+            event_times = re.findall(r'\d{1,2}\:\d{2}', text_for_time)
+            start_time = parser.parse(event_times[0])
+            time = datetime.strftime(start_time, '%H:%M:%S')
+            return time
+        except Exception:
+            try:
+                event_times = re.findall(r'\d{1,2}\:\d{2}', text_for_time)
+                start_time = parser.parse(event_times[0])
+                time = datetime.strftime(start_time, '%H:%M:%S')
+                return time
+            except Exception:
+                try:
+                    event_times = text_for_time.split('-')
+                    start_time = parser.parse(event_times[0])
+                    time = datetime.strftime(start_time, '%H:%M:%S')
+                    return time
+                except Exception:
+                    return time
+           
+    else:
+        return time
+    
+
+def get_end_time(text_for_time):
+    time = 0
+    if text_for_time != '':
+        try:
+            text_for_time = ''.join(text_for_time)
+            event_times = re.findall(r'\d{1,2}\:\d{2}', text_for_time)
+            end_time = parser.parse(event_times[-1])
+            time = datetime.strftime(end_time, '%H:%M:%S')
+            return time
+        except Exception:
+            try:
+                event_times = re.findall(r'\d{1,2}\:\d{2}', text_for_time)
+                end_time = parser.parse(event_times[-1])
+                time = datetime.strftime(end_time, '%H:%M:%S')
+                return time
+            except Exception:
+                try:
+                    event_times = text_for_time.split('-')
+                    end_time = parser.parse(event_times[-1])
+                    time = datetime.strftime(end_time, '%H:%M:%S')
+                    return time
+                except Exception:
+                    return time
+    else:
+        return time
+    
+    
 def get_event(article):
     div = article.find('div', {'class': 'row'})
     a = div.find('a')
     event_href = a.get('href')
     event_website = event_href
-    try:
-        event_name = div.find('h2').get_text()
-    except AttributeError:
-        event_name = ''
-    try:
-        dates_text = div.find('p', {'class': 'full-date'}).get_text().split('-')
-        dates = get_date(dates_text)
-    except AttributeError:
-        dates = ''
-    try:
-        text_for_time = div.find('p', {'class': 'time'}).get_text()
-    except AttributeError:
-        text_for_time = ''
-
-    event_start_time = ""
-    event_end_time = ""
-
-    if text_for_time != '':
-        try:
-            event_times = re.findall(r'\s(\d+\:\d+\s?)', text_for_time)
-            if len(event_times) > 1:
-                start_time = parser.parse(event_times[0])
-                event_start_time = datetime.strftime(start_time, '%H:%M:%S')
-                end_time = parser.parse(event_times[-1])
-                event_end_time = datetime.strftime(end_time, '%H:%M:%S')
-            else:
-                start_time = parser.parse(event_times[0])
-                event_start_time = datetime.strftime(start_time, '%H:%M:%S')
-
-        except AttributeError:
-            event_times = text_for_time.split('-')
-            if len(event_times) > 1:
-                start_time = parser.parse(event_times[0])
-                event_start_time = datetime.strftime(start_time, '%H:%M:%S')
-                end_time = parser.parse(event_times[-1])
-                event_end_time = datetime.strftime(end_time, '%H:%M:%S')
-            else:
-                start_time = parser.parse(event_times[0])
-                event_start_time = datetime.strftime(start_time, '%H:%M:%S')
-                event_end_time = event_start_time
-    else:
-        event_start_time = ''
-        event_end_time = ''
-
+    event_name = get_event_name(div)
+    text_with_time = find_times_text(div)
+    dates_text = find_dates_text(div)
+    dates = get_date(dates_text)
+    event_start_time = get_start_time(text_with_time)
+    event_end_time = get_end_time(text_with_time)
     if dates != '':
         multi_events = []
         for idx, val in enumerate(dates):
-            event_data = {'Event Website': event_website,
-                          'Event Name': event_name,
+            event_data = {'Event Name': event_name,
+                          'Event Website': event_website,
                           'Event Start Time': event_start_time,
                           'Event End Time': event_end_time,
                           'Event Start Date': dates[idx],
@@ -146,17 +230,16 @@ def get_event(article):
                           'All Day Event': False,
                           'Timezone': 'America/New_York',
                           'Event Organizers': 'US National Arboretum'}
-
             event = get_more_info(event_website, event_data)
             multi_events.append(event)
         return multi_events
     else:
-        event_data = {'Event Website': event_website,
-                      'Event Name': event_name,
+        event_data = {'Event Name': event_name,
+                      'Event Website': event_website,
                       'Event Start Time': event_start_time,
                       'Event End Time': event_end_time,
-                      'Event Start Date': 0,
-                      'Event End Date': 0,
+                      'Event Start Date': dates,
+                      'Event End Date': dates,
                       'All Day Event': False,
                       'Timezone': 'America/New_York',
                       'Event Organizers': 'US National Arboretum'}
@@ -169,92 +252,61 @@ def get_more_info(event_website, event_data):
     r = get_request(event_website)
     soup = BeautifulSoup(r.content, 'html.parser')
     div = soup.find('div', {'class': 'col-sm-9 col-sm-push-3 content'})
-    whitelist = ['p']
-    text_with_time = [t for t in div.find_all(
-        text=True) if t.parent.name in whitelist]
-    text_for_time = " ".join(text_with_time)
-    if event_data['Event Name'] == '':
-        event_name = div.find("h2").get_text()
-    else:
-        event_name = event_data['Event Name']
-    try:
-        event_description = div.find('p').get_text()
-    except Exception:
-        event_description = 'No Description Found'
-    # Event Cost
-    event_cost_list = re.findall(r'\$(\d+)', text_for_time)
-    if event_cost_list == []:
-        event_cost = 'Free'
-    else:
-        event_cost = event_cost_list[0]
-    # Event Times
-    if event_data['Event Start Time'] == '' and event_data['Event End Time']:
-        event_times = re.findall(r'\s(\d+\:\d+\s?)', text_for_time)
-        if event_times != '' and len(event_times) > 1:
-            start_time = parser.parse(event_times[0])
-            event_start_time = datetime.strftime(start_time, '%H:%M:%S')
-            end_time = parser.parse(event_times[-1])
-            event_end_time = datetime.strftime(end_time, '%H:%M:%S')
-        elif event_times != '' and len(event_times) == 1:
-            start_time = parser.parse(event_times)
-            event_start_time = datetime.strftime(start_time, '%H:%M:%S')
-            event_end_time = ''
-    else:
-        event_start_time = event_data['Event Start Time']
-        event_end_time = event_data['Event End Time']
-    # Event Date
-    if event_data['Event Start Date'] == 0:
+    text_with_time = find_times_text(div)
+    event_description = get_description(div)
+    event_cost = find_event_cost(text_with_time)
+    dates_text = find_dates_text(div)
+    evnt_start_time = event_data['Event Start Time']
+    evnt_end_time = event_data['Event End Time']
+    if event_data['Event Start Date'] == '':
         try:
-            dates_with_text = div.find('b', text='Date:').next_sibling
-            dates_text = str(dates_with_text.encode('utf-8'))
             dates = get_date(dates_text)
-
         except Exception:
-            dates_text = div.find(
-                'h3', {'class': 'date'}).get_text().split('-')
-            dates = get_date(dates_text)
+            dates = []
     else:
         dates = []
-    # update dictionaries
+    if evnt_start_time == 0 and evnt_end_time == 0:
+        try:
+            evnt_start_time = get_start_time(text_with_time)
+            evnt_end_time = get_end_time(text_with_time)
+        except Exception:
+            pass
     if len(dates) > 0:
         for idx, val in enumerate(dates):
             multi_events = []
             multi_event_data = event_data.update({
-                'Event Name': event_name,
                 'Event Description': event_description,
                 'Event Start Date': dates[idx],
                 'Event End Date': dates[idx],
-                'Event Start Time': event_start_time,
-                'Event End Time': event_end_time,
-                'Event Venue Name': '',
+                'Event Start Time': evnt_start_time,
+                'Event End Time': evnt_end_time,
+                'Event Venue Name': 'US National Arboretum',
                 'Event Cost': event_cost,
                 'Event Currency Symbol': "$",
-                'Event Category': " "
-            })
+                'Event Category': " "})
             multi_events.append(multi_event_data)
         return multi_events
-
-    else:
+    elif len(dates) == 0 and event_data['Event Start Date'] != 0:
         event_data.update({
-            'Event Name': event_name,
             'Event Description': event_description,
-            'Event Start Time': event_start_time,
-            'Event End Time': event_end_time,
-            'Event Venue Name': '',
+            'Event Start Time': evnt_start_time,
+            'Event End Time': evnt_end_time,
+            'Event Venue Name': 'US National Arboretum',
             'Event Cost': event_cost,
             'Event Currency Symbol': "$",
-            'Event Category': " "
-        })
+            'Event Category': " "})
         return event_data
+    else:
+        pass
 
 
 def main():
     try:
         events = get_events()
+        return events
     except Exception as error:
         msg = f"Exception getting event IDs: {error}"
         logger.error(msg, exc_info=True)
-    return events
 
 
 if __name__ == '__main__':
