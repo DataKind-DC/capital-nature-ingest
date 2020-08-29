@@ -35,7 +35,13 @@ def get_category_name(page):
 
 def scrape(event_id, event_cost):
     page = get(event_id, resource='events').json()
-    venue = get(page["venue_id"], resource='venues').json()
+    venue = get(page["venue_id"], resource='venues')
+    if not venue:
+        msg = f'Exception getting venue from event_id {event_id}'
+        logger.error(msg, exc_info=True)
+        return
+    else:
+        venue = venue.json()
 
     start = datetime.strptime(page['start']['local'], '%Y-%m-%dT%H:%M:%S')
     end = datetime.strptime(page['end']['local'], '%Y-%m-%dT%H:%M:%S')
@@ -113,7 +119,9 @@ def main():
     for events in event_a_refs:
         event_cost = get_cost_events(events)
         event_id = events.find("a").get("data-eid")
-        events_array.append(scrape(event_id, event_cost))
+        event = scrape(event_id, event_cost)
+        if event:  
+            events_array.append(event)
     
     return events_array
 

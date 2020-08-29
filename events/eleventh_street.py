@@ -121,7 +121,12 @@ def get_event_venue(event_site_soup, event_name):
         venue = event_site_soup.find('dd', class_='tribe-venue').text
     except AttributeError:
         # try to look in dd tag for the dl tag
-        dls = event_site_soup.find_all('dl')
+        try:
+            dls = event_site_soup.find_all('dl')
+        except AttributeError as e:
+            msg = f'Exception getting event venue for {event_name}: {e}'
+            logger.error(msg, exc_info=True)
+            return venue
         for dl in dls:
             _venue = dl.find('dd', {'class': 'tribe-venue'})
             if _venue:
