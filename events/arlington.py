@@ -67,7 +67,7 @@ def get_event_website(event_name, start_date, end_date):
     params = {
         "SearchTerm": event_name
     }
-    uri = f'https://today-service.arlingtonva.us/api/event/elasticevent'
+    uri = 'https://today-service.arlingtonva.us/api/event/elasticevent'
     r = requests.get(uri, params=params)
     data = r.json()
     items = data['items']

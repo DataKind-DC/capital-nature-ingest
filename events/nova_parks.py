@@ -1,115 +1,123 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import os
 import re
 
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 
 from .utils.log import get_logger
 
 logger = get_logger(os.path.basename(__file__))
 
-try:
-    EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
-except KeyError:
-    EVENTBRITE_TOKEN = input("Enter your Eventbrite Token Key:")
 
-
-def get_category_name(page):
-    if page["category_id"] is None:
-        category = ''
-    else:
-        if page["subcategory_id"] is None:
-            category = get(page["category_id"], 'categories/').json()["name"]
-        else:
-            category_name = get(page["category_id"], 'categories/')
-            category_name = category_name.json()["name"]
-            category_name = category_name.replace(",", "")
-            subcategory_name = get(page["subcategory_id"], 'subcategories/')
-            subcategory_name = subcategory_name.json()["name"]
-            subcategory_name = subcategory_name.replace(",", "")
-            category = category_name + "," + subcategory_name
-    return category
-
-
-def scrape(event_id, event_cost):
-    page = get(event_id, resource='events').json()
-    venue = get(page["venue_id"], resource='venues').json()
-
-    start = datetime.strptime(page['start']['local'], '%Y-%m-%dT%H:%M:%S')
-    end = datetime.strptime(page['end']['local'], '%Y-%m-%dT%H:%M:%S')
-    desc = "(" + venue["address"]["region"] + ") " + page["summary"]
-    event_data = {
-        'Event Name': page['name']['text'],
-        'Event Description': desc,
-        'Event Start Date': start.strftime('%Y-%m-%d'),
-        'Event Start Time': start.strftime('%H:%M:%S'),
-        'Event End Date': end.strftime('%Y-%m-%d'),
-        'Event End Time': end.strftime('%H:%M:%S'),
-        'All Day Event': "False",
-        'Timezone': "America/New_York",
-        'Event Venue Name': venue["name"],
-        'Event Organizers': 'NOVA Parks',
-        'Event Cost': event_cost,
-        'Event Currency Symbol': "$",
-        # TODO: parse event data for optional category fields if present
-        'Event Category': get_category_name(page),  
-        'Event Website': page['url'],
-        'Event Featured Image': ""
-    }
-    return event_data
-
-
-def get(api_id, resource, params={'token': EVENTBRITE_TOKEN}):
-    url = f'https://www.eventbrite.com/o/{api_id}' if resource == 'o' \
-        else f'https://www.eventbriteapi.com/v3/{resource}/{api_id}'  
+def form_url():
+    start = datetime.now().strftime("%m-%d-%Y").replace("-", "%2F")
+    end = (datetime.now() + timedelta(90))
+    end = end.strftime("%m-%d-%Y").replace("-", "%2F")
     
+    url = (
+        "https://www.novaparks.com/efq/events?"
+        f"from[value][date]={start}&"
+        f"to[value][date]={end}&"
+        "response_type=ajax"
+    )
+    return url
+
+
+def scrape(url):
     try:
-        if resource != 'o':
-            r = requests.get(url, params=params) 
-        else:
-            r = requests.get(url)
+        r = requests.get(url)
     except Exception as e:
         msg = f"Exception making GET request to {url}: {e}"
         logger.critical(msg, exc_info=True)
         return
-    if not r.ok:
-        code = r.status_code
-        msg = f"Non-200 status code of {code} making GET request to: {url}"
-        logger.critical(msg, exc_info=True)
-      
-    return r
-
-
-def get_live_events(soup):
-    live_events = soup.find("article", {"id": "live_events"})
-    event_divs = live_events.find_all("div", {"class": "list-card-v2"})
+    content = r.content
+    soup = BeautifulSoup(content, 'html.parser')
+    
+    event_divs = soup.find_all(
+        'div',
+        {'class': 'layout layout-one-third-two-thirds'}
+    )
     
     return event_divs
- 
 
-def get_cost_events(soup):
-    cost = soup.find("span", {"class": "list-card__label"}).text
-    cost = cost.lower()
-    cost = cost.replace("free", "0")
-    cost = re.sub(r'[^\d]+', '', cost)
-    if cost == "":
-        cost = "0"
-    return cost
+
+def get_event_cost(event_description):
+    currency_re = re.compile(r'(?:[\$]{1}[,\d]+.?\d*)')
+    
+    event_cost = re.findall(currency_re, event_description)
+
+    if len(event_cost) > 0:
+        event_cost = event_cost[0].split(".")[0].replace("$", '')
+        event_cost = ''.join(s for s in event_cost if s.isdigit())
+        return event_cost
+    return ''
+
+
+def get_event_data(event_div):
+    href = event_div.find('a').get('href')
+    event_name = event_div.find('h3', {'class': 'field-content'}).text
+    event_description = event_div.find('div', {'class': 'body'}).text
+    event_website = f'https://www.novaparks.com{href}'
+    
+    try:
+        start_date, start_time = event_div.find(
+            'span',
+            {'class': 'date-display-start'}
+        ).get('content', '').split("T")
+        start_time = start_time.split("-")[0]
+    except ValueError as e:
+        msg = f"Exception getting start date/time for {event_website}: {e}"
+        logger.error(msg, exc_info=True)
+        return
+    
+    try:
+        end_date, end_time = event_div.find(
+            'span',
+            {'class': 'date-display-end'}
+        ).get('content', '').split("T")
+        end_time = end_time.split("-")[0]
+    except ValueError as e:
+        msg = f"Exception getting end date/time for {event_website}: {e}"
+        logger.warning(msg, exc_info=True)
+        end_time = start_time
+        end_date = start_date
+    
+    event_venue = event_div.find('p', {'class': 'subhead'}).text
+    event_cost = get_event_cost(event_description)
+    event_image = event_div.find('img').get('src', '')
+    
+    event_data = {
+        'Event Name': event_name,
+        'Event Description': event_description,
+        'Event Start Date': start_date,
+        'Event Start Time': start_time,
+        'Event End Date': end_date,
+        'Event End Time': end_time,
+        'All Day Event': "False",
+        'Timezone': "America/New_York",
+        'Event Venue Name': event_venue,
+        'Event Organizers': 'NOVA Parks',
+        'Event Cost': event_cost,
+        'Event Currency Symbol': "$",
+        'Event Website': event_website,
+        'Event Featured Image': event_image
+    }
+    
+    return event_data
 
 
 def main():
-    events_array = []
-    r = get(15206349515, 'o')
-    soup = BeautifulSoup(r.content, 'html.parser')  
-    event_a_refs = get_live_events(soup)
-    for events in event_a_refs:
-        event_cost = get_cost_events(events)
-        event_id = events.find("a").get("data-eid")
-        events_array.append(scrape(event_id, event_cost))
-    
-    return events_array
+    url = form_url()
+    event_divs = scrape(url)
+    events = []
+    for event_div in event_divs:
+        event = get_event_data(event_div)
+        if not event:
+            continue
+        events.append(event)
+    return events
 
 
 if __name__ == '__main__':
