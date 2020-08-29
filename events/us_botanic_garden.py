@@ -107,7 +107,7 @@ def get_cost(soup):
     return cost
 
 
-def get_event_info(evt_id):
+def get_event_info(evt_id):  # noqa: C901
     '''
     Given an event id, go to the event detail page and extract all its info
     :param evt_id: id of event, used in event detail page url
@@ -155,7 +155,11 @@ def get_event_info(evt_id):
             # formatted consistently. The fist p element is, 
             # like this - CATEGORY: TITLE
             title_re = re.search(r"^([^:]+):\s*(.*)", text)
-            evt_category = title_re.group(1)
+            try:
+                evt_category = title_re.group(1)
+            except AttributeError as e:
+                msg = f'Exception getting event category {evt_id}: {e}'
+                logger.warning(msg, exc_info=True)
             evt_name = title_re.group(2)
         elif idx == 1:
             # it's the subtitle - skip it
@@ -206,7 +210,7 @@ def main():
         try:
             event_info.append(get_event_info(evt_id))
         except Exception as e:
-            msg = f"{e}: failed to get event ingo for {evt_id}."
+            msg = f"{e}: failed to get event info for {evt_id}."
             logging.exception(msg, exc_info=True)
     
     return event_info

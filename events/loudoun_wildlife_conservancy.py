@@ -20,7 +20,7 @@ def bs4_page(url):
     except Exception as e:
         msg = f'Exception making GET to {url}: {e}'
         logger.critical(msg, exc_info=True)
-        return None
+        return
     content = r_val.content
     soup = bs4.BeautifulSoup(content, 'html.parser')
     return soup
@@ -75,7 +75,12 @@ def month(url):
     scripts = soup.find_all('script', {'type': 'application/ld+json'})[1:]
     events = []
     for tag in scripts:
-        event_list = json.loads(tag.string[2:])
+        try:
+            event_list = json.loads(tag.string[2:])
+        except json.decoder.JSONDecodeError as e:
+            msg = f'Exception decoding json from {url}: {e}'
+            logger.error(msg, exc_info=True)
+            continue
         for event in event_list:
             event_dict = event_details(event)
             events.append(event_dict)

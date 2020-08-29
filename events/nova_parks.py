@@ -102,7 +102,8 @@ def get_event_data(event_div):
         'Event Cost': event_cost,
         'Event Currency Symbol': "$",
         'Event Website': event_website,
-        'Event Featured Image': event_image
+        'Event Featured Image': event_image,
+        'Event Category': ''
     }
     
     return event_data

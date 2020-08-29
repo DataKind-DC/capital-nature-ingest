@@ -200,7 +200,12 @@ def get_event_data():
         logger.critical(msg, exc_info=True)
         return
     cookies = r.cookies
-    crumb = cookies.get_dict()['crumb']
+    try:
+        crumb = cookies.get_dict()['crumb']
+    except KeyError as e:
+        msg = f"Exception parsing cookies from {cal}: {e}"
+        logger.critical(msg, exc_info=True)
+        return
     month = datetime.now().strftime("%m-%Y")
     url = (
         f'http://cityblossoms.org/api/open/GetItemsByMonth?month={month}'
