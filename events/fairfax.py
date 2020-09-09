@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 import logging
 import os
 import re
@@ -241,14 +242,28 @@ def schematize_event_time(event_time):
     return schematized_event_time
 
 
-def main():
-    cal = 'https://www.fairfaxcounty.gov/parks/park-events-calendar'
+def get_events(end_date, page):
+    url = (
+        'https://www.fairfaxcounty.gov/parks/views/'
+        'ajax?_wrapper_format=drupal_ajax'
+    )
+    data = dict(
+        view_name='calendar_of_events',
+        view_display_id='block_1',
+        view_path='/node/840',
+        pager_element='0',
+        field_locationref_target_id='All',
+        field_start_date_value='today',
+        field_end_date_value=end_date,
+        page=page
+    )
     try:
-        r = requests.get(cal)
+        r = requests.post(url, data=data)
     except Exception as e:
-        logger.critical(f'Exception making GET to {cal}: {e}', exc_info=True)
+        msg = f'Exception making POST to {url} with {data}: {e}'
+        logger.critical(msg, exc_info=True)
         return []
-    content = r.content
+    content = r.json()[4]['data']
     soup = BeautifulSoup(content, 'html.parser')
     title_divs = soup.find_all('div', {'class': 'calendar-title'})
     domain = 'https://www.fairfaxcounty.gov'
@@ -286,6 +301,27 @@ def main():
                      'All Day Event': False}
             events.append(event)
 
+    return events
+
+
+def main():
+    end_date = (datetime.today() + timedelta(3 * 30)).strftime("%m/%d/%Y")
+    events = []
+    for page in range(10):  # unlikely more than 200 events in 3 months
+        _events = get_events(end_date, page)
+        try:
+            # if the last event from the previous page is the same as this
+            # page's last event, then this is a dupe page and we're done
+            stop = _events[-1] == events[-1]
+        except IndexError:
+            # occurs on first page when events is an empty list
+            if page > 0:
+                # occurs if we get to second page without any events on first
+                break
+            stop = False
+        if stop:
+            break
+        events.extend(_events)
     return events
 
 
