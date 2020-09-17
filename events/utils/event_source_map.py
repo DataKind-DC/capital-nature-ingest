@@ -15,6 +15,7 @@ event_source_map = {
     'nova_parks': "NOVA Parks",
     'nps': "National Park Service",
     'nva_audubon_society': "Audubon Society of Northern Virginia",
+    'patc': "Potomac Appalachian Trail Club",
     'potomac_conservancy': "Potomac Conservancy",
     'rcc': "Rock Creek Conservancy",
     'riverkeeper': "Anacostia Riverkeeper",
