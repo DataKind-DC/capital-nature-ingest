@@ -39,7 +39,6 @@ def get_event_data(soup):
         e = e.replace('""', '", "')
         e = json.loads(e)
         event_data.append(e)
-    
     return event_data
 
 
@@ -106,8 +105,8 @@ def schematize_event(event_data, event_websites):
                 msg = f"Unable to extract required data for ANS event: {site}"
                 logger.error(msg, exc_info=True)
                 continue
-        if not event_venue:
-            continue
+        event_venue = "See event website" if not event_venue else event_venue
+        
         event = {'Event Name': event_name,
                  'Event Website': event_website,
                  'Event Start Date': start_date,
