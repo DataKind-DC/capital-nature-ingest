@@ -8,7 +8,7 @@ event_source_map = {
     'eleventh_street': "Building Bridges Across the River",
     'fairfax': "Fairfax Parks",
     'fona': "Friends of the National Arboretum",
-    'friends_of_kenilworth_gardens': "Friends of Kenilworth Gardens",
+    'friends_of_kenilworth_gardens': "Friends Of Kenilworth Gardens",
     'lfwa': "Little Falls Watershed Alliance",
     'mdflora': "Maryland Native Plant Society",
     'montgomery': "Montgomery Parks",
