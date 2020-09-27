@@ -10,6 +10,7 @@ event_source_map = {
     'fona': "Friends of the National Arboretum",
     'friends_of_kenilworth_gardens': "Friends Of Kenilworth Gardens",
     'lfwa': "Little Falls Watershed Alliance",
+    'loudoun_wildlife_conservancy': "Loudon Wildlife Conservancy",
     'mdflora': "Maryland Native Plant Society",
     'montgomery': "Montgomery Parks",
     'nova_parks': "NOVA Parks",
