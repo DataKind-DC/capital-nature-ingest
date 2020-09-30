@@ -157,9 +157,8 @@ def get_event_info(evt_id):  # noqa: C901
             title_re = re.search(r"^([^:]+):\s*(.*)", text)
             try:
                 evt_category = title_re.group(1)
-            except AttributeError as e:
-                msg = f'Exception getting event category {evt_id}: {e}'
-                logger.warning(msg, exc_info=True)
+            except AttributeError:
+                evt_category = ''
             evt_name = title_re.group(2)
         elif idx == 1:
             # it's the subtitle - skip it
