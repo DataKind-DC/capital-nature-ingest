@@ -56,7 +56,8 @@ def get_source_events(event_source_main):
             logger.error(msg, exc_info=True)
             events.pop(i)
     events = formatters.tag_events_with_state(events)
-    
+    events = formatters.date_filter(events)
+
     return events
 
 
