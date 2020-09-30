@@ -154,6 +154,7 @@ def parse_event_website(event_website):
     else:
         event_description = get_event_description(soup)
         event_cost = get_event_cost(soup)
+        event_cost = '0' if not event_cost else event_cost
 
     return event_description, event_cost
 
