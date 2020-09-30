@@ -52,10 +52,11 @@ def unicoder(value):
     return v
 
 
-def date_filter(events):
+def date_filter(events, n_days=90):
     '''Given an event, determine if it occurs within the next 7 months
     Paramters:
         events (list): a list of dicts, with each dict representing an event
+        n_days (int): number of days
 
     Returns:
         events_filtered (list): a list of dicts, with each being an event
@@ -70,7 +71,7 @@ def date_filter(events):
             continue
         too_far_into_the_future = datetime.now() + timedelta(100)
         date_diff = start - too_far_into_the_future
-        if date_diff <= timedelta(210):
+        if date_diff <= timedelta(n_days):
             events_filtered.append(e)
 
     return events_filtered
