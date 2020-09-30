@@ -88,11 +88,11 @@ def get_event_description(soup):
     '''
     p_tags = soup.find_all('p')
     p_texts = [p.get_text() for p in p_tags]
-    cookie_str = 'website uses cookies'
-    cookie_notice_index = [i for i, s in enumerate(p_texts) if cookie_str in s]
-    if cookie_notice_index:
-        del p_texts[cookie_notice_index.pop()]
-    event_description = max(p_texts, key=len).strip()
+    parsed_p_texts = []
+    for p in p_texts:
+        if 'website uses cookies' not in p:
+            parsed_p_texts.append(p.strip())
+    event_description = max(parsed_p_texts, key=len)
 
     return event_description
 
