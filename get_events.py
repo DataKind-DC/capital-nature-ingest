@@ -2,7 +2,6 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from inspect import getmodule
 from io import StringIO
-import logging
 from math import ceil
 import os
 
