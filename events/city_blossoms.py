@@ -251,8 +251,18 @@ def get_event_data():
         msg = f"Exception making GET request to {url}: {e}"
         logger.critical(msg, exc_info=True)
         return
-    with requests_retry_session() as session:
-        r = session.get(url)
+    try:
+        with requests_retry_session() as session:
+            r = session.get(url)
+    except Exception as e:
+        logger.critical(
+            f"Exception making GET request to {url}: {e}", exc_info=True)
+        return
+    if not r.ok:
+        logger.critical(
+            f"Non-200 status of {r.status_code} making GET request to {url}")
+        return
+
     events_data = r.json()
     
     return events_data
