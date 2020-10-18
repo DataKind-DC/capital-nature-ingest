@@ -106,6 +106,24 @@ def get_event_categories(event):
     return event_categories
 
 
+def get_event_image(event):
+    """make sure the event image doesn't redirect to stock image
+
+    Args:
+        event (str): url to image from calendar API
+
+    Returns:
+        url (str) if no redirect, else None
+    """    
+    event_image = event.get('assetUrl', '')
+    try:
+        r = requests.get(event_image, allow_redirects=False)
+        if r.status_code != 302:
+            return event_image
+    except:  # noqa: E722
+        return
+
+
 def schematize_event(event):
     '''
     Given an event as returned by the API, schematize it.
@@ -123,7 +141,10 @@ def schematize_event(event):
     for intervening_day in intervening_days:
         start_date = intervening_day
         end_date = intervening_day
-        event_url = event['fullUrl']
+        try:
+            event_url = event['fullUrl']
+        except KeyError:
+            continue
         event_website = f'http://cityblossoms.org{event_url}'
         event_name = event['title']
         try:
@@ -142,22 +163,25 @@ def schematize_event(event):
         event_cost = ''  # not returned by the API or on the event's website
         event_description = get_event_description(event_website)
         event_categories = get_event_categories(event)
-        event_image = event.get('assetUrl', '')
-        schematized_event = {'Event Start Date': start_date,
-                             'Event End Date': end_date, 
-                             'Event Start Time': start_time,
-                             'Event End Time': end_time,
-                             'Event Website': event_website,
-                             'Event Name': event_name,
-                             'Event Venue Name': event_venue,
-                             'Event Cost': event_cost,
-                             'Event Description': event_description,
-                             'Event Currency Symbol': '$',
-                             'Timezone': 'America/New_York',
-                             'Event Organizers': 'City Blossoms',
-                             'Event Category': event_categories,
-                             'All Day Event': False,
-                             'Event Featured Image': event_image}
+        schematized_event = {
+            'Event Start Date': start_date,
+            'Event End Date': end_date, 
+            'Event Start Time': start_time,
+            'Event End Time': end_time,
+            'Event Website': event_website,
+            'Event Name': event_name,
+            'Event Venue Name': event_venue,
+            'Event Cost': event_cost,
+            'Event Description': event_description,
+            'Event Currency Symbol': '$',
+            'Timezone': 'America/New_York',
+            'Event Organizers': 'City Blossoms',
+            'Event Category': event_categories,
+            'All Day Event': False,
+        }
+        event_image = get_event_image(event)
+        if event_image:
+            schematized_event.update({'Event Featured Image': event_image})
         schematized_events.append(schematized_event)
     
     return schematized_events
@@ -192,24 +216,10 @@ def get_event_data():
     '''
     Returns the results of the city blossoms events API
     '''
-    cal = 'http://cityblossoms.org/calendar'
-    try:
-        r = requests.get(cal)
-    except Exception as e:
-        msg = f"Exception making GET request to {cal}: {e}"
-        logger.critical(msg, exc_info=True)
-        return
-    cookies = r.cookies
-    try:
-        crumb = cookies.get_dict()['crumb']
-    except KeyError as e:
-        msg = f"Exception parsing cookies from {cal}: {e}"
-        logger.critical(msg, exc_info=True)
-        return
     month = datetime.now().strftime("%m-%Y")
     url = (
         f'http://cityblossoms.org/api/open/GetItemsByMonth?month={month}'
-        f'&collectionId=55a52dfce4b09a8bb0485083&crumb={crumb}'
+        '&collectionId=55a52dfce4b09a8bb0485083'  # found in Chrome inspect
     )
     try:
         r = requests.get(url)
