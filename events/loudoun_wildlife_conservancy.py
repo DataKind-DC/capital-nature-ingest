@@ -76,7 +76,7 @@ def month(url):
     events = []
     for tag in scripts:
         try:
-            event_list = json.loads(tag.string[2:])
+            event_list = json.loads(tag.string)
         except json.decoder.JSONDecodeError as e:
             msg = f'Exception decoding json from {url}: {e}'
             logger.error(msg, exc_info=True)
