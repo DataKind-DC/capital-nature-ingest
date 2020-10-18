@@ -93,7 +93,11 @@ def get(api_id, resource, params={'token': EVENTBRITE_TOKEN}):
 
 def get_live_events(soup):
     live_events = soup.find("article", {"id": "live_events"})
-    event_divs = live_events.find_all("div", {"class": "list-card-v2"})
+    try:
+        event_divs = live_events.find_all("div", {"class": "list-card-v2"})
+    except AttributeError:
+        # mustn't be any events
+        return []
 
     return event_divs
  
