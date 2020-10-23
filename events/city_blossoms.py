@@ -3,13 +3,37 @@ from dateutil import tz
 import logging
 import os
 import re
+from urllib3.util.retry import Retry
 
 from bs4 import BeautifulSoup
 import requests
+from requests.adapters import HTTPAdapter
 
 from .utils.log import get_logger
 
 logger = get_logger(os.path.basename(__file__))
+
+
+def requests_retry_session(retries=3, 
+                           backoff_factor=0.5, 
+                           status_forcelist=(429, 500, 502, 503, 504), 
+                           session=None):
+    '''
+    Use to create an http(s) requests session that will retry a request.
+    '''
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries, 
+        read=retries, 
+        connect=retries, 
+        backoff_factor=backoff_factor, 
+        status_forcelist=status_forcelist
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    
+    return session
 
 
 def filter_events(events_data):
@@ -227,6 +251,18 @@ def get_event_data():
         msg = f"Exception making GET request to {url}: {e}"
         logger.critical(msg, exc_info=True)
         return
+    try:
+        with requests_retry_session() as session:
+            r = session.get(url)
+    except Exception as e:
+        logger.critical(
+            f"Exception making GET request to {url}: {e}", exc_info=True)
+        return
+    if not r.ok:
+        logger.critical(
+            f"Non-200 status of {r.status_code} making GET request to {url}")
+        return
+
     events_data = r.json()
     
     return events_data

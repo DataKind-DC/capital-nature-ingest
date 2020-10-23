@@ -61,6 +61,8 @@ def get_event_timing(event_soup, event_website):
             ix = 0 if "-" in ix else int(ix) - 1
             soup_time = [div.text for div in sub_divs][ix]
 
+        soup_time = soup_time.split(" UTC")[0]
+
         start_time = datetime.strptime(
             soup_time.split(' - ', 1)[0].strip(),
             '%I:%M %p')
@@ -69,7 +71,6 @@ def get_event_timing(event_soup, event_website):
             soup_time.split(' - ', 1)[1].strip(), '%I:%M %p')
         end_time = datetime.strftime(end_time, '%H:%M:%S')
     except AttributeError:
-        print("!")
         all_day_event = True
     except ValueError as e:
         msg = f'Exception parsing {soup_time} from {event_website}: {e}'
@@ -123,9 +124,7 @@ def get_event_venue(event_site_soup, event_name):
         # try to look in dd tag for the dl tag
         try:
             dls = event_site_soup.find_all('dl')
-        except AttributeError as e:
-            msg = f'Exception getting event venue for {event_name}: {e}'
-            logger.error(msg, exc_info=True)
+        except AttributeError:
             return venue
         for dl in dls:
             _venue = dl.find('dd', {'class': 'tribe-venue'})
@@ -135,6 +134,8 @@ def get_event_venue(event_site_soup, event_name):
     except Exception as e:
         msg = f'Exception finding the event venue for {event_name}: {e}'  
         logger.error(msg, exc_info=True)
+    if not venue:
+        return '11th Street Bridge Park'
     return venue.strip()
 
 
