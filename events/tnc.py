@@ -10,23 +10,48 @@ from .utils.log import get_logger
 logger = get_logger(os.path.basename(__file__))
 
 
+def get_api_url():
+    url = (
+        'https://www.nature.org/en-us/get-involved/how-to-help/'
+        'volunteer-and-attend-events/find-local-events-and-opportunities/'
+        '?r=United%20States&s=Virginia'
+    )
+    try:
+        r = requests.get(url)
+    except Exception as e:
+        msg = f"Exception making GET request to {url}: {e}"
+        logger.critical(msg, exc_info=True)
+        return
+    try:
+        soup = BeautifulSoup(r.content, 'html.parser')
+        api_url = soup.find('input', {'name': 'serviceurl'}).get('value')
+    except Exception as e:
+        msg = f"Unable to get API url: {e}"
+        return
+    return api_url
+
+
 def customized_url():
     today = datetime.now().strftime('%Y-%m-%d')
-    url = ('https://uv6jfqw6q8.execute-api.us-east-1.amazonaws.com/prod/search'
-           '?q=*&q.parser=lucene'
-           '&fq=(and%20template_name:%27eventdetailpage%27search_by_domain:'
-           '%27nature_usa_en%27'
-           '(or%20geographic_location:%27all_locations%27(and%20event_region_'
-           'title:%27United%20States'
-           '%27event_locale_title:%27Virginia%27))event_start_date:%20%5B%27'
-           f'{today}'
-           'T00:00:00Z%27,%7D)&sort=event_start_date_sort%20asc&size=200')
+    api = get_api_url()
+    if not api:
+        return
+    url = (
+        f'{api}?q=*&q.parser=lucene&fq=(and%20template_name:%27eventdetailpage'
+        '%27search_by_domain:%27nature_usa_en%27(or%20geographic_location:%27'
+        'all_locations%27(and%20event_region_title:%27United%20States%27'
+        'event_locale_title:%27Virginia%27))'
+        f'event_start_date:%20%5B%27{today}T00:00:00Z%27,%7D)'
+        '&sort=event_start_date_sort%20asc&size=200'
+    )
     
     return url
 
 
 def get_api_events():
     url = customized_url()
+    if not url:
+        return
     try:
         r = requests.get(url)
     except Exception as e:
@@ -39,7 +64,7 @@ def get_api_events():
     return events
 
 
-def main():
+def main():  # noqa: C901
     events_dict = []
     events = get_api_events()
     if not events:
@@ -82,7 +107,10 @@ def main():
             venue = ', '.join(venue[0].get_text(strip=True).split('\r\n'))
             event_description = str.strip(fields['description'])
             event_name = fields['title']
-            event_categories = ", ".join(fields['topic_title'])
+            try:
+                event_categories = ", ".join(fields['topic'])
+            except KeyError:
+                event_categories = ""
             event_dict = {
                 'Event Start Date': start_date,
                 'Event End Date': end_date,
