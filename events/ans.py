@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import json
+from json.decoder import JSONDecodeError
 import logging
 import os
 import re
@@ -35,9 +36,13 @@ def get_event_data(soup):
             replace("\r", '').\
             replace("@", '').strip()
         e = re.sub(r'  +', '', e)
-        e = re.sub(comma_hugged_by_quotes, "", e)
-        e = e.replace('""', '", "')
-        e = json.loads(e)
+        try:
+            e = re.sub(comma_hugged_by_quotes, "", e)
+            e = e.replace('""', '", "')
+            e = json.loads(e)
+        except JSONDecodeError:
+            # ignore the entry about the website that's not an event
+            continue
         event_data.append(e)
     return event_data
 
