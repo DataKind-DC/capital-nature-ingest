@@ -36,7 +36,7 @@ cd capital-nature-ingest
 
 ```bash
 python -m venv env
-source env/bin/activate
+source env/bin/activate # env\Scripts\activate if you're on Windows
 pip install -r requirements.txt
 ```
 
