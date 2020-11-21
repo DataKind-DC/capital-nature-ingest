@@ -64,7 +64,7 @@ def get_api_events():
     return events
 
 
-def main():
+def main():  # noqa: C901
     events_dict = []
     events = get_api_events()
     if not events:
