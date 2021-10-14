@@ -5,16 +5,6 @@ from io import StringIO
 from math import ceil
 import os
 
-from events import ans, arlington, aws, casey_trees, city_blossoms, \
-    dc_audubon, eleventh_street, fairfax, fona, \
-    friends_of_kenilworth_gardens, loudoun_wildlife_conservancy, lfwa, \
-    montgomery, nova_parks, nps, potomac_conservancy, rcc, riverkeeper, \
-    sierra_club_md, sierra_club, tnc, us_botanic_garden, vnps, \
-    nva_audubon_society, mdflora
-from events.utils.log import get_logger
-from tests.utils import schema_test
-from events.utils import formatters, reports, aws_utils
-
 try:
     NPS_KEY = os.environ['NPS_KEY']
 except KeyError:
@@ -26,6 +16,18 @@ try:
 except KeyError:
     EVENTBRITE_TOKEN = input("Enter your Eventbrite API key:")
     os.environ["EVENTBRITE_TOKEN"] = EVENTBRITE_TOKEN
+
+from events import ans, arlington, aws, casey_trees, city_blossoms, \
+    dc_audubon, eleventh_street, fairfax, fona, \
+    friends_of_kenilworth_gardens, loudoun_wildlife_conservancy, lfwa, \
+    montgomery, nova_parks, nps, potomac_conservancy, rcc, riverkeeper, \
+    sierra_club_md, sierra_club, tnc, us_botanic_garden, vnps, \
+    nva_audubon_society, mdflora
+from events.utils.log import get_logger
+from tests.utils import schema_test
+from events.utils import formatters, reports, aws_utils
+
+
 
 BUCKET = os.getenv('BUCKET_NAME')
 
@@ -104,7 +106,15 @@ def main(event={}, context={}):
 
 
 if __name__ == '__main__':
-    events = main()
-    print(f"Done scraping {len(events)} events!")
-    print(f"You can find the logs in ./logs")
-    print("You can find the reports in ./data/ and ./reports/, respectively.")
+    events = []
+    data_path = os.path.join(os.getcwd(), 'data')
+    reports_path = os.path.join(os.getcwd(), 'reports')
+    try:
+        events.extend(main())
+    except Exception as e:
+        logger.critical(f"Critical error: {e}")
+    finally:
+        print(f"Done scraping {len(events)} events!")
+        print(f"You can find the logs in ./logs")
+        print(f"You can find the data in {data_path}")
+        print(f"You can find the reports in {reports_path}")

@@ -10,10 +10,7 @@ from .utils.log import get_logger
 
 logger = get_logger(os.path.basename(__file__))
 
-try:
-    EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
-except KeyError:
-    EVENTBRITE_TOKEN = input("Enter your Eventbrite Token Key:")
+EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
 
 
 def get_category_name(page):

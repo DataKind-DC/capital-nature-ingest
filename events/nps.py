@@ -7,10 +7,8 @@ from astral import Astral
 from bs4 import BeautifulSoup
 import requests
 
-try:
-    NPS_KEY = os.environ['NPS_KEY']
-except KeyError:
-    NPS_KEY = input("Enter your NPS API key:")
+NPS_KEY = os.environ['NPS_KEY']
+
 
 from .utils.log import get_logger
 
