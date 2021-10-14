@@ -2,10 +2,8 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from inspect import getmodule
 from io import StringIO
-from logging import getLogger
 from math import ceil
 import os
-from sys import platform
 
 try:
     NPS_KEY = os.environ['NPS_KEY']
@@ -34,7 +32,6 @@ BUCKET = os.getenv('BUCKET_NAME')
 
 
 logger = get_logger(os.path.basename(__file__))
-
 
 
 def get_source_events(event_source_main):
