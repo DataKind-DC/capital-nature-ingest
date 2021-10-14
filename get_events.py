@@ -2,8 +2,10 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from inspect import getmodule
 from io import StringIO
+from logging import getLogger
 from math import ceil
 import os
+from sys import platform
 
 try:
     NPS_KEY = os.environ['NPS_KEY']
@@ -28,10 +30,12 @@ from tests.utils import schema_test
 from events.utils import formatters, reports, aws_utils
 
 
-
 BUCKET = os.getenv('BUCKET_NAME')
 
-logger = get_logger(os.path.basename(__file__))
+if platform != 'win32':
+    logger = get_logger(os.path.basename(__file__))
+else:
+    logger = getLogger('scrapers')
 
 
 def get_source_events(event_source_main):

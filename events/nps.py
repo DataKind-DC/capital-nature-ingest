@@ -10,7 +10,7 @@ import requests
 NPS_KEY = os.environ['NPS_KEY']
 
 
-from .utils.log import get_logger
+from .utils.log import get_logger  # noqa: E402
 
 logger = get_logger(os.path.basename(__file__))
 

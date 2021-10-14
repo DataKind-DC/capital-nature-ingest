@@ -14,7 +14,6 @@ logger = get_logger(os.path.basename(__file__))
 EVENTBRITE_TOKEN = os.environ['EVENTBRITE_TOKEN']
 
 
-
 def get_category_name(page):
     if page["category_id"] is None:
         category = ''

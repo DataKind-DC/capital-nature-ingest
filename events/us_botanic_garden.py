@@ -159,7 +159,12 @@ def get_event_info(evt_id):  # noqa: C901
                 evt_category = title_re.group(1)
             except AttributeError:
                 evt_category = ''
-            evt_name = title_re.group(2)
+            try:
+                evt_name = title_re.group(2)
+            except AttributeError as e:
+                msg = f"Exception getting US Botanic Garden event name: {e}"
+                logger.error(msg, exc_info=True)
+                evt_name = ''
         elif idx == 1:
             # it's the subtitle - skip it
             continue
