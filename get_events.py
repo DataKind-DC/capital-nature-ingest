@@ -32,10 +32,9 @@ from events.utils import formatters, reports, aws_utils
 
 BUCKET = os.getenv('BUCKET_NAME')
 
-if platform != 'win32':
-    logger = get_logger(os.path.basename(__file__))
-else:
-    logger = getLogger('scrapers')
+
+logger = get_logger(os.path.basename(__file__))
+
 
 
 def get_source_events(event_source_main):
