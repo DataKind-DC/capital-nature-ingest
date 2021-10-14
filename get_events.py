@@ -95,7 +95,7 @@ def main(event={}, context={}):
             return events
     except Exception as e:
         events = []
-        logger.critical(f"Critical error: {e}")
+        logger.critical(f"Critical error: {e}", exc_info=True)
     finally:
         log_df = reports.make_reports(events)
         if BUCKET:
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     try:
         events.extend(main())
     except Exception as e:
-        logger.critical(f"Critical error: {e}")
+        logger.critical(f"Critical error: {e}", exc_info=True)
     finally:
         print(f"Done scraping {len(events)} events!")
         print(f"You can find the logs in ./logs")
