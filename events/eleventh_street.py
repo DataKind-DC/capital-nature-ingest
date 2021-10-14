@@ -74,6 +74,7 @@ def get_event_timing(event_soup, event_website):
         except ValueError as e:
             msg = f'Exception parsing {soup_time} from {event_website}: {e}'
             logger.error(msg, exc_info=True)
+            return start_time, end_time, all_day_event
         end_time = datetime.strftime(end_time, '%H:%M:%S')
     except AttributeError:
         all_day_event = True

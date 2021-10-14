@@ -85,7 +85,11 @@ def get_live_events(soup):
 
 def handle_date(event_soup):
     date = event_soup.find("span", {"id": "Test2:j_id5:j_id24"})
-    date = date.text
+    try:
+        date = date.text
+    except AttributeError as e:
+        logger.error(f"Exception getting date: {e}", exc_info=True)
+        return ''
     date = date.replace(" ", "")
     date_formatted = datetime.strptime(date, "%a%b%d,%Y")
     date = date_formatted.strftime('%Y-%m-%d')
@@ -94,7 +98,11 @@ def handle_date(event_soup):
 
 def handle_start_time(event_soup):
     time_start = event_soup.find("span", {"id": "Test2:j_id5:j_id28"})
-    time_start = time_start.text
+    try:
+        time_start = time_start.text
+    except AttributeError as e:
+        logger.error(f"Exception getting star time: {e}", exc_info=True)
+        return ''
     time_start = time_start.replace(" ", "")
     time_start_formatted = datetime.strptime(time_start, "%I:%M%p")
     time_start = time_start_formatted.strftime('%H:%M:%S')
@@ -103,7 +111,11 @@ def handle_start_time(event_soup):
 
 def handle_end_time(event_soup):
     time_end = event_soup.find("span", {"id": "Test2:j_id5:j_id32"})
-    time_end = time_end.text
+    try:
+        time_end = time_end.text
+    except AttributeError as e:
+        logger.error(f"Exception getting end time: {e}", exc_info=True)
+        return ''
     time_end = time_end.replace(" ", "")
     time_end_formatted = datetime.strptime(time_end, "%I:%M%p")
     time_end = time_end_formatted.strftime('%H:%M:%S')
@@ -112,7 +124,11 @@ def handle_end_time(event_soup):
 
 def handle_location(event_soup):
     venue_name = event_soup.find("span", {"id": "Test2:j_id5:j_id36"})
-    venue_name = venue_name.text
+    try:
+        venue_name = venue_name.text
+    except AttributeError as e:
+        logger.error(f"Exception getting venue name: {e}", exc_info=True)
+        return ''
     return venue_name
 
 
@@ -134,7 +150,11 @@ def handle_description(event_soup):
 
 def handle_event_name(event_soup):
     event_name = event_soup.find("h1", {"class": "eventlist-title"})
-    event_name_string = event_name.text
+    try:
+        event_name_string = event_name.text
+    except AttributeError as e:
+        logger.error(f"Exception getting event name: {e}", exc_info=True)
+        return ''
     return event_name_string
 
 
@@ -163,19 +183,27 @@ def parse_event_divs(event_divs):
             soup_level_three = get_url(a_tag.get("href"))
             if not soup_level_three:
                 continue
+            description = handle_description(soup_level_three)
+            start_date = handle_date(soup_level_three)
+            start_time = handle_start_time(soup_level_three)
+            end_date = handle_date(soup_level_three)
+            end_time = handle_end_time(soup_level_three)
+            venue_name = handle_location(soup_level_three)
+            if not all([start_date, start_time, end_date, end_time, venue_name]):
+                continue
             event_data = {
                 'Event Name': handle_event_name(event_div),
                 # TODO: Some HTML tags are falling through the cracks
                 # in our description string. Eliminate HTML tags
                 # without losing the fidelity of the description message.
-                'Event Description': handle_description(soup_level_three),
-                'Event Start Date': handle_date(soup_level_three),
-                'Event Start Time': handle_start_time(soup_level_three),
-                'Event End Date': handle_date(soup_level_three),
-                'Event End Time': handle_end_time(soup_level_three),
+                'Event Description': description,
+                'Event Start Date': start_date,
+                'Event Start Time': start_time,
+                'Event End Date': end_date,
+                'Event End Time': end_time,
                 'All Day Event': "False",
                 'Timezone': "America/New_York",
-                'Event Venue Name': handle_location(soup_level_three),
+                'Event Venue Name': venue_name,
                 'Event Organizers': 'Little Falls Watershed Alliance',
                 'Event Cost': "0.00",
                 'Event Currency Symbol': "$",
