@@ -3,6 +3,7 @@ from datetime import datetime
 from io import StringIO
 import logging
 import os
+import sys
 import traceback
 
 from .event_source_map import event_source_map
@@ -60,12 +61,14 @@ def get_logger(event_source, bucket=BUCKET):
         log_dir = os.path.join(os.getcwd(), "logs")
         if not os.path.exists(log_dir):
             os.mkdir(log_dir)
-    
-    log_file = os.path.join(log_dir, f'{event_source}_{now}.csv')   
-    log_file = log_file.replace(".py", "")
-    f_handler = logging.FileHandler(log_file)
-    f_handler.setLevel(logging.WARNING)
-    f_handler.setFormatter(CsvFormatter())
-    logger.addHandler(f_handler)
+    if sys.platform != 'win32':
+        log_file = os.path.join(log_dir, f'{event_source}_{now}.csv')   
+        log_file = log_file.replace(".py", "")
+        f_handler = logging.FileHandler(log_file)
+        f_handler.setLevel(logging.WARNING)
+        f_handler.setFormatter(CsvFormatter())
+        logger.addHandler(f_handler)
+    else:
+        logger.disabled = True
 
     return logger

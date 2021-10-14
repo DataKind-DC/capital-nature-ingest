@@ -67,8 +67,13 @@ def get_event_timing(event_soup, event_website):
             soup_time.split(' - ', 1)[0].strip(),
             '%I:%M %p')
         start_time = datetime.strftime(start_time, '%H:%M:%S')
-        end_time = datetime.strptime(
-            soup_time.split(' - ', 1)[1].strip(), '%I:%M %p')
+        try:
+            end_time = datetime.strptime(
+                soup_time.split(' - ', 1)[1].strip(), '%I:%M %p'
+            )
+        except ValueError as e:
+            msg = f'Exception parsing {soup_time} from {event_website}: {e}'
+            logger.error(msg, exc_info=True)
         end_time = datetime.strftime(end_time, '%H:%M:%S')
     except AttributeError:
         all_day_event = True

@@ -3,6 +3,7 @@ from datetime import datetime
 from io import StringIO
 import os
 import re
+import sys
 
 import pandas as pd
 from pandas.errors import EmptyDataError
@@ -59,11 +60,21 @@ def events_to_csv(events, out_dir='data', bucket=BUCKET):
         out_path = os.path.join(os.getcwd(), out_dir, filename)
         if not os.path.exists(os.path.join(os.getcwd(), out_dir)):
             os.mkdir(os.path.join(os.getcwd(), out_dir))
-        with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            for event in events:
-                writer.writerow(event)
+        if sys.platform == 'win32':
+            # https://stackoverflow.com/questions/3348460/csv-file-written-with-python-has-blank-lines-between-each-row
+            with open(out_path, mode='w', encoding='utf-8', errors='ignore', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                for event in events:
+                    if event:
+                        writer.writerow(event)
+        else:
+            with open(out_path, mode='w', encoding='utf-8', errors='ignore') as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                for event in events:
+                    if event:
+                        writer.writerow(event)
         return scrape_date
 
 
@@ -206,7 +217,11 @@ def get_past_organizers(out_dir='data', bucket=BUCKET):
         with open(organizer_file) as f:
             reader = csv.reader(f)
             for i in reader:
-                organizer = i[0]
+                try:
+                    organizer = i[0]
+                except IndexError:
+                    # file has no organizers for some other reason
+                    return set()
                 organizers.append(organizer)
         os.remove(organizer_file)
     
@@ -417,6 +432,7 @@ class ScrapeReport():
             else:
                 put_object(data, self.report_path)
         else:
+            df.dropna(inplace=True)
             df.to_csv(self.report_path, index=False)
 
         return self.log_df

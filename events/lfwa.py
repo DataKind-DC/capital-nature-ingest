@@ -121,8 +121,12 @@ def handle_cost(event_soup):
 
 
 def handle_description(event_soup):
-    description = event_soup.find("span", {"id": "Test2:j_id5:j_id47"}).text
-    return description
+    try:
+        description = event_soup.find("span", {"id": "Test2:j_id5:j_id47"}).text
+        return description
+    except AttributeError as e:
+        logger.error(f"Exception getting description: {e}", exc_info=True)
+        return ''
 
 
 def handle_event_name(event_soup):
